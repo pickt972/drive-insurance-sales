@@ -6,8 +6,9 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { EMPLOYEES, INSURANCE_TYPES, Employee, InsuranceType } from "@/types/sales";
-import { Plus, User, FileText, Shield } from "lucide-react";
+import { useCommissions } from "@/hooks/useCommissions";
+import { EMPLOYEES, ENCOURAGEMENTS } from "@/types/sales";
+import { Plus, User, FileText, Shield, Euro } from "lucide-react";
 
 interface SalesFormProps {
   onAddSale: (sale: {
@@ -17,15 +18,18 @@ interface SalesFormProps {
     insuranceTypes: string[];
     date: string;
   }) => void;
+  currentUser?: string;
+  isAdmin?: boolean;
 }
 
-export const SalesForm = ({ onAddSale }: SalesFormProps) => {
-  const [employeeName, setEmployeeName] = useState<string>("");
+export const SalesForm = ({ onAddSale, currentUser, isAdmin }: SalesFormProps) => {
+  const [employeeName, setEmployeeName] = useState<string>(currentUser || "");
   const [clientName, setClientName] = useState("");
   const [reservationNumber, setReservationNumber] = useState("");
   const [selectedInsurances, setSelectedInsurances] = useState<string[]>([]);
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const { toast } = useToast();
+  const { commissions, calculateTotal, getCommissionTypes } = useCommissions();
 
   const handleInsuranceChange = (insurance: string, checked: boolean) => {
     if (checked) {
@@ -38,7 +42,9 @@ export const SalesForm = ({ onAddSale }: SalesFormProps) => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!employeeName || !clientName || !reservationNumber || selectedInsurances.length === 0) {
+    const finalEmployeeName = isAdmin && employeeName ? employeeName : currentUser || "";
+    
+    if (!finalEmployeeName || !clientName || !reservationNumber || selectedInsurances.length === 0) {
       toast({
         title: "Erreur",
         description: "Veuillez remplir tous les champs obligatoires.",
@@ -47,24 +53,51 @@ export const SalesForm = ({ onAddSale }: SalesFormProps) => {
       return;
     }
 
+    // Input validation
+    if (clientName.trim().length < 2) {
+      toast({
+        title: "Erreur",
+        description: "Le nom du client doit contenir au moins 2 caractères",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (reservationNumber.trim().length < 3) {
+      toast({
+        title: "Erreur",
+        description: "Le numéro de réservation doit contenir au moins 3 caractères",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const totalCommission = calculateTotal(selectedInsurances);
+    
     onAddSale({
-      employeeName,
-      clientName,
-      reservationNumber,
+      employeeName: finalEmployeeName,
+      clientName: clientName.trim(),
+      reservationNumber: reservationNumber.trim().toUpperCase(),
       insuranceTypes: selectedInsurances,
       date,
     });
 
     // Reset form
-    setEmployeeName("");
+    if (!isAdmin) {
+      setEmployeeName(currentUser || "");
+    } else {
+      setEmployeeName("");
+    }
     setClientName("");
     setReservationNumber("");
     setSelectedInsurances([]);
     setDate(new Date().toISOString().split('T')[0]);
 
+    // Encouraging toast message
+    const encouragement = ENCOURAGEMENTS[Math.floor(Math.random() * ENCOURAGEMENTS.length)];
     toast({
-      title: "Vente enregistrée",
-      description: `Vente ajoutée avec succès pour ${clientName}`,
+      title: encouragement,
+      description: `Commission: ${totalCommission.toFixed(2)} € • ${finalEmployeeName}`,
       variant: "default",
     });
   };
@@ -80,24 +113,26 @@ export const SalesForm = ({ onAddSale }: SalesFormProps) => {
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="employee" className="flex items-center gap-2">
-                <User className="h-4 w-4" />
-                Employé *
-              </Label>
-              <Select value={employeeName} onValueChange={setEmployeeName}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Sélectionner un employé" />
-                </SelectTrigger>
-                <SelectContent>
-                  {EMPLOYEES.map((employee) => (
-                    <SelectItem key={employee} value={employee}>
-                      {employee}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            {isAdmin && (
+              <div className="space-y-2">
+                <Label htmlFor="employee" className="flex items-center gap-2">
+                  <User className="h-4 w-4" />
+                  Employé concerné *
+                </Label>
+                <Select value={employeeName} onValueChange={setEmployeeName}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Sélectionner un employé" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {EMPLOYEES.map((employee) => (
+                      <SelectItem key={employee} value={employee}>
+                        {employee}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
             <div className="space-y-2">
               <Label htmlFor="date">Date</Label>
@@ -143,8 +178,8 @@ export const SalesForm = ({ onAddSale }: SalesFormProps) => {
               <Shield className="h-4 w-4" />
               Assurances vendues *
             </Label>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              {INSURANCE_TYPES.map((insurance) => (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {getCommissionTypes().map((insurance) => (
                 <div key={insurance} className="flex items-center space-x-2 p-3 rounded-lg border bg-card">
                   <Checkbox
                     id={insurance}
@@ -153,15 +188,29 @@ export const SalesForm = ({ onAddSale }: SalesFormProps) => {
                       handleInsuranceChange(insurance, checked as boolean)
                     }
                   />
-                  <Label 
-                    htmlFor={insurance} 
-                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                  >
-                    {insurance}
-                  </Label>
+                  <div className="flex-1">
+                    <Label 
+                      htmlFor={insurance} 
+                      className="text-sm font-medium leading-none cursor-pointer"
+                    >
+                      {insurance}
+                    </Label>
+                    <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
+                      <Euro className="h-3 w-3" />
+                      <span>{commissions[insurance]?.toFixed(2)} €</span>
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>
+            {selectedInsurances.length > 0 && (
+              <div className="p-3 bg-primary/10 border border-primary/20 rounded-lg">
+                <div className="flex items-center gap-2 text-sm font-medium text-primary">
+                  <Euro className="h-4 w-4" />
+                  Total commission: {calculateTotal(selectedInsurances).toFixed(2)} €
+                </div>
+              </div>
+            )}
           </div>
 
           <Button 
