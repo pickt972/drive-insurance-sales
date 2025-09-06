@@ -7,6 +7,7 @@ import { Dashboard } from "@/components/Dashboard";
 import { ExportPanel } from "@/components/ExportPanel";
 import { LoginForm } from "@/components/LoginForm";
 import { CommissionManager } from "@/components/CommissionManager";
+import { UserManager } from "@/components/UserManager";
 import { useSalesData } from "@/hooks/useSalesData";
 import { useAuth } from "@/hooks/useAuth";
 import { BarChart3, FileText, Plus, Download, Car, LogOut, Settings, User } from "lucide-react";
@@ -69,7 +70,7 @@ const Index = () => {
       {/* Main Content */}
       <main className="container mx-auto px-4 py-6">
         <Tabs defaultValue="dashboard" className="space-y-6">
-          <TabsList className={`grid w-full ${isAdmin ? 'grid-cols-5 lg:w-[750px]' : 'grid-cols-4 lg:w-[600px]'}`}>
+          <TabsList className={`grid w-full ${isAdmin ? 'grid-cols-6 lg:w-[900px]' : 'grid-cols-4 lg:w-[600px]'}`}>
             <TabsTrigger value="dashboard" className="flex items-center gap-2">
               <BarChart3 className="h-4 w-4" />
               <span className="hidden sm:inline">Tableau de bord</span>
@@ -87,10 +88,16 @@ const Index = () => {
               <span className="hidden sm:inline">Export</span>
             </TabsTrigger>
             {isAdmin && (
-              <TabsTrigger value="admin" className="flex items-center gap-2">
-                <Settings className="h-4 w-4" />
-                <span className="hidden sm:inline">Admin</span>
-              </TabsTrigger>
+              <>
+                <TabsTrigger value="admin" className="flex items-center gap-2">
+                  <Settings className="h-4 w-4" />
+                  <span className="hidden sm:inline">Commissions</span>
+                </TabsTrigger>
+                <TabsTrigger value="users" className="flex items-center gap-2">
+                  <User className="h-4 w-4" />
+                  <span className="hidden sm:inline">Utilisateurs</span>
+                </TabsTrigger>
+              </>
             )}
           </TabsList>
 
@@ -115,9 +122,14 @@ const Index = () => {
           </TabsContent>
 
           {isAdmin && (
-            <TabsContent value="admin" className="space-y-6">
-              <CommissionManager />
-            </TabsContent>
+            <>
+              <TabsContent value="admin" className="space-y-6">
+                <CommissionManager />
+              </TabsContent>
+              <TabsContent value="users" className="space-y-6">
+                <UserManager />
+              </TabsContent>
+            </>
           )}
         </Tabs>
       </main>
