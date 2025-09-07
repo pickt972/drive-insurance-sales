@@ -7,6 +7,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Car, User, Lock, Mail } from "lucide-react";
 import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 export const LoginPage = () => {
   const { signInWithUsername, loading } = useSupabaseAuth();
@@ -14,6 +15,7 @@ export const LoginPage = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [sendingReset, setSendingReset] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
 
   const handleSignIn = async (e: React.FormEvent) => {
@@ -25,12 +27,38 @@ export const LoginPage = () => {
     setIsLoading(false);
   };
 
-  const handleForgotPassword = () => {
-    setShowForgotPassword(true);
-    toast({
-      title: "Demande envoyée",
-      description: "Votre demande de réinitialisation de mot de passe a été envoyée à l'administrateur.",
-    });
+  const handleForgotPassword = async () => {
+    if (!username) {
+      toast({
+        title: "Nom d'utilisateur requis",
+        description: "Veuillez saisir votre nom d'utilisateur.",
+        variant: "destructive",
+      });
+      return;
+    }
+    try {
+      setSendingReset(true);
+      const { error } = await supabase.functions.invoke('password-reset-request', {
+        body: {
+          username,
+          origin: window.location.origin,
+        },
+      });
+      if (error) throw error;
+      setShowForgotPassword(true);
+      toast({
+        title: "Demande envoyée",
+        description: "L'administrateur a été notifié par email.",
+      });
+    } catch (err: any) {
+      toast({
+        title: "Échec de l'envoi",
+        description: err.message || "Impossible d'envoyer la demande. Réessayez plus tard.",
+        variant: "destructive",
+      });
+    } finally {
+      setSendingReset(false);
+    }
   };
 
   return (
@@ -114,12 +142,13 @@ export const LoginPage = () => {
                 variant="link"
                 size="sm"
                 onClick={handleForgotPassword}
+                disabled={sendingReset}
                 className="text-muted-foreground hover:text-primary"
               >
-                Mot de passe oublié ?
+                {sendingReset ? 'Envoi…' : 'Mot de passe oublié ?'}
               </Button>
             </div>
-            
+
             <div className="text-center">
               <p className="text-xs text-muted-foreground">
                 En vous connectant, vous acceptez nos conditions d'utilisation
