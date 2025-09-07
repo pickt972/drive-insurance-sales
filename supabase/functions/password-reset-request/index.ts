@@ -30,10 +30,16 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Initialize Supabase admin client
+    // Initialize Supabase admin client with service role key for admin operations
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false,
+        }
+      }
     );
 
     // Find user profile (case insensitive)
