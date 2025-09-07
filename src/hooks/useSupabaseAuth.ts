@@ -66,17 +66,47 @@ export const useSupabaseAuth = () => {
     }
   };
 
-  const signInWithEmail = async (email: string, password: string) => {
+  const signInWithUsername = async (username: string, password: string) => {
     try {
+      // D'abord, récupérer l'email associé au nom d'utilisateur
+      const { data: profileData, error: profileError } = await (supabase as any)
+        .schema('api')
+        .from('profiles')
+        .select('user_id')
+        .eq('username', username)
+        .single();
+
+      if (profileError || !profileData) {
+        toast({
+          title: "Erreur de connexion",
+          description: "Nom d'utilisateur ou mot de passe incorrect",
+          variant: "destructive",
+        });
+        return { success: false, error: "Utilisateur non trouvé" };
+      }
+
+      // Ensuite, récupérer l'email depuis auth.users
+      const { data: userData, error: userError } = await supabase.auth.admin.getUserById(profileData.user_id);
+
+      if (userError || !userData.user?.email) {
+        toast({
+          title: "Erreur de connexion",
+          description: "Impossible de récupérer les informations utilisateur",
+          variant: "destructive",
+        });
+        return { success: false, error: "Erreur système" };
+      }
+
+      // Enfin, se connecter avec l'email et le mot de passe
       const { data, error } = await supabase.auth.signInWithPassword({
-        email,
+        email: userData.user.email,
         password,
       });
 
       if (error) {
         toast({
           title: "Erreur de connexion",
-          description: error.message,
+          description: "Nom d'utilisateur ou mot de passe incorrect",
           variant: "destructive",
         });
         return { success: false, error: error.message };
@@ -270,9 +300,7 @@ export const useSupabaseAuth = () => {
     loading,
     isAuthenticated: !!user,
     isAdmin: profile?.role === 'admin',
-    signInWithEmail,
-    signUp,
-    signInWithGoogle,
+    signInWithUsername,
     signOut,
     createUserProfile,
     fetchUserProfile,
