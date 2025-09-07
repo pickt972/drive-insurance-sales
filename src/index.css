@@ -2,53 +2,70 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+/* Aloelocation - Design system moderne et mobile-first 
 All colors MUST be HSL.
 */
 
 @layer base {
   :root {
-    --background: 248 250 252;
-    --foreground: 215 25% 27%;
+    /* Palette Aloelocation - Corporate moderne */
+    --background: 250 252 254;
+    --foreground: 215 25% 15%;
 
     --card: 255 255 255;
-    --card-foreground: 215 25% 27%;
+    --card-foreground: 215 25% 15%;
 
     --popover: 255 255 255;
-    --popover-foreground: 215 25% 27%;
+    --popover-foreground: 215 25% 15%;
 
-    --primary: 214 84% 56%;
+    /* Bleu corporate Aloelocation */
+    --primary: 212 90% 45%;
     --primary-foreground: 255 255 255;
-    --primary-hover: 214 84% 48%;
+    --primary-hover: 212 90% 38%;
+    --primary-light: 212 90% 95%;
 
-    --secondary: 216 12% 84%;
-    --secondary-foreground: 215 25% 27%;
+    --secondary: 215 25% 88%;
+    --secondary-foreground: 215 25% 15%;
 
-    --muted: 216 12% 84%;
-    --muted-foreground: 215 13% 65%;
+    --muted: 215 25% 96%;
+    --muted-foreground: 215 15% 45%;
 
-    --accent: 214 32% 91%;
-    --accent-foreground: 215 25% 27%;
+    --accent: 212 90% 96%;
+    --accent-foreground: 212 90% 20%;
 
-    --success: 142 71% 45%;
+    /* Couleurs de statut */
+    --success: 142 76% 36%;
     --success-foreground: 355 100% 97%;
+    --success-light: 142 76% 95%;
 
     --warning: 38 92% 50%;
     --warning-foreground: 48 96% 89%;
+    --warning-light: 38 92% 95%;
 
-    --destructive: 0 84% 60%;
+    --destructive: 0 72% 50%;
     --destructive-foreground: 210 40% 98%;
+    --destructive-light: 0 72% 95%;
 
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
-    --ring: 214 84% 56%;
+    --border: 215 25% 90%;
+    --input: 215 25% 98%;
+    --ring: 212 90% 45%;
 
-    --gradient-primary: linear-gradient(135deg, hsl(214 84% 56%), hsl(214 84% 48%));
-    --gradient-card: linear-gradient(135deg, hsl(255 255 255), hsl(248 250 252));
-    --shadow-card: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-    --shadow-elevated: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    /* Gradients modernes */
+    --gradient-primary: linear-gradient(135deg, hsl(212 90% 45%), hsl(212 90% 38%));
+    --gradient-success: linear-gradient(135deg, hsl(142 76% 36%), hsl(142 76% 30%));
+    --gradient-card: linear-gradient(135deg, hsl(255 255 255), hsl(250 252 254));
+    --gradient-hero: linear-gradient(135deg, hsl(212 90% 45%) 0%, hsl(212 90% 55%) 100%);
+    
+    /* Ombres modernes */
+    --shadow-card: 0 2px 8px rgb(0 0 0 / 0.04), 0 1px 3px rgb(0 0 0 / 0.06);
+    --shadow-elevated: 0 8px 25px rgb(0 0 0 / 0.08), 0 3px 10px rgb(0 0 0 / 0.06);
+    --shadow-success: 0 4px 14px hsl(142 76% 36% / 0.15);
+    --shadow-primary: 0 4px 14px hsl(212 90% 45% / 0.15);
 
-    --radius: 0.5rem;
+    /* Mobile-first radius */
+    --radius: 12px;
+    --radius-sm: 8px;
+    --radius-lg: 16px;
 
     --sidebar-background: 0 0% 98%;
 
@@ -68,45 +85,54 @@ All colors MUST be HSL.
   }
 
   .dark {
-    --background: 215 28% 17%;
+    --background: 215 28% 8%;
     --foreground: 213 31% 91%;
 
-    --card: 215 28% 17%;
+    --card: 215 28% 12%;
     --card-foreground: 213 31% 91%;
 
-    --popover: 215 28% 17%;
+    --popover: 215 28% 12%;
     --popover-foreground: 213 31% 91%;
 
-    --primary: 214 84% 56%;
+    --primary: 212 90% 55%;
     --primary-foreground: 255 255 255;
-    --primary-hover: 214 84% 48%;
+    --primary-hover: 212 90% 48%;
+    --primary-light: 212 90% 15%;
 
-    --secondary: 215 25% 27%;
+    --secondary: 215 25% 20%;
     --secondary-foreground: 213 31% 91%;
 
-    --muted: 215 25% 27%;
+    --muted: 215 25% 15%;
     --muted-foreground: 215 13% 65%;
 
-    --accent: 215 25% 27%;
+    --accent: 215 25% 20%;
     --accent-foreground: 213 31% 91%;
 
-    --success: 142 71% 45%;
+    --success: 142 76% 45%;
     --success-foreground: 355 100% 97%;
+    --success-light: 142 76% 15%;
 
-    --warning: 38 92% 50%;
+    --warning: 38 92% 60%;
     --warning-foreground: 48 96% 89%;
+    --warning-light: 38 92% 15%;
 
-    --destructive: 0 84% 60%;
+    --destructive: 0 72% 60%;
     --destructive-foreground: 210 40% 98%;
+    --destructive-light: 0 72% 15%;
 
-    --border: 215 25% 27%;
-    --input: 215 25% 27%;
-    --ring: 214 84% 56%;
+    --border: 215 25% 20%;
+    --input: 215 25% 15%;
+    --ring: 212 90% 55%;
 
-    --gradient-primary: linear-gradient(135deg, hsl(214 84% 56%), hsl(214 84% 48%));
-    --gradient-card: linear-gradient(135deg, hsl(215 28% 17%), hsl(215 25% 27%));
-    --shadow-card: 0 4px 6px -1px rgb(0 0 0 / 0.3), 0 2px 4px -2px rgb(0 0 0 / 0.3);
-    --shadow-elevated: 0 10px 15px -3px rgb(0 0 0 / 0.3), 0 4px 6px -4px rgb(0 0 0 / 0.3);
+    --gradient-primary: linear-gradient(135deg, hsl(212 90% 55%), hsl(212 90% 48%));
+    --gradient-success: linear-gradient(135deg, hsl(142 76% 45%), hsl(142 76% 38%));
+    --gradient-card: linear-gradient(135deg, hsl(215 28% 12%), hsl(215 25% 15%));
+    --gradient-hero: linear-gradient(135deg, hsl(212 90% 55%) 0%, hsl(212 90% 65%) 100%);
+    
+    --shadow-card: 0 2px 8px rgb(0 0 0 / 0.3), 0 1px 3px rgb(0 0 0 / 0.2);
+    --shadow-elevated: 0 8px 25px rgb(0 0 0 / 0.4), 0 3px 10px rgb(0 0 0 / 0.3);
+    --shadow-success: 0 4px 14px hsl(142 76% 45% / 0.25);
+    --shadow-primary: 0 4px 14px hsl(212 90% 55% / 0.25);
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-primary: 224.3 76.3% 48%;
@@ -124,6 +150,77 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans antialiased;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
+}
+
+/* Animation pour les toasts de succès */
+@keyframes slideInFromTop {
+  from {
+    transform: translateY(-100%) translateX(-50%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0) translateX(-50%);
+    opacity: 1;
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Classes utilitaires pour l'app mobile */
+.mobile-container {
+  @apply max-w-md mx-auto min-h-screen bg-background;
+}
+
+.mobile-header {
+  @apply sticky top-0 z-50 bg-card border-b shadow-card;
+}
+
+.mobile-content {
+  @apply flex-1 p-4 pb-20;
+}
+
+.mobile-bottom-nav {
+  @apply fixed bottom-0 left-0 right-0 bg-card border-t shadow-elevated z-40;
+}
+
+.success-toast {
+  @apply fixed top-4 left-1/2 transform -translate-x-1/2 z-50 
+         bg-gradient-to-r from-success-light to-success-light 
+         border border-success text-success-foreground 
+         rounded-lg px-6 py-4 shadow-success;
+  animation: slideInFromTop 0.5s ease-out;
+}
+
+.metric-card {
+  @apply bg-gradient-card rounded-lg p-4 border shadow-card;
+}
+
+.primary-button {
+  @apply bg-gradient-primary text-primary-foreground hover:shadow-primary transition-all duration-200;
+}
+
+.success-button {
+  @apply bg-gradient-success text-success-foreground hover:shadow-success transition-all duration-200;
 }

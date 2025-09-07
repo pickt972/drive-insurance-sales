@@ -14,7 +14,153 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      auto_exports: {
+        Row: {
+          error_message: string | null
+          export_date: string
+          file_name: string
+          file_path: string | null
+          id: string
+          status: string
+          type: string
+        }
+        Insert: {
+          error_message?: string | null
+          export_date?: string
+          file_name: string
+          file_path?: string | null
+          id?: string
+          status?: string
+          type: string
+        }
+        Update: {
+          error_message?: string | null
+          export_date?: string
+          file_name?: string
+          file_path?: string | null
+          id?: string
+          status?: string
+          type?: string
+        }
+        Relationships: []
+      }
+      insurance_types: {
+        Row: {
+          commission: number
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          commission: number
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          commission?: number
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          role: string
+          updated_at: string
+          user_id: string
+          username: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          role?: string
+          updated_at?: string
+          user_id: string
+          username: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          role?: string
+          updated_at?: string
+          user_id?: string
+          username?: string
+        }
+        Relationships: []
+      }
+      sales: {
+        Row: {
+          client_email: string | null
+          client_name: string
+          client_phone: string | null
+          commission_amount: number
+          created_at: string
+          employee_id: string
+          id: string
+          insurance_type_id: string
+          notes: string | null
+          reservation_number: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          client_email?: string | null
+          client_name: string
+          client_phone?: string | null
+          commission_amount: number
+          created_at?: string
+          employee_id: string
+          id?: string
+          insurance_type_id: string
+          notes?: string | null
+          reservation_number: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          client_email?: string | null
+          client_name?: string
+          client_phone?: string | null
+          commission_amount?: number
+          created_at?: string
+          employee_id?: string
+          id?: string
+          insurance_type_id?: string
+          notes?: string | null
+          reservation_number?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "sales_insurance_type_id_fkey"
+            columns: ["insurance_type_id"]
+            isOneToOne: false
+            referencedRelation: "insurance_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
