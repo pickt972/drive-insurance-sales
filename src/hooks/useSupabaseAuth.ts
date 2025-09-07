@@ -73,8 +73,6 @@ export const useSupabaseAuth = () => {
         provider: 'google',
         options: {
           redirectTo: redirectUrl,
-          // Evite le chargement d'accounts.google.com dans l'iframe
-          // et nous permet de contrôler la redirection au niveau top
           skipBrowserRedirect: true,
         },
       });
@@ -89,11 +87,30 @@ export const useSupabaseAuth = () => {
       }
 
       if (data?.url) {
-        // Ouvre la redirection dans le contexte top pour contourner l'iframe
-        if (window.top) {
-          window.top.location.href = data.url;
-        } else {
-          window.location.href = data.url;
+        try {
+          // Si l'app n'est PAS dans une iframe, rediriger normalement
+          if (window.top === window.self) {
+            window.location.href = data.url;
+            return;
+          }
+
+          // Sinon, ouvrir dans un nouvel onglet pour contourner les restrictions d'iframe
+          const win = window.open(data.url, '_blank', 'noopener,noreferrer');
+          if (!win) {
+            // Fallback ultime: tenter la redirection dans l'iframe
+            window.location.href = data.url;
+          } else {
+            win.opener = null;
+          }
+        } catch (e) {
+          // En cas d'erreur de sécurité, tenter l'ouverture en nouvel onglet
+          const win = window.open(data.url, '_blank', 'noopener,noreferrer');
+          if (!win) {
+            toast({
+              title: "Autoriser l'ouverture de fenêtre",
+              description: "Veuillez autoriser l'ouverture de fenêtres pop-up pour procéder à la connexion Google.",
+            });
+          }
         }
       }
     } catch (error) {
