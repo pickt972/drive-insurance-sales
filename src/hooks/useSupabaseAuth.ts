@@ -66,6 +66,80 @@ export const useSupabaseAuth = () => {
     }
   };
 
+  const signInWithEmail = async (email: string, password: string) => {
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        toast({
+          title: "Erreur de connexion",
+          description: error.message,
+          variant: "destructive",
+        });
+        return { success: false, error: error.message };
+      }
+
+      toast({
+        title: "Connexion réussie",
+        description: "Bienvenue !",
+      });
+
+      return { success: true, data };
+    } catch (error) {
+      console.error('Erreur lors de la connexion:', error);
+      toast({
+        title: "Erreur",
+        description: "Une erreur est survenue lors de la connexion",
+        variant: "destructive",
+      });
+      return { success: false, error: "Une erreur est survenue" };
+    }
+  };
+
+  const signUp = async (email: string, password: string, username: string) => {
+    try {
+      const redirectUrl = `${window.location.origin}/`;
+
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: redirectUrl,
+          data: {
+            username: username,
+          }
+        }
+      });
+
+      if (error) {
+        toast({
+          title: "Erreur d'inscription",
+          description: error.message,
+          variant: "destructive",
+        });
+        return { success: false, error: error.message };
+      }
+
+      toast({
+        title: "Inscription réussie",
+        description: "Vérifiez votre email pour confirmer votre compte",
+      });
+
+      return { success: true, data };
+    } catch (error) {
+      console.error('Erreur lors de l\'inscription:', error);
+      toast({
+        title: "Erreur",
+        description: "Une erreur est survenue lors de l'inscription",
+        variant: "destructive",
+      });
+      return { success: false, error: "Une erreur est survenue" };
+    }
+  };
+
   const signInWithGoogle = async () => {
     try {
       const redirectUrl = `${window.location.origin}/`;
@@ -196,6 +270,8 @@ export const useSupabaseAuth = () => {
     loading,
     isAuthenticated: !!user,
     isAdmin: profile?.role === 'admin',
+    signInWithEmail,
+    signUp,
     signInWithGoogle,
     signOut,
     createUserProfile,
