@@ -35,15 +35,23 @@ const handler = async (req: Request): Promise<Response> => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Find user profile
+    // Find user profile (case insensitive)
     const { data: profile, error: profileError } = await supabaseAdmin
       .from('profiles')
       .select('user_id, username')
-      .eq('username', username)
-      .single();
+      .ilike('username', username)
+      .maybeSingle();
 
-    if (profileError || !profile) {
-      console.log('Profile not found:', profileError);
+    if (profileError) {
+      console.log('Database error:', profileError);
+      return new Response(
+        JSON.stringify({ error: 'Erreur de base de données' }), 
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (!profile) {
+      console.log('Profile not found for username:', username);
       return new Response(
         JSON.stringify({ error: 'Utilisateur non trouvé' }), 
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
