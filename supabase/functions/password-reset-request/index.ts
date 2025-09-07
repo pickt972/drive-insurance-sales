@@ -30,7 +30,7 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Initialize Supabase admin client with proper service role configuration
+    // Initialize Supabase admin client with API schema
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
@@ -39,42 +39,25 @@ const handler = async (req: Request): Promise<Response> => {
           autoRefreshToken: false,
           persistSession: false,
         },
-        global: {
-          headers: {
-            'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`
-          }
+        db: { 
+          schema: 'api' 
         }
       }
     );
 
-    // Find user profile using direct query to bypass RLS
-    let profile = null;
-    try {
-      const { data, error } = await supabaseAdmin
-        .from('profiles')
-        .select('user_id, username')
-        .ilike('username', inputUsername)
-        .maybeSingle();
-      
-      if (error) {
-        console.log('Database error:', error);
-        // Fallback: try to find user with exact match
-        const { data: exactMatch, error: exactError } = await supabaseAdmin
-          .from('profiles')
-          .select('user_id, username')
-          .eq('username', inputUsername)
-          .maybeSingle();
-        
-        if (exactMatch) {
-          profile = exactMatch;
-        } else if (exactError) {
-          console.log('Exact match error:', exactError);
-        }
-      } else {
-        profile = data;
-      }
-    } catch (err) {
-      console.log('Query error:', err);
+    // Find user profile using API schema
+    const { data: profile, error: profileError } = await supabaseAdmin
+      .from('profiles')
+      .select('user_id, username')
+      .ilike('username', inputUsername)
+      .maybeSingle();
+
+    if (profileError) {
+      console.log('Database error while fetching profile:', profileError);
+      return new Response(
+        JSON.stringify({ error: 'Erreur de base de données' }), 
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     if (!profile) {
