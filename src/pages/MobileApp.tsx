@@ -1,26 +1,42 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
 import { useSupabaseSales } from "@/hooks/useSupabaseSales";
 import { LoginPage } from "@/components/auth/LoginPage";
 import { ProfileSetup } from "@/components/auth/ProfileSetup";
 import { MobileLayout } from "@/components/mobile/MobileLayout";
+import { DesktopLayout } from "@/components/desktop/DesktopLayout";
 import { MobileDashboard } from "@/components/dashboard/MobileDashboard";
+import { DesktopDashboard } from "@/components/dashboard/DesktopDashboard";
 import { MobileSalesForm } from "@/components/sales/MobileSalesForm";
+import { DesktopSalesForm } from "@/components/sales/DesktopSalesForm";
 import { SalesTable } from "@/components/SalesTable";
 import { CommissionManager } from "@/components/CommissionManager";
 import { UserManager } from "@/components/UserManager";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Download, FileText, Loader2 } from "lucide-react";
 
-const MobileApp = () => {
+const useResponsive = () => {
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+  
+  return isMobile;
+};
+
+const ResponsiveApp = () => {
   const [currentTab, setCurrentTab] = useState("dashboard");
   const { isAuthenticated, profile, loading: authLoading } = useSupabaseAuth();
   const { stats, loading: statsLoading, refreshStats } = useSupabaseSales();
+  const isMobile = useResponsive();
 
   // Loading state
   if (authLoading) {
     return (
-      <div className="mobile-container flex items-center justify-center min-h-screen">
+      <div className={`${isMobile ? 'mobile-container' : 'min-h-screen'} flex items-center justify-center ${isMobile ? '' : 'p-4'}`}>
         <div className="text-center">
           <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
           <p className="text-muted-foreground">Chargement...</p>
@@ -53,14 +69,20 @@ const MobileApp = () => {
               <div className="flex items-center justify-center py-8">
                 <Loader2 className="h-6 w-6 animate-spin text-primary" />
               </div>
-            ) : (
+            ) : isMobile ? (
               <MobileDashboard stats={stats} />
+            ) : (
+              <DesktopDashboard stats={stats} />
             )}
           </div>
         );
 
       case "add":
-        return <MobileSalesForm onSaleAdded={handleSaleAdded} />;
+        return isMobile ? (
+          <MobileSalesForm onSaleAdded={handleSaleAdded} />
+        ) : (
+          <DesktopSalesForm onSaleAdded={handleSaleAdded} />
+        );
 
       case "sales":
         return (
@@ -118,19 +140,21 @@ const MobileApp = () => {
         );
 
       default:
-        return <MobileDashboard stats={stats} />;
+        return isMobile ? <MobileDashboard stats={stats} /> : <DesktopDashboard stats={stats} />;
     }
   };
 
+  const Layout = isMobile ? MobileLayout : DesktopLayout;
+
   return (
-    <MobileLayout 
+    <Layout 
       currentTab={currentTab} 
       onTabChange={setCurrentTab}
       isAdmin={profile.role === "admin"}
     >
       {renderTabContent()}
-    </MobileLayout>
+    </Layout>
   );
 };
 
-export default MobileApp;
+export default ResponsiveApp;
