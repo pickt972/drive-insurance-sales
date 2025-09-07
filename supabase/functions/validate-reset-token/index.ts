@@ -30,18 +30,29 @@ const handler = async (req: Request): Promise<Response> => {
     // Initialize Supabase admin client
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false,
+        },
+        global: {
+          headers: {
+            'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`
+          }
+        }
+      }
     );
 
-    // Find and validate reset token
+    // Find and validate reset token with proper admin permissions
     const { data: resetToken, error: tokenError } = await supabaseAdmin
       .from('password_reset_tokens')
       .select('*')
       .eq('token', token)
-      .eq('username', username)
+      .ilike('username', username)
       .eq('used', false)
       .gt('expires_at', new Date().toISOString())
-      .single();
+      .maybeSingle();
 
     if (tokenError || !resetToken) {
       console.log('Token validation failed:', tokenError);
