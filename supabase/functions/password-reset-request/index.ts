@@ -30,7 +30,7 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Initialize Supabase admin client with service role key for admin operations
+    // Initialize Supabase admin client with proper service role configuration
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
@@ -38,23 +38,43 @@ const handler = async (req: Request): Promise<Response> => {
         auth: {
           autoRefreshToken: false,
           persistSession: false,
+        },
+        global: {
+          headers: {
+            'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`
+          }
         }
       }
     );
 
-    // Find user profile (case insensitive)
-    const { data: profile, error: profileError } = await supabaseAdmin
-      .from('profiles')
-      .select('user_id, username')
-      .ilike('username', inputUsername)
-      .maybeSingle();
-
-    if (profileError) {
-      console.log('Database error while fetching profile:', profileError);
-      return new Response(
-        JSON.stringify({ error: 'Erreur de base de données' }), 
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+    // Find user profile using direct query to bypass RLS
+    let profile = null;
+    try {
+      const { data, error } = await supabaseAdmin
+        .from('profiles')
+        .select('user_id, username')
+        .ilike('username', inputUsername)
+        .maybeSingle();
+      
+      if (error) {
+        console.log('Database error:', error);
+        // Fallback: try to find user with exact match
+        const { data: exactMatch, error: exactError } = await supabaseAdmin
+          .from('profiles')
+          .select('user_id, username')
+          .eq('username', inputUsername)
+          .maybeSingle();
+        
+        if (exactMatch) {
+          profile = exactMatch;
+        } else if (exactError) {
+          console.log('Exact match error:', exactError);
+        }
+      } else {
+        profile = data;
+      }
+    } catch (err) {
+      console.log('Query error:', err);
     }
 
     if (!profile) {
@@ -65,7 +85,7 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Get user email from auth.users
+    // Get user email from auth.users using admin API
     const { data: authUser, error: authError } = await supabaseAdmin.auth.admin.getUserById(profile.user_id);
 
     if (authError || !authUser.user?.email) {
@@ -101,7 +121,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Send email with reset link
     const resend = new Resend(Deno.env.get('RESEND_API_KEY'));
-    const resetUrl = `${origin}/reset-password?token=${resetToken}&username=${encodeURIComponent(username)}`;
+    const resetUrl = `${origin}/reset-password?token=${resetToken}&username=${encodeURIComponent(inputUsername)}`;
 
     const emailResponse = await resend.emails.send({
       from: "Aloelocation <onboarding@resend.dev>",
@@ -110,7 +130,7 @@ const handler = async (req: Request): Promise<Response> => {
       html: `
         <div style="max-width: 600px; margin: 0 auto; padding: 20px; font-family: Arial, sans-serif;">
           <h1 style="color: #333; text-align: center;">Réinitialisation de mot de passe</h1>
-          <p>Bonjour <strong>${username}</strong>,</p>
+          <p>Bonjour <strong>${inputUsername}</strong>,</p>
           <p>Vous avez demandé la réinitialisation de votre mot de passe.</p>
           <p>Cliquez sur le lien ci-dessous pour choisir un nouveau mot de passe :</p>
           <div style="text-align: center; margin: 30px 0;">
