@@ -83,16 +83,13 @@ const handler = async (req: Request): Promise<Response> => {
     const resetToken = crypto.randomUUID();
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
-    // Store reset token in database
-    const { error: tokenError } = await supabaseAdmin
-      .from('password_reset_tokens')
-      .insert({
-        user_id: profile.user_id,
-        username: inputUsername,
-        token: resetToken,
-        expires_at: expiresAt.toISOString(),
-        used: false
-      });
+    // Store reset token using API function
+    const { error: tokenError } = await supabaseAdmin.rpc('create_password_reset_token', {
+      p_user_id: profile.user_id,
+      p_username: inputUsername,
+      p_token: resetToken,
+      p_expires_at: expiresAt.toISOString()
+    });
 
     if (tokenError) {
       console.log('Error storing token:', tokenError);
