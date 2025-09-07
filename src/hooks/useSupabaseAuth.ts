@@ -151,6 +151,8 @@ export const useSupabaseAuth = () => {
     if (!user) return null;
 
     try {
+      console.log('Tentative de création de profil:', userData, 'pour user:', user.id);
+      
       const { data, error } = await supabase
         .from('profiles')
         .insert({
@@ -162,18 +164,25 @@ export const useSupabaseAuth = () => {
         .single();
 
       if (error) {
+        console.error('Erreur détaillée lors de la création du profil:', error);
         toast({
           title: "Erreur",
-          description: "Impossible de créer le profil utilisateur",
+          description: `Impossible de créer le profil utilisateur: ${error.message}`,
           variant: "destructive",
         });
         return null;
       }
 
+      console.log('Profil créé avec succès:', data);
       setProfile(data as Profile);
       return data;
     } catch (error) {
       console.error('Erreur lors de la création du profil:', error);
+      toast({
+        title: "Erreur",
+        description: `Une erreur est survenue: ${error instanceof Error ? error.message : 'Erreur inconnue'}`,
+        variant: "destructive",
+      });
       return null;
     }
   };
