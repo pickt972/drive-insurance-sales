@@ -12,6 +12,7 @@ import { DesktopSalesForm } from "@/components/sales/DesktopSalesForm";
 import { SalesTable } from "@/components/SalesTable";
 import { CommissionManager } from "@/components/CommissionManager";
 import { UserManager } from "@/components/UserManager";
+import { ExportPanel } from "@/components/ExportPanel";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Download, FileText, Loader2 } from "lucide-react";
 
@@ -121,23 +122,7 @@ const ResponsiveApp = () => {
         );
 
       case "export":
-        return (
-          <Card className="shadow-card">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Download className="h-5 w-5 text-primary" />
-                Export & Sauvegarde
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8 text-muted-foreground">
-                <Download className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>Fonctionnalité en cours de développement</p>
-                <p className="text-xs mt-2">Export CSV/PDF et sauvegarde Google Drive</p>
-              </div>
-            </CardContent>
-          </Card>
-        );
+        return <ExportPanel sales={stats.recentSales} />;
 
       default:
         return isMobile ? <MobileDashboard stats={stats} /> : <DesktopDashboard stats={stats} />;

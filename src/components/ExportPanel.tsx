@@ -6,16 +6,21 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useToast } from "@/hooks/use-toast";
-import { Download, Upload, ChevronDown, Settings, FileText, Cloud } from "lucide-react";
+import { Download, Upload, ChevronDown, Settings, FileText, Cloud, File } from "lucide-react";
 import { useState } from "react";
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import { supabase } from "@/integrations/supabase/client";
+import { SaleWithDetails } from "@/types/database";
 
 interface ExportPanelProps {
-  sales: Sale[];
+  sales: SaleWithDetails[];
 }
 
 export const ExportPanel = ({ sales }: ExportPanelProps) => {
   const [googleCredentials, setGoogleCredentials] = useState("");
   const [isCredentialsOpen, setIsCredentialsOpen] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
 
   const exportToCSV = () => {
@@ -28,15 +33,19 @@ export const ExportPanel = ({ sales }: ExportPanelProps) => {
       return;
     }
 
-    const headers = ["Date", "Employé", "Client", "N° Réservation", "Assurances"];
+    const headers = ["Date", "Employé", "Client", "Email", "Téléphone", "N° Réservation", "Assurance", "Commission", "Notes"];
     const csvContent = [
       headers.join(","),
       ...sales.map(sale => [
-        sale.date,
-        sale.employeeName,
-        sale.clientName,
-        sale.reservationNumber,
-        `"${sale.insuranceTypes.join("; ")}"`,
+        new Date(sale.created_at).toLocaleDateString('fr-FR'),
+        sale.employee_name,
+        sale.client_name,
+        sale.client_email || '',
+        sale.client_phone || '',
+        sale.reservation_number,
+        sale.insurance_name,
+        sale.commission_amount,
+        `"${(sale.notes || '').replace(/"/g, '""')}"`,
       ].join(","))
     ].join("\n");
 
@@ -56,6 +65,57 @@ export const ExportPanel = ({ sales }: ExportPanelProps) => {
     });
   };
 
+  const exportToPDF = () => {
+    if (sales.length === 0) {
+      toast({
+        title: "Aucune donnée",
+        description: "Aucune vente à exporter.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const doc = new jsPDF();
+    
+    // Titre
+    doc.setFontSize(20);
+    doc.text('Rapport des Ventes d\'Assurances', 20, 20);
+    
+    // Date du rapport
+    doc.setFontSize(12);
+    doc.text(`Généré le: ${new Date().toLocaleDateString('fr-FR')}`, 20, 30);
+    
+    // Statistiques
+    const totalCommission = sales.reduce((sum, sale) => sum + Number(sale.commission_amount), 0);
+    doc.text(`Nombre total de ventes: ${sales.length}`, 20, 40);
+    doc.text(`Commission totale: ${totalCommission.toFixed(2)} €`, 20, 50);
+
+    // Tableau
+    const tableData = sales.map(sale => [
+      new Date(sale.created_at).toLocaleDateString('fr-FR'),
+      sale.employee_name,
+      sale.client_name,
+      sale.reservation_number,
+      sale.insurance_name,
+      `${sale.commission_amount} €`
+    ]);
+
+    autoTable(doc, {
+      head: [['Date', 'Employé', 'Client', 'N° Réservation', 'Assurance', 'Commission']],
+      body: tableData,
+      startY: 60,
+      styles: { fontSize: 8 },
+      headStyles: { fillColor: [41, 128, 185] }
+    });
+
+    doc.save(`ventes-assurances-${new Date().toISOString().split('T')[0]}.pdf`);
+
+    toast({
+      title: "Export réussi",
+      description: "Le fichier PDF a été téléchargé.",
+    });
+  };
+
   const exportToExcel = () => {
     if (sales.length === 0) {
       toast({
@@ -66,8 +126,7 @@ export const ExportPanel = ({ sales }: ExportPanelProps) => {
       return;
     }
 
-    // Create a simplified Excel-compatible HTML table
-    const headers = ["Date", "Employé", "Client", "N° Réservation", "Assurances"];
+    const headers = ["Date", "Employé", "Client", "Email", "Téléphone", "N° Réservation", "Assurance", "Commission", "Notes"];
     const htmlContent = `
       <table border="1">
         <thead>
@@ -76,11 +135,15 @@ export const ExportPanel = ({ sales }: ExportPanelProps) => {
         <tbody>
           ${sales.map(sale => `
             <tr>
-              <td>${sale.date}</td>
-              <td>${sale.employeeName}</td>
-              <td>${sale.clientName}</td>
-              <td>${sale.reservationNumber}</td>
-              <td>${sale.insuranceTypes.join("; ")}</td>
+              <td>${new Date(sale.created_at).toLocaleDateString('fr-FR')}</td>
+              <td>${sale.employee_name}</td>
+              <td>${sale.client_name}</td>
+              <td>${sale.client_email || ''}</td>
+              <td>${sale.client_phone || ''}</td>
+              <td>${sale.reservation_number}</td>
+              <td>${sale.insurance_name}</td>
+              <td>${sale.commission_amount} €</td>
+              <td>${sale.notes || ''}</td>
             </tr>
           `).join("")}
         </tbody>
@@ -103,7 +166,7 @@ export const ExportPanel = ({ sales }: ExportPanelProps) => {
     });
   };
 
-  const uploadToGoogleDrive = () => {
+  const uploadToGoogleDrive = async () => {
     if (!googleCredentials.trim()) {
       toast({
         title: "Identifiants manquants",
@@ -113,12 +176,58 @@ export const ExportPanel = ({ sales }: ExportPanelProps) => {
       return;
     }
 
-    // Simulate Google Drive upload
-    toast({
-      title: "Upload simulé",
-      description: "Cette fonctionnalité nécessite une intégration backend complète avec l'API Google Drive.",
-      variant: "default",
-    });
+    if (sales.length === 0) {
+      toast({
+        title: "Aucune donnée",
+        description: "Aucune vente à exporter vers Google Drive.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsUploading(true);
+
+    try {
+      // Préparer les données à envoyer
+      const exportData = {
+        sales: sales.map(sale => ({
+          date: new Date(sale.created_at).toLocaleDateString('fr-FR'),
+          employee: sale.employee_name,
+          client: sale.client_name,
+          email: sale.client_email || '',
+          phone: sale.client_phone || '',
+          reservation: sale.reservation_number,
+          insurance: sale.insurance_name,
+          commission: sale.commission_amount,
+          notes: sale.notes || ''
+        })),
+        credentials: JSON.parse(googleCredentials),
+        filename: `ventes-assurances-${new Date().toISOString().split('T')[0]}`
+      };
+
+      const { data, error } = await supabase.functions.invoke('google-drive-export', {
+        body: exportData
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      toast({
+        title: "Upload réussi",
+        description: `Le fichier a été envoyé vers Google Drive: ${data.fileName}`,
+      });
+
+    } catch (error) {
+      console.error('Erreur lors de l\'upload vers Google Drive:', error);
+      toast({
+        title: "Erreur d'upload",
+        description: "Impossible d'envoyer le fichier vers Google Drive. Vérifiez vos identifiants.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   return (
@@ -130,10 +239,15 @@ export const ExportPanel = ({ sales }: ExportPanelProps) => {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Button onClick={exportToCSV} variant="outline" className="h-12">
             <FileText className="mr-2 h-4 w-4" />
             Exporter en CSV
+          </Button>
+          
+          <Button onClick={exportToPDF} variant="outline" className="h-12">
+            <File className="mr-2 h-4 w-4" />
+            Exporter en PDF
           </Button>
           
           <Button onClick={exportToExcel} variant="outline" className="h-12">
@@ -155,34 +269,40 @@ export const ExportPanel = ({ sales }: ExportPanelProps) => {
           <CollapsibleContent className="space-y-4 mt-4">
             <div className="space-y-2">
               <Label htmlFor="credentials">
-                Identifiants Google (client_id, client_secret, refresh_token)
+                Identifiants Google Drive (JSON)
               </Label>
               <Textarea
                 id="credentials"
-                placeholder="Collez ici vos identifiants Google Drive au format JSON..."
+                placeholder={`{
+  "client_id": "votre_client_id",
+  "client_secret": "votre_client_secret", 
+  "refresh_token": "votre_refresh_token"
+}`}
                 value={googleCredentials}
                 onChange={(e) => setGoogleCredentials(e.target.value)}
-                className="min-h-[100px]"
+                className="min-h-[120px] font-mono text-sm"
               />
             </div>
             
             <Button 
               onClick={uploadToGoogleDrive} 
               className="w-full bg-gradient-primary hover:bg-primary-hover"
-              disabled={sales.length === 0}
+              disabled={sales.length === 0 || isUploading}
             >
               <Cloud className="mr-2 h-4 w-4" />
-              Envoyer vers Google Drive
+              {isUploading ? 'Envoi en cours...' : 'Envoyer vers Google Drive'}
             </Button>
           </CollapsibleContent>
         </Collapsible>
 
         <div className="text-sm text-muted-foreground p-3 bg-muted/50 rounded-lg">
-          <p className="font-medium mb-1">💡 Note :</p>
-          <p>
-            L'intégration Google Drive complète nécessite un backend sécurisé. 
-            Cette version propose une simulation de l'interface.
-          </p>
+          <p className="font-medium mb-1">💡 Instructions Google Drive :</p>
+          <ul className="list-disc list-inside space-y-1 text-xs">
+            <li>Créez un projet sur Google Cloud Console</li>
+            <li>Activez l'API Google Drive</li>
+            <li>Créez des identifiants OAuth 2.0</li>
+            <li>Obtenez un refresh_token via le flow OAuth</li>
+          </ul>
         </div>
       </CardContent>
     </Card>
