@@ -6,12 +6,14 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
-import { User, Plus, Trash2, Key, Settings } from "lucide-react";
+import { User, Plus, Trash2, Key, Settings, Shield } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useNavigate } from "react-router-dom";
 
 export const UserManager = () => {
   const { users, addUser, removeUser, updatePassword } = useAuth();
+  const navigate = useNavigate();
   const [newUsername, setNewUsername] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [newRole, setNewRole] = useState<"admin" | "employee">("employee");
@@ -140,6 +142,18 @@ export const UserManager = () => {
             <strong>{totalUsers} utilisateurs</strong> au total : 1 administrateur et {employeeUsers.length} employé(s)
           </AlertDescription>
         </Alert>
+
+        {/* Admin tools */}
+        <div className="flex gap-2">
+          <Button
+            onClick={() => navigate('/admin/reset-password')}
+            variant="outline"
+            className="flex items-center gap-2"
+          >
+            <Shield className="h-4 w-4" />
+            Réinitialisation Admin
+          </Button>
+        </div>
 
         {/* Current users list */}
         <div className="space-y-4">
