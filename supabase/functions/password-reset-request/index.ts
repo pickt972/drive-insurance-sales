@@ -20,7 +20,8 @@ const handler = async (req: Request): Promise<Response> => {
 
   try {
     const { username, origin }: ResetRequestBody = await req.json();
-    console.log('Reset request for username:', username);
+    const inputUsername = (username || '').trim();
+    console.log('Reset request for username:', inputUsername);
 
     if (!username) {
       return new Response(
@@ -48,7 +49,7 @@ const handler = async (req: Request): Promise<Response> => {
     const { data: profilePublic, error: errPublic } = await supabaseAdmin
       .from('profiles')
       .select('user_id, username')
-      .ilike('username', username)
+      .ilike('username', inputUsername)
       .maybeSingle();
 
     if (profilePublic) {
@@ -59,7 +60,7 @@ const handler = async (req: Request): Promise<Response> => {
       const { data: profileApi, error: errApi } = await supabaseApi
         .from('profiles')
         .select('user_id, username')
-        .ilike('username', username)
+        .ilike('username', inputUsername)
         .maybeSingle();
       if (profileApi) {
         profile = profileApi;
@@ -103,7 +104,7 @@ const handler = async (req: Request): Promise<Response> => {
       .from('password_reset_tokens')
       .insert({
         user_id: profile.user_id,
-        username: username,
+        username: inputUsername,
         token: resetToken,
         expires_at: expiresAt.toISOString(),
         used: false
