@@ -29,25 +29,50 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Initialize Supabase admin client
+    // Initialize Supabase admin clients
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
+    // Client for api schema (if profiles live there)
+    const supabaseApi = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+      { db: { schema: 'api' } }
+    );
 
-    // Find user profile (case insensitive)
-    const { data: profile, error: profileError } = await supabaseAdmin
+    // Find user profile (case insensitive), try public then api schema
+    let profile: { user_id: string; username: string } | null = null;
+    let profileError: any = null;
+
+    const { data: profilePublic, error: errPublic } = await supabaseAdmin
       .from('profiles')
       .select('user_id, username')
       .ilike('username', username)
       .maybeSingle();
 
+    if (profilePublic) {
+      profile = profilePublic;
+    } else {
+      profileError = errPublic;
+      console.log('Public schema lookup failed, trying api schema. Error:', errPublic);
+      const { data: profileApi, error: errApi } = await supabaseApi
+        .from('profiles')
+        .select('user_id, username')
+        .ilike('username', username)
+        .maybeSingle();
+      if (profileApi) {
+        profile = profileApi;
+        profileError = null;
+      } else if (errApi) {
+        profileError = errApi;
+        console.log('API schema lookup failed:', errApi);
+      }
+    }
+
     if (profileError) {
-      console.log('Database error:', profileError);
-      return new Response(
-        JSON.stringify({ error: 'Erreur de base de données' }), 
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      // Log internal DB error but do not leak details
+      console.log('Database error while fetching profile:', profileError);
     }
 
     if (!profile) {
