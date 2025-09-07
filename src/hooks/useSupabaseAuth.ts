@@ -68,12 +68,15 @@ export const useSupabaseAuth = () => {
   const signInWithGoogle = async () => {
     try {
       const redirectUrl = `${window.location.origin}/`;
-      
-      const { error } = await supabase.auth.signInWithOAuth({
+
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: redirectUrl
-        }
+          redirectTo: redirectUrl,
+          // Evite le chargement d'accounts.google.com dans l'iframe
+          // et nous permet de contrôler la redirection au niveau top
+          skipBrowserRedirect: true,
+        },
       });
 
       if (error) {
@@ -82,6 +85,16 @@ export const useSupabaseAuth = () => {
           description: error.message,
           variant: "destructive",
         });
+        return;
+      }
+
+      if (data?.url) {
+        // Ouvre la redirection dans le contexte top pour contourner l'iframe
+        if (window.top) {
+          window.top.location.href = data.url;
+        } else {
+          window.location.href = data.url;
+        }
       }
     } catch (error) {
       console.error('Erreur lors de la connexion Google:', error);
