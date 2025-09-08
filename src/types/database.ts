@@ -33,6 +33,17 @@ export interface Sale {
   // Relations
   employee?: Profile;
   insurance_type?: InsuranceType;
+  sale_insurances?: SaleInsurance[];
+}
+
+export interface SaleInsurance {
+  id: string;
+  sale_id: string;
+  insurance_type_id: string;
+  commission_amount: number;
+  created_at: string;
+  // Relations
+  insurance_type?: InsuranceType;
 }
 
 export interface AutoExport {
