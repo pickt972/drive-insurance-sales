@@ -46,6 +46,8 @@ export const DesktopSalesForm = ({ onSaleAdded }: DesktopSalesFormProps) => {
 
   const fetchInsuranceTypes = async () => {
     try {
+      console.log('🔍 Récupération des types d\'assurance...');
+      
       const { data, error } = await supabase
         .from('insurance_types')
         .select('*')
@@ -53,13 +55,24 @@ export const DesktopSalesForm = ({ onSaleAdded }: DesktopSalesFormProps) => {
         .order('name');
 
       if (error) {
-        console.error('Erreur lors de la récupération des types d\'assurance:', error);
+        console.error('❌ Erreur lors de la récupération des types d\'assurance:', error);
+        toast({
+          title: "Erreur",
+          description: "Impossible de charger les types d'assurance",
+          variant: "destructive",
+        });
         return;
       }
 
+      console.log('✅ Types d\'assurance récupérés:', data?.length || 0, 'éléments');
       setInsuranceTypes(data || []);
     } catch (error) {
-      console.error('Erreur:', error);
+      console.error('❌ Erreur:', error);
+      toast({
+        title: "Erreur",
+        description: "Une erreur est survenue lors du chargement",
+        variant: "destructive",
+      });
     }
   };
 
