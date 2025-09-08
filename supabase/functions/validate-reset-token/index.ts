@@ -27,10 +27,15 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Initialize Supabase client
+    // Initialize Supabase client with API schema specification
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? ''
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      {
+        db: { 
+          schema: 'api' 
+        }
+      }
     );
 
     // Use the RPC function to validate reset token

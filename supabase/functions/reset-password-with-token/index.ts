@@ -31,7 +31,12 @@ const handler = async (req: Request): Promise<Response> => {
     // Initialize Supabase clients
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? ''
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      {
+        db: { 
+          schema: 'api' 
+        }
+      }
     );
     
     const supabaseAdmin = createClient(
