@@ -4,9 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Check, Phone, Mail, FileText, DollarSign } from "lucide-react";
+import { Plus, Check, Phone, Mail, FileText, DollarSign, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -32,7 +32,7 @@ export const DesktopSalesForm = ({ onSaleAdded }: DesktopSalesFormProps) => {
   const [clientEmail, setClientEmail] = useState("");
   const [clientPhone, setClientPhone] = useState("");
   const [reservationNumber, setReservationNumber] = useState("");
-  const [selectedInsuranceId, setSelectedInsuranceId] = useState("");
+  const [selectedInsuranceIds, setSelectedInsuranceIds] = useState<string[]>([]);
   const [notes, setNotes] = useState("");
   const [loading, setLoading] = useState(false);
   const [insuranceTypes, setInsuranceTypes] = useState<InsuranceType[]>([]);
@@ -77,14 +77,14 @@ export const DesktopSalesForm = ({ onSaleAdded }: DesktopSalesFormProps) => {
     }
   };
 
-  const selectedInsurance = insuranceTypes.find(ins => ins.id === selectedInsuranceId);
+  const selectedInsurances = insuranceTypes.filter(ins => selectedInsuranceIds.includes(ins.id));
 
   const resetForm = () => {
     setClientName("");
     setClientEmail("");
     setClientPhone("");
     setReservationNumber("");
-    setSelectedInsuranceId("");
+    setSelectedInsuranceIds([]);
     setNotes("");
   };
 
@@ -107,10 +107,10 @@ export const DesktopSalesForm = ({ onSaleAdded }: DesktopSalesFormProps) => {
       return false;
     }
 
-    if (!selectedInsuranceId) {
+    if (selectedInsuranceIds.length === 0) {
       toast({
         title: "Erreur",
-        description: "Veuillez sélectionner un type d'assurance",
+        description: "Veuillez sélectionner au moins un type d'assurance",
         variant: "destructive",
       });
       return false;
@@ -122,12 +122,14 @@ export const DesktopSalesForm = ({ onSaleAdded }: DesktopSalesFormProps) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!validateForm() || !profile || !selectedInsurance) return;
+    if (!validateForm() || !profile || selectedInsurances.length === 0) return;
 
     setLoading(true);
 
     try {
-      const { error } = await supabase
+      const totalCommission = selectedInsurances.reduce((sum, ins) => sum + ins.commission, 0);
+      
+      const { data: sale, error } = await supabase
         .from('sales')
         .insert({
           employee_id: profile.user_id,
@@ -135,10 +137,12 @@ export const DesktopSalesForm = ({ onSaleAdded }: DesktopSalesFormProps) => {
           client_email: clientEmail.trim() || null,
           client_phone: clientPhone.trim() || null,
           reservation_number: reservationNumber.trim().toUpperCase(),
-          insurance_type_id: selectedInsuranceId,
-          commission_amount: selectedInsurance.commission,
+          insurance_type_id: selectedInsuranceIds[0], // Premier pour compatibilité
+          commission_amount: totalCommission,
           notes: notes.trim() || null,
-        });
+        })
+        .select()
+        .single();
 
       if (error) {
         toast({
@@ -151,10 +155,12 @@ export const DesktopSalesForm = ({ onSaleAdded }: DesktopSalesFormProps) => {
 
       // Message de succès amusant
       const encouragement = ENCOURAGEMENTS[Math.floor(Math.random() * ENCOURAGEMENTS.length)];
+      const insuranceNames = selectedInsurances.map(ins => ins.name).join(", ");
+      const finalCommission = selectedInsurances.reduce((sum, ins) => sum + ins.commission, 0);
       
       toast({
         title: encouragement,
-        description: `Commission de ${selectedInsurance.commission.toFixed(2)} € ajoutée ! 🚀`,
+        description: `${insuranceNames} - Commission de ${finalCommission.toFixed(2)} € ajoutée ! 🚀`,
         className: "success-toast",
       });
 
@@ -270,41 +276,69 @@ export const DesktopSalesForm = ({ onSaleAdded }: DesktopSalesFormProps) => {
                     Type d'Assurance
                   </h3>
                   
-                  <div>
-                    <Label htmlFor="insuranceType">Sélectionner une assurance *</Label>
-                    <Select value={selectedInsuranceId} onValueChange={setSelectedInsuranceId}>
-                      <SelectTrigger className="mt-1">
-                        <SelectValue placeholder="Choisir le type d'assurance" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {insuranceTypes.map((insurance) => (
-                          <SelectItem key={insurance.id} value={insurance.id}>
-                            <div className="flex items-center justify-between w-full">
+                  <div className="space-y-3">
+                    <Label className="text-sm font-medium">
+                      Types d'assurance * (sélection multiple)
+                    </Label>
+                    <div className="grid grid-cols-1 gap-3">
+                      {insuranceTypes.map((insurance) => (
+                        <div key={insurance.id} className="flex items-center space-x-3 p-4 border rounded-lg hover:bg-accent/50 transition-colors">
+                          <Checkbox
+                            id={insurance.id}
+                            checked={selectedInsuranceIds.includes(insurance.id)}
+                            onCheckedChange={(checked) => {
+                              if (checked) {
+                                setSelectedInsuranceIds([...selectedInsuranceIds, insurance.id]);
+                              } else {
+                                setSelectedInsuranceIds(selectedInsuranceIds.filter(id => id !== insurance.id));
+                              }
+                            }}
+                          />
+                          <Label htmlFor={insurance.id} className="flex-1 cursor-pointer">
+                            <div className="flex items-center justify-between">
                               <span className="font-medium">{insurance.name}</span>
                               <Badge variant="outline" className="ml-3">
                                 {insurance.commission.toFixed(2)} €
                               </Badge>
                             </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                          </Label>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
 
-                {/* Preview de la commission */}
-                {selectedInsurance && (
-                  <Card className="bg-gradient-success border-success/20">
+                {/* Résumé des sélections */}
+                {selectedInsurances.length > 0 && (
+                  <Card className="bg-gradient-primary">
                     <CardContent className="p-6">
                       <div className="text-center">
-                        <div className="text-sm text-success-foreground/80 mb-2">
-                          Commission prévue
+                        <div className="text-sm text-white/80 mb-2">
+                          Assurances sélectionnées ({selectedInsurances.length})
                         </div>
-                        <div className="text-3xl font-bold text-white mb-2">
-                          {selectedInsurance.commission.toFixed(2)} €
+                        <div className="flex flex-wrap gap-2 justify-center mb-3">
+                          {selectedInsurances.map((insurance) => (
+                            <Badge 
+                              key={insurance.id} 
+                              variant="secondary" 
+                              className="flex items-center gap-2"
+                            >
+                              {insurance.name}
+                              <button
+                                type="button"
+                                onClick={() => setSelectedInsuranceIds(selectedInsuranceIds.filter(id => id !== insurance.id))}
+                                className="ml-1 hover:bg-destructive/10 rounded-full p-0.5"
+                              >
+                                <X className="h-3 w-3" />
+                              </button>
+                            </Badge>
+                          ))}
                         </div>
-                        <div className="text-sm text-success-foreground/80">
-                          pour {selectedInsurance.name}
+                        <div className="text-2xl font-bold text-white mb-2">
+                          {selectedInsurances.reduce((sum, ins) => sum + ins.commission, 0).toFixed(2)} €
+                        </div>
+                        <div className="text-sm text-white/80">
+                          Commission totale prévue
                         </div>
                       </div>
                     </CardContent>

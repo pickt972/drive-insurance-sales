@@ -4,9 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Check, Phone, Mail, FileText } from "lucide-react";
+import { Plus, Check, Phone, Mail, FileText, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -32,7 +32,7 @@ export const MobileSalesForm = ({ onSaleAdded }: MobileSalesFormProps) => {
   const [clientEmail, setClientEmail] = useState("");
   const [clientPhone, setClientPhone] = useState("");
   const [reservationNumber, setReservationNumber] = useState("");
-  const [selectedInsuranceId, setSelectedInsuranceId] = useState("");
+  const [selectedInsuranceIds, setSelectedInsuranceIds] = useState<string[]>([]);
   const [notes, setNotes] = useState("");
   const [loading, setLoading] = useState(false);
   const [insuranceTypes, setInsuranceTypes] = useState<InsuranceType[]>([]);
@@ -77,14 +77,14 @@ export const MobileSalesForm = ({ onSaleAdded }: MobileSalesFormProps) => {
     }
   };
 
-  const selectedInsurance = insuranceTypes.find(ins => ins.id === selectedInsuranceId);
+  const selectedInsurances = insuranceTypes.filter(ins => selectedInsuranceIds.includes(ins.id));
 
   const resetForm = () => {
     setClientName("");
     setClientEmail("");
     setClientPhone("");
     setReservationNumber("");
-    setSelectedInsuranceId("");
+    setSelectedInsuranceIds([]);
     setNotes("");
   };
 
@@ -107,10 +107,10 @@ export const MobileSalesForm = ({ onSaleAdded }: MobileSalesFormProps) => {
       return false;
     }
 
-    if (!selectedInsuranceId) {
+    if (selectedInsuranceIds.length === 0) {
       toast({
         title: "Erreur",
-        description: "Veuillez sélectionner un type d'assurance",
+        description: "Veuillez sélectionner au moins un type d'assurance",
         variant: "destructive",
       });
       return false;
@@ -122,12 +122,14 @@ export const MobileSalesForm = ({ onSaleAdded }: MobileSalesFormProps) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!validateForm() || !profile || !selectedInsurance) return;
+    if (!validateForm() || !profile || selectedInsurances.length === 0) return;
 
     setLoading(true);
 
     try {
-      const { error } = await supabase
+      const totalCommission = selectedInsurances.reduce((sum, ins) => sum + ins.commission, 0);
+      
+      const { data: sale, error } = await supabase
         .from('sales')
         .insert({
           employee_id: profile.user_id,
@@ -135,10 +137,12 @@ export const MobileSalesForm = ({ onSaleAdded }: MobileSalesFormProps) => {
           client_email: clientEmail.trim() || null,
           client_phone: clientPhone.trim() || null,
           reservation_number: reservationNumber.trim().toUpperCase(),
-          insurance_type_id: selectedInsuranceId,
-          commission_amount: selectedInsurance.commission,
+          insurance_type_id: selectedInsuranceIds[0], // Premier pour compatibilité
+          commission_amount: totalCommission,
           notes: notes.trim() || null,
-        });
+        })
+        .select()
+        .single();
 
       if (error) {
         toast({
@@ -149,12 +153,17 @@ export const MobileSalesForm = ({ onSaleAdded }: MobileSalesFormProps) => {
         return;
       }
 
+      // Pour l'instant, on simplifie sans la table sale_insurances
+      // car elle n'est pas dans les types générés
+
       // Message de succès amusant
       const encouragement = ENCOURAGEMENTS[Math.floor(Math.random() * ENCOURAGEMENTS.length)];
+      const insuranceNames = selectedInsurances.map(ins => ins.name).join(", ");
+      const finalCommission = selectedInsurances.reduce((sum, ins) => sum + ins.commission, 0);
       
       toast({
         title: encouragement,
-        description: `Commission de ${selectedInsurance.commission.toFixed(2)} € ajoutée ! 🚀`,
+        description: `${insuranceNames} - Commission de ${finalCommission.toFixed(2)} € ajoutée ! 🚀`,
         className: "success-toast",
       });
 
@@ -253,43 +262,68 @@ export const MobileSalesForm = ({ onSaleAdded }: MobileSalesFormProps) => {
               />
             </div>
 
-            {/* Type d'assurance */}
+            {/* Types d'assurance */}
             <div>
-              <Label htmlFor="insuranceType" className="text-xs text-muted-foreground">
-                Type d'assurance *
+              <Label className="text-xs text-muted-foreground">
+                Types d'assurance * (sélection multiple)
               </Label>
-              <Select value={selectedInsuranceId} onValueChange={setSelectedInsuranceId}>
-                <SelectTrigger className="mt-1">
-                  <SelectValue placeholder="Sélectionner une assurance" />
-                </SelectTrigger>
-                <SelectContent>
-                  {insuranceTypes.map((insurance) => (
-                    <SelectItem key={insurance.id} value={insurance.id}>
-                      <div className="flex items-center justify-between w-full">
+              <div className="mt-2 space-y-2">
+                {insuranceTypes.map((insurance) => (
+                  <div key={insurance.id} className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-accent/50 transition-colors">
+                    <Checkbox
+                      id={insurance.id}
+                      checked={selectedInsuranceIds.includes(insurance.id)}
+                      onCheckedChange={(checked) => {
+                        if (checked) {
+                          setSelectedInsuranceIds([...selectedInsuranceIds, insurance.id]);
+                        } else {
+                          setSelectedInsuranceIds(selectedInsuranceIds.filter(id => id !== insurance.id));
+                        }
+                      }}
+                    />
+                    <Label htmlFor={insurance.id} className="flex-1 cursor-pointer">
+                      <div className="flex items-center justify-between">
                         <span>{insurance.name}</span>
                         <Badge variant="outline" className="ml-2">
                           {insurance.commission.toFixed(2)} €
                         </Badge>
                       </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+                    </Label>
+                  </div>
+                ))}
 
-            {/* Commission preview */}
-            {selectedInsurance && (
-              <div className="p-3 bg-success-light rounded-lg border border-success/20">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-success">
-                    Commission prévue
-                  </span>
-                  <span className="text-lg font-bold text-success">
-                    {selectedInsurance.commission.toFixed(2)} €
-                  </span>
-                </div>
               </div>
-            )}
+              
+              {/* Résumé des sélections */}
+              {selectedInsurances.length > 0 && (
+                <div className="mt-3 p-3 bg-primary-light rounded-lg">
+                  <div className="text-sm font-medium text-primary mb-2">
+                    Assurances sélectionnées ({selectedInsurances.length})
+                  </div>
+                  <div className="flex flex-wrap gap-2 mb-2">
+                    {selectedInsurances.map((insurance) => (
+                      <Badge 
+                        key={insurance.id} 
+                        variant="secondary" 
+                        className="flex items-center gap-1"
+                      >
+                        {insurance.name}
+                        <button
+                          type="button"
+                          onClick={() => setSelectedInsuranceIds(selectedInsuranceIds.filter(id => id !== insurance.id))}
+                          className="ml-1 hover:bg-destructive/10 rounded-full p-0.5"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </Badge>
+                    ))}
+                  </div>
+                  <div className="text-sm font-bold text-primary">
+                    Commission totale: {selectedInsurances.reduce((sum, ins) => sum + ins.commission, 0).toFixed(2)} €
+                  </div>
+                </div>
+              )}
+            </div>
 
             {/* Notes */}
             <div>
