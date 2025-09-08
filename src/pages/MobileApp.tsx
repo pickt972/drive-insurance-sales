@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
-import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
-import { useSupabaseSales } from "@/hooks/useSupabaseSales";
-import { LoginPage } from "@/components/auth/LoginPage";
-import { ProfileSetup } from "@/components/auth/ProfileSetup";
+import { useAuth } from "@/hooks/useAuth";
+import { useSalesData } from "@/hooks/useSalesData";
+import { LoginForm } from "@/components/LoginForm";
 import { MobileLayout } from "@/components/mobile/MobileLayout";
 import { DesktopLayout } from "@/components/desktop/DesktopLayout";
 import { MobileDashboard } from "@/components/dashboard/MobileDashboard";
@@ -30,52 +29,64 @@ const useResponsive = () => {
 
 const ResponsiveApp = () => {
   const [currentTab, setCurrentTab] = useState("dashboard");
-  const { isAuthenticated, profile, loading: authLoading } = useSupabaseAuth();
-  const { stats, loading: statsLoading, refreshStats } = useSupabaseSales();
+  const { currentUser, users, login, isAuthenticated, isAdmin } = useAuth();
+  const { sales, addSale, getStats } = useSalesData();
   const isMobile = useResponsive();
-
-  // Loading state
-  if (authLoading) {
-    return (
-      <div className={`${isMobile ? 'mobile-container' : 'min-h-screen'} flex items-center justify-center ${isMobile ? '' : 'p-4'}`}>
-        <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
-          <p className="text-muted-foreground">Chargement...</p>
-        </div>
-      </div>
-    );
-  }
+  
+  const salesStats = getStats();
+  
+  // Convert SalesStats to DashboardStats format
+  const stats = {
+    totalSales: salesStats.totalSales,
+    totalCommission: salesStats.totalCommissions,
+    salesThisWeek: salesStats.totalSales, // Simplified for now
+    topSellers: Object.entries(salesStats.commissionsByEmployee)
+      .map(([name, commission]) => ({ 
+        employee_name: name, 
+        sales_count: salesStats.salesByEmployee[name] || 0,
+        total_commission: commission 
+      }))
+      .sort((a, b) => b.total_commission - a.total_commission),
+    recentSales: sales.slice(0, 10).map(sale => ({
+      id: sale.id,
+      employee_id: sale.employeeName,
+      client_name: sale.clientName,
+      client_email: undefined,
+      client_phone: undefined,
+      reservation_number: sale.reservationNumber,
+      insurance_type_id: "1",
+      commission_amount: sale.commissions,
+      notes: undefined,
+      status: 'active' as const,
+      created_at: new Date(sale.timestamp).toISOString(),
+      updated_at: new Date(sale.timestamp).toISOString(),
+      employee_name: sale.employeeName,
+      insurance_name: sale.insuranceTypes.join(", ")
+    })),
+    weeklyEvolution: [] // Simplified for now
+  };
 
   // Not authenticated
   if (!isAuthenticated) {
-    return <LoginPage />;
-  }
-
-  // Profile setup needed
-  if (!profile) {
-    return <ProfileSetup />;
+    return (
+      <LoginForm 
+        onLogin={login}
+        usernames={users.map(u => u.username)}
+      />
+    );
   }
 
   const handleSaleAdded = () => {
-    refreshStats();
     setCurrentTab("dashboard");
   };
 
   const renderTabContent = () => {
     switch (currentTab) {
       case "dashboard":
-        return (
-          <div>
-            {statsLoading ? (
-              <div className="flex items-center justify-center py-8">
-                <Loader2 className="h-6 w-6 animate-spin text-primary" />
-              </div>
-            ) : isMobile ? (
-              <MobileDashboard stats={stats} />
-            ) : (
-              <DesktopDashboard stats={stats} />
-            )}
-          </div>
+        return isMobile ? (
+          <MobileDashboard stats={stats} />
+        ) : (
+          <DesktopDashboard stats={stats} />
         );
 
       case "add":
@@ -104,7 +115,7 @@ const ResponsiveApp = () => {
         );
 
       case "admin":
-        return profile.role === "admin" ? (
+        return isAdmin ? (
           <CommissionManager />
         ) : (
           <div className="text-center py-8 text-muted-foreground">
@@ -113,7 +124,7 @@ const ResponsiveApp = () => {
         );
 
       case "users":
-        return profile.role === "admin" ? (
+        return isAdmin ? (
           <UserManager />
         ) : (
           <div className="text-center py-8 text-muted-foreground">
@@ -135,7 +146,7 @@ const ResponsiveApp = () => {
     <Layout 
       currentTab={currentTab} 
       onTabChange={setCurrentTab}
-      isAdmin={profile.role === "admin"}
+      isAdmin={isAdmin}
     >
       {renderTabContent()}
     </Layout>
