@@ -17,6 +17,14 @@ export const CommissionManager = () => {
 
   useEffect(() => {
     fetchInsuranceTypes();
+    // Retry si la première tentative échoue
+    const timer = setTimeout(() => {
+      if (insuranceTypes.length === 0) {
+        fetchInsuranceTypes();
+      }
+    }, 2000);
+    
+    return () => clearTimeout(timer);
   }, []);
 
   const fetchInsuranceTypes = async () => {
@@ -37,6 +45,7 @@ export const CommissionManager = () => {
           description: "Impossible de récupérer les types d'assurance",
           variant: "destructive",
         });
+        // Ne pas vider la liste en cas d'erreur
         return;
       }
 
@@ -49,6 +58,7 @@ export const CommissionManager = () => {
         description: "Impossible de récupérer les types d'assurance",
         variant: "destructive",
       });
+      // Ne pas vider la liste en cas d'erreur
     } finally {
       setLoading(false);
     }
