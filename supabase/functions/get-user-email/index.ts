@@ -39,11 +39,11 @@ const handler = async (req: Request): Promise<Response> => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Récupérer le user_id depuis profiles
+    // Récupérer le user_id depuis profiles (recherche insensible à la casse)
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('user_id')
-      .eq('username', username)
+      .ilike('username', username.toLowerCase().trim())
       .maybeSingle();
 
     if (profileError || !profile) {

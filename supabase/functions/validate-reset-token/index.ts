@@ -42,7 +42,7 @@ const handler = async (req: Request): Promise<Response> => {
     const { data: resetTokens, error: tokenError } = await supabase
       .rpc('get_valid_reset_token', {
         p_token: token,
-        p_username: username
+        p_username: username.toLowerCase().trim()
       });
 
     const isArray = Array.isArray(resetTokens);

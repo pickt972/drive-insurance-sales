@@ -24,7 +24,7 @@ export const LoginPage = () => {
     if (!username || !password) return;
     
     setIsLoading(true);
-    await signInWithUsername(username, password);
+    await signInWithUsername(username.toLowerCase().trim(), password);
     setIsLoading(false);
   };
 
@@ -41,7 +41,7 @@ export const LoginPage = () => {
       setSendingReset(true);
       const { error } = await supabase.functions.invoke('password-reset-request', {
         body: {
-          username,
+          username: username.toLowerCase().trim(),
           origin: window.location.origin,
         },
       });

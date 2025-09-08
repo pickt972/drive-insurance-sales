@@ -70,7 +70,7 @@ export const useSupabaseAuth = () => {
     try {
       // Récupérer l'email associé au nom d'utilisateur via Edge Function
       const { data: emailResp, error: emailError } = await supabase.functions.invoke('get-user-email', {
-        body: { username },
+        body: { username: username.toLowerCase().trim() },
       });
 
       if (emailError || !emailResp?.email) {
