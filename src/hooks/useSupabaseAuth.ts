@@ -48,8 +48,7 @@ export const useSupabaseAuth = () => {
 
   const fetchUserProfile = async (userId: string) => {
     try {
-      const { data, error } = await (supabase as any)
-        .schema('api')
+      const { data, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('user_id', userId)
@@ -242,8 +241,7 @@ export const useSupabaseAuth = () => {
     try {
       console.log('Tentative de création de profil:', userData, 'pour user:', user.id);
       
-      const { data, error } = await (supabase as any)
-        .schema('api')
+      const { data, error } = await supabase
         .from('profiles')
         .insert({
           user_id: user.id,
