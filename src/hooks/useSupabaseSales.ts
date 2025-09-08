@@ -25,8 +25,7 @@ export const useSupabaseSales = () => {
       const weekAgoIso = weekAgo.toISOString();
 
       // Récupérer toutes les ventes avec les détails
-      const { data: sales, error } = await (supabase as any)
-        .schema('api')
+      const { data: sales, error } = await supabase
         .from('sales')
         .select(`
           *,
