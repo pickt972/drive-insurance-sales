@@ -24,8 +24,7 @@ export const CommissionManager = () => {
       setLoading(true);
       console.log('🔍 Récupération des types d\'assurance...');
 
-      const { data, error } = await (supabase as any)
-        .schema('api')
+      const { data, error } = await supabase
         .from('insurance_types')
         .select('*')
         .eq('is_active', true)
@@ -67,8 +66,7 @@ export const CommissionManager = () => {
     }
 
     try {
-      const { error } = await (supabase as any)
-        .schema('api')
+      const { error } = await supabase
         .from('insurance_types')
         .update({ commission: amount })
         .eq('id', id);
@@ -126,8 +124,7 @@ export const CommissionManager = () => {
     }
 
     try {
-      const { data, error } = await (supabase as any)
-        .schema('api')
+      const { data, error } = await supabase
         .from('insurance_types')
         .insert({
           name: newType,
@@ -168,8 +165,7 @@ export const CommissionManager = () => {
 
   const handleRemoveCommission = async (id: string) => {
     try {
-      const { error } = await (supabase as any)
-        .schema('api')
+      const { error } = await supabase
         .from('insurance_types')
         .update({ is_active: false })
         .eq('id', id);
