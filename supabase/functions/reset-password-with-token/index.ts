@@ -54,7 +54,8 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    const resetToken = resetTokens[0];
+    const isArray = Array.isArray(resetTokens);
+    const resetToken = isArray ? resetTokens[0] : resetTokens;
 
     // Update user password using Supabase Auth Admin API
     const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(

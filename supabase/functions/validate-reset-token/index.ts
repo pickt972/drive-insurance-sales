@@ -40,7 +40,10 @@ const handler = async (req: Request): Promise<Response> => {
         p_username: username
       });
 
-    if (tokenError || !resetTokens || resetTokens.length === 0) {
+    const isArray = Array.isArray(resetTokens);
+    const tokenRow = isArray ? resetTokens[0] : resetTokens;
+
+    if (tokenError || !tokenRow) {
       console.log('Token validation failed:', tokenError);
       return new Response(
         JSON.stringify({ error: 'Token invalide ou expiré' }), 
