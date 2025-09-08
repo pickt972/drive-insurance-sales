@@ -44,6 +44,11 @@ export const DesktopSalesForm = ({ onSaleAdded }: DesktopSalesFormProps) => {
     fetchInsuranceTypes();
   }, []);
 
+  // Fonction pour rafraîchir les types d'assurance
+  const refreshInsuranceTypes = () => {
+    fetchInsuranceTypes();
+  };
+
   const fetchInsuranceTypes = async () => {
     try {
       console.log('🔍 Récupération des types d\'assurance...');
