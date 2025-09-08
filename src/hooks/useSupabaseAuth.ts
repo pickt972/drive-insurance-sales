@@ -68,38 +68,23 @@ export const useSupabaseAuth = () => {
 
   const signInWithUsername = async (username: string, password: string) => {
     try {
-      // D'abord, récupérer l'email associé au nom d'utilisateur
-      const { data: profileData, error: profileError } = await (supabase as any)
-        .schema('api')
-        .from('profiles')
-        .select('user_id')
-        .eq('username', username)
-        .single();
+      // Récupérer l'email associé au nom d'utilisateur via Edge Function
+      const { data: emailResp, error: emailError } = await supabase.functions.invoke('get-user-email', {
+        body: { username },
+      });
 
-      if (profileError || !profileData) {
+      if (emailError || !emailResp?.email) {
         toast({
           title: "Erreur de connexion",
           description: "Nom d'utilisateur ou mot de passe incorrect",
           variant: "destructive",
         });
-        return { success: false, error: "Utilisateur non trouvé" };
+        return { success: false, error: emailError?.message || 'Utilisateur non trouvé' };
       }
 
-      // Ensuite, récupérer l'email depuis auth.users
-      const { data: userData, error: userError } = await supabase.auth.admin.getUserById(profileData.user_id);
-
-      if (userError || !userData.user?.email) {
-        toast({
-          title: "Erreur de connexion",
-          description: "Impossible de récupérer les informations utilisateur",
-          variant: "destructive",
-        });
-        return { success: false, error: "Erreur système" };
-      }
-
-      // Enfin, se connecter avec l'email et le mot de passe
+      // Se connecter avec l'email et le mot de passe
       const { data, error } = await supabase.auth.signInWithPassword({
-        email: userData.user.email,
+        email: emailResp.email,
         password,
       });
 
@@ -128,7 +113,6 @@ export const useSupabaseAuth = () => {
       return { success: false, error: "Une erreur est survenue" };
     }
   };
-
   const signUp = async (email: string, password: string, username: string) => {
     try {
       const redirectUrl = `${window.location.origin}/`;
