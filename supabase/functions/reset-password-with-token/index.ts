@@ -28,29 +28,33 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Initialize Supabase admin client
+    // Initialize Supabase clients
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? ''
+    );
+    
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Find and validate reset token
-    const { data: resetToken, error: tokenError } = await supabaseAdmin
-      .from('password_reset_tokens')
-      .select('*')
-      .eq('token', token)
-      .eq('username', username)
-      .eq('used', false)
-      .gt('expires_at', new Date().toISOString())
-      .single();
+    // Find and validate reset token using RPC
+    const { data: resetTokens, error: tokenError } = await supabase
+      .rpc('get_valid_reset_token', {
+        p_token: token,
+        p_username: username
+      });
 
-    if (tokenError || !resetToken) {
+    if (tokenError || !resetTokens || resetTokens.length === 0) {
       console.log('Token validation failed:', tokenError);
       return new Response(
         JSON.stringify({ error: 'Token invalide ou expiré' }), 
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+
+    const resetToken = resetTokens[0];
 
     // Update user password using Supabase Auth Admin API
     const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
@@ -66,11 +70,11 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Mark token as used
-    const { error: markUsedError } = await supabaseAdmin
-      .from('password_reset_tokens')
-      .update({ used: true })
-      .eq('id', resetToken.id);
+    // Mark token as used with RPC
+    const { error: markUsedError } = await supabase
+      .rpc('mark_reset_token_used', {
+        p_token: token
+      });
 
     if (markUsedError) {
       console.log('Error marking token as used:', markUsedError);

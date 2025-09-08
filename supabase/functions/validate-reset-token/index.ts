@@ -27,34 +27,20 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Initialize Supabase admin client
-    const supabaseAdmin = createClient(
+    // Initialize Supabase client
+    const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false,
-        },
-        global: {
-          headers: {
-            'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`
-          }
-        }
-      }
+      Deno.env.get('SUPABASE_ANON_KEY') ?? ''
     );
 
-    // Find and validate reset token with proper admin permissions
-    const { data: resetToken, error: tokenError } = await supabaseAdmin
-      .from('password_reset_tokens')
-      .select('*')
-      .eq('token', token)
-      .ilike('username', username)
-      .eq('used', false)
-      .gt('expires_at', new Date().toISOString())
-      .maybeSingle();
+    // Use the RPC function to validate reset token
+    const { data: resetTokens, error: tokenError } = await supabase
+      .rpc('get_valid_reset_token', {
+        p_token: token,
+        p_username: username
+      });
 
-    if (tokenError || !resetToken) {
+    if (tokenError || !resetTokens || resetTokens.length === 0) {
       console.log('Token validation failed:', tokenError);
       return new Response(
         JSON.stringify({ error: 'Token invalide ou expiré' }), 
