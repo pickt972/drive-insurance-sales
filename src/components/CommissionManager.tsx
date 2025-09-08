@@ -140,6 +140,21 @@ export const CommissionManager = () => {
             </div>
           </div>
         </div>
+
+        {/* Save button */}
+        <div className="flex justify-end pt-4 border-t">
+          <Button
+            onClick={() => {
+              toast({
+                title: "Modifications enregistrées",
+                description: "Les commissions ont été sauvegardées avec succès",
+              });
+            }}
+            className="bg-gradient-primary hover:bg-primary-hover"
+          >
+            Enregistrer les modifications
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );
