@@ -311,30 +311,6 @@ export const DesktopSalesForm = ({ onSaleAdded }: DesktopSalesFormProps) => {
                   </Card>
                 )}
 
-                {/* Liste des assurances disponibles */}
-                <div>
-                  <h4 className="font-medium mb-3">Assurances disponibles</h4>
-                  <div className="space-y-2 max-h-48 overflow-y-auto">
-                    {insuranceTypes.map((insurance) => (
-                      <div 
-                        key={insurance.id}
-                        className={`p-3 rounded-lg border cursor-pointer transition-colors ${
-                          selectedInsuranceId === insurance.id 
-                            ? 'border-primary bg-primary/5' 
-                            : 'border-border hover:bg-accent'
-                        }`}
-                        onClick={() => setSelectedInsuranceId(insurance.id)}
-                      >
-                        <div className="flex items-center justify-between">
-                          <span className="font-medium">{insurance.name}</span>
-                          <Badge variant="outline">
-                            {insurance.commission.toFixed(2)} €
-                          </Badge>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
               </div>
             </div>
 
