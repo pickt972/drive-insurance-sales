@@ -291,7 +291,6 @@ export const MobileSalesForm = ({ onSaleAdded }: MobileSalesFormProps) => {
                     </Label>
                   </div>
                 ))}
-
               </div>
               
               {/* Résumé des sélections */}
