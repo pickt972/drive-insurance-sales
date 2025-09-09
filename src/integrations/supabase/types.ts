@@ -131,6 +131,45 @@ export type Database = {
         }
         Relationships: []
       }
+      sale_insurances: {
+        Row: {
+          commission_amount: number
+          created_at: string
+          id: string
+          insurance_type_id: string
+          sale_id: string
+        }
+        Insert: {
+          commission_amount: number
+          created_at?: string
+          id?: string
+          insurance_type_id: string
+          sale_id: string
+        }
+        Update: {
+          commission_amount?: number
+          created_at?: string
+          id?: string
+          insurance_type_id?: string
+          sale_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sale_insurances_insurance_type_id_fkey"
+            columns: ["insurance_type_id"]
+            isOneToOne: false
+            referencedRelation: "insurance_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sale_insurances_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "sales"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sales: {
         Row: {
           client_email: string | null
