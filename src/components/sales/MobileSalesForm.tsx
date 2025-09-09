@@ -288,12 +288,7 @@ export const MobileSalesForm = ({ onSaleAdded }: MobileSalesFormProps) => {
                       }}
                     />
                     <Label htmlFor={insurance.id} className="flex-1 cursor-pointer">
-                      <div className="flex items-center justify-between">
-                        <span>{insurance.name}</span>
-                        <Badge variant="outline" className="ml-2">
-                          {insurance.commission.toFixed(2)} €
-                        </Badge>
-                      </div>
+                      <span>{insurance.name}</span>
                     </Label>
                   </div>
                 ))}

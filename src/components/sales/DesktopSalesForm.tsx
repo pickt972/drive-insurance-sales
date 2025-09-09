@@ -301,12 +301,7 @@ export const DesktopSalesForm = ({ onSaleAdded }: DesktopSalesFormProps) => {
                             }}
                           />
                           <Label htmlFor={insurance.id} className="flex-1 cursor-pointer">
-                            <div className="flex items-center justify-between">
-                              <span className="font-medium">{insurance.name}</span>
-                              <Badge variant="outline" className="ml-3">
-                                {insurance.commission.toFixed(2)} €
-                              </Badge>
-                            </div>
+                            <span className="font-medium">{insurance.name}</span>
                           </Label>
                         </div>
                       ))}
