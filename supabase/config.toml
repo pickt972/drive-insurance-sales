@@ -19,4 +19,4 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.export-sales-report]
-verify_jwt = true
+verify_jwt = false
