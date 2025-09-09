@@ -103,14 +103,22 @@ export const useAuth = () => {
       return { success: false, error: "Impossible de retirer les privilèges administrateur au compte admin principal" };
     }
 
+    // Update users list
     setUsers(prev => prev.map(u => 
       u.username === username 
         ? { ...u, role: newRole }
         : u
     ));
+
+    // If the updated user is the current user, also update currentUser and its persistence
+    if (currentUser?.username === username) {
+      const updatedCurrent = { ...currentUser, role: newRole };
+      setCurrentUser(updatedCurrent);
+      localStorage.setItem("current-user", JSON.stringify(updatedCurrent));
+    }
+
     return { success: true };
   };
-
   const updatePassword = (username: string, newPassword: string): { success: boolean; error?: string } => {
     setUsers(prev => prev.map(u => 
       u.username === username 
