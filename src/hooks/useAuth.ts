@@ -42,14 +42,29 @@ export const useAuth = () => {
   useEffect(() => {
     const savedUsers = localStorage.getItem("app-users");
     if (savedUsers) {
-      setUsers(JSON.parse(savedUsers));
+      const parsedUsers = JSON.parse(savedUsers);
+      console.log("Loading users from localStorage:", parsedUsers); // Debug log
+      setUsers(parsedUsers);
     } else {
       localStorage.setItem("app-users", JSON.stringify(DEFAULT_USERS));
     }
 
     const savedUser = localStorage.getItem("current-user");
     if (savedUser) {
-      setCurrentUser(JSON.parse(savedUser));
+      const parsedUser = JSON.parse(savedUser);
+      console.log("Loading current user from localStorage:", parsedUser); // Debug log
+      
+      // Ensure the current user has the latest data from saved users
+      const savedUsersData = savedUsers ? JSON.parse(savedUsers) : DEFAULT_USERS;
+      const upToDateUser = savedUsersData.find((u: User) => u.username === parsedUser.username);
+      
+      if (upToDateUser) {
+        console.log("Setting current user with up-to-date data:", upToDateUser); // Debug log
+        setCurrentUser(upToDateUser);
+        localStorage.setItem("current-user", JSON.stringify(upToDateUser));
+      } else {
+        setCurrentUser(parsedUser);
+      }
     }
 
     setHydrated(true);
@@ -61,12 +76,14 @@ export const useAuth = () => {
   }, [users, hydrated]);
 
   const login = (username: string, password: string): { success: boolean; error?: string } => {
+    // Get the latest user data from the users array to ensure we have the current role
     const user = users.find(u => u.username === username && u.password === password);
     
     if (!user) {
       return { success: false, error: "Identifiant ou mot de passe incorrect" };
     }
 
+    console.log("Login - user found:", user); // Debug log
     setCurrentUser(user);
     localStorage.setItem("current-user", JSON.stringify(user));
     return { success: true };
