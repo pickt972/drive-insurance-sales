@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
-import { User, Plus, Trash2, Key, Settings, Shield } from "lucide-react";
+import { User, Plus, Trash2, Key, Settings, Shield, Eye, EyeOff } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useNavigate } from "react-router-dom";
@@ -19,6 +19,8 @@ export const UserManager = () => {
   const [newRole, setNewRole] = useState<"admin" | "employee">("employee");
   const [passwordChangeUser, setPasswordChangeUser] = useState("");
   const [newPasswordChange, setNewPasswordChange] = useState("");
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showNewPasswordChange, setShowNewPasswordChange] = useState(false);
   const { toast } = useToast();
 
   const handleAddUser = () => {
@@ -208,13 +210,29 @@ export const UserManager = () => {
             </div>
             <div className="space-y-2">
               <Label htmlFor="new-password">Mot de passe</Label>
-              <Input
-                id="new-password"
-                type="password"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="Minimum 6 caractères"
-              />
+              <div className="relative">
+                <Input
+                  id="new-password"
+                  type={showNewPassword ? "text" : "password"}
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="Minimum 6 caractères"
+                  className="pr-10"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                  onClick={() => setShowNewPassword(!showNewPassword)}
+                >
+                  {showNewPassword ? (
+                    <EyeOff className="h-4 w-4 text-muted-foreground" />
+                  ) : (
+                    <Eye className="h-4 w-4 text-muted-foreground" />
+                  )}
+                </Button>
+              </div>
             </div>
             <div className="space-y-2">
               <Label htmlFor="new-role">Rôle</Label>
@@ -263,13 +281,29 @@ export const UserManager = () => {
             </div>
             <div className="space-y-2">
               <Label htmlFor="new-password-change">Nouveau mot de passe</Label>
-              <Input
-                id="new-password-change"
-                type="password"
-                value={newPasswordChange}
-                onChange={(e) => setNewPasswordChange(e.target.value)}
-                placeholder="Minimum 6 caractères"
-              />
+              <div className="relative">
+                <Input
+                  id="new-password-change"
+                  type={showNewPasswordChange ? "text" : "password"}
+                  value={newPasswordChange}
+                  onChange={(e) => setNewPasswordChange(e.target.value)}
+                  placeholder="Minimum 6 caractères"
+                  className="pr-10"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                  onClick={() => setShowNewPasswordChange(!showNewPasswordChange)}
+                >
+                  {showNewPasswordChange ? (
+                    <EyeOff className="h-4 w-4 text-muted-foreground" />
+                  ) : (
+                    <Eye className="h-4 w-4 text-muted-foreground" />
+                  )}
+                </Button>
+              </div>
             </div>
           </div>
           <Button
