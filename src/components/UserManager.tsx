@@ -153,7 +153,6 @@ export const UserManager = () => {
       });
     }
   };
-  };
 
   const employeeUsers = users.filter(u => u.role === "employee");
   const totalUsers = users.length;
