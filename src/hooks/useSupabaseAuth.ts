@@ -3,6 +3,7 @@ import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { Profile } from '@/types/database';
 import { useToast } from '@/hooks/use-toast';
+import { useNavigate } from 'react-router-dom';
 
 export const useSupabaseAuth = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -10,6 +11,7 @@ export const useSupabaseAuth = () => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   useEffect(() => {
     // Écouter les changements d'état d'authentification
@@ -227,6 +229,9 @@ export const useSupabaseAuth = () => {
           title: "Déconnexion réussie",
           description: "À bientôt !",
         });
+        
+        // Redirection automatique vers la page de connexion
+        navigate('/auth', { replace: true });
       }
     } catch (error) {
       console.error('Erreur lors de la déconnexion:', error);
