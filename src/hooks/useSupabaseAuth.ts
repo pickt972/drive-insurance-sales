@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Profile } from '@/types/database';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/hooks/useAuth';
 
 export const useSupabaseAuth = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -12,6 +13,7 @@ export const useSupabaseAuth = () => {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { logout: localLogout } = useAuth();
 
   useEffect(() => {
     // Écouter les changements d'état d'authentification
@@ -230,7 +232,8 @@ export const useSupabaseAuth = () => {
           description: "À bientôt !",
         });
         
-        // Redirection automatique vers la page de connexion
+        // Nettoyer l'ancien système d'auth local et rediriger
+        localLogout();
         navigate('/auth', { replace: true });
       }
     } catch (error) {
