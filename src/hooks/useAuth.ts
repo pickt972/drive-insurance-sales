@@ -75,7 +75,7 @@ export const useAuth = () => {
     localStorage.setItem("app-users", JSON.stringify(users));
   }, [users, hydrated]);
 
-  const login = (username: string, password: string): { success: boolean; error?: string } => {
+  const login = async (username: string, password: string): Promise<{ success: boolean; error?: string }> => {
     // Get the latest user data from the users array to ensure we have the current role
     const user = users.find(u => u.username === username && u.password === password);
     
