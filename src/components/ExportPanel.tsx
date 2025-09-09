@@ -13,6 +13,7 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { supabase } from "@/integrations/supabase/client";
 import { SaleWithDetails } from "@/types/database";
+import { useAuth } from "@/hooks/useAuth";
 
 interface ExportPanelProps {
   sales: SaleWithDetails[];
@@ -25,24 +26,15 @@ export const ExportPanel = ({ sales }: ExportPanelProps) => {
   const { toast } = useToast();
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-  const [employees, setEmployees] = useState<Array<{ user_id: string; username: string }>>([]);
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [isExporting, setIsExporting] = useState(false);
+  const { users } = useAuth();
 
-  useEffect(() => {
-    const loadEmployees = async () => {
-      const { data, error } = await (supabase as any)
-        .schema('api')
-        .from('profiles')
-        .select('user_id, username')
-        .eq('is_active', true)
-        .order('username');
-      if (!error && data) {
-        setEmployees(data as any);
-      }
-    };
-    loadEmployees();
-  }, []);
+  // Créer une liste des utilisateurs avec des IDs factices pour la compatibilité
+  const employees = users.map(user => ({
+    user_id: user.username, // Utiliser le username comme ID
+    username: user.username
+  }));
 
   const exportToCSV = () => {
     if (sales.length === 0) {
@@ -263,31 +255,54 @@ export const ExportPanel = ({ sales }: ExportPanelProps) => {
 
     setIsExporting(true);
     try {
-      const { data, error } = await supabase.functions.invoke('export-sales-report', {
-        body: {
-          startDate,
-          endDate,
-          userIds: selectedUsers,
-          format: 'pdf',
-        }
+      // Filtrer les ventes localement pour l'instant
+      const startDateTime = new Date(startDate).getTime();
+      const endDateTime = new Date(endDate).getTime() + 24*3600*1000 - 1;
+      
+      let filteredSales = sales.filter(sale => {
+        const saleDate = new Date(sale.created_at).getTime();
+        return saleDate >= startDateTime && saleDate <= endDateTime;
       });
 
-      if (error) throw error;
-
-      const base64 = data.fileData as string;
-      const byteCharacters = atob(base64);
-      const byteNumbers = new Array(byteCharacters.length);
-      for (let i = 0; i < byteCharacters.length; i++) {
-        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      
+      // Si des utilisateurs spécifiques sont sélectionnés, filtrer par nom d'employé
+      if (selectedUsers.length > 0) {
+        filteredSales = filteredSales.filter(sale => 
+          selectedUsers.includes(sale.employee_name)
+        );
       }
-      const byteArray = new Uint8Array(byteNumbers);
-      const blob = new Blob([byteArray], { type: 'application/pdf' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = data.fileName || `export-ventes.pdf`;
-      a.click();
-      URL.revokeObjectURL(url);
+
+      // Générer le PDF localement
+      const doc = new jsPDF();
+      
+      doc.setFontSize(20);
+      doc.text(`Export des ventes du ${startDate} au ${endDate}`, 20, 20);
+      
+      doc.setFontSize(12);
+      doc.text(`Généré le: ${new Date().toLocaleDateString('fr-FR')}`, 20, 30);
+      
+      const totalCommission = filteredSales.reduce((sum, sale) => sum + Number(sale.commission_amount), 0);
+      doc.text(`Nombre total de ventes: ${filteredSales.length}`, 20, 40);
+      doc.text(`Commission totale: ${totalCommission.toFixed(2)} €`, 20, 50);
+
+      const tableData = filteredSales.map(sale => [
+        new Date(sale.created_at).toLocaleDateString('fr-FR'),
+        sale.employee_name,
+        sale.client_name,
+        sale.reservation_number,
+        sale.insurance_name,
+        `${sale.commission_amount} €`
+      ]);
+
+      autoTable(doc, {
+        head: [['Date', 'Employé', 'Client', 'N° Réservation', 'Assurance', 'Commission']],
+        body: tableData,
+        startY: 60,
+        styles: { fontSize: 8 },
+        headStyles: { fillColor: [41, 128, 185] }
+      });
+
+      doc.save(`export-ventes-${startDate}_au_${endDate}.pdf`);
 
       toast({ title: 'Export réussi', description: 'Le PDF a été téléchargé.' });
     } catch (error) {
