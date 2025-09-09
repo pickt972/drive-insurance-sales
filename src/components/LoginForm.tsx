@@ -4,8 +4,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
-import { LogIn, User, Lock, Eye, EyeOff } from "lucide-react";
+import { LogIn, User, Lock, Eye, EyeOff, Mail } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface LoginFormProps {
   onLogin: (username: string, password: string) => { success: boolean; error?: string };
@@ -17,6 +19,8 @@ export const LoginForm = ({ onLogin, usernames }: LoginFormProps) => {
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [sendingReset, setSendingReset] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
   const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -46,6 +50,40 @@ export const LoginForm = ({ onLogin, usernames }: LoginFormProps) => {
     setIsLoading(false);
   };
 
+  const handleForgotPassword = async () => {
+    if (!username) {
+      toast({
+        title: "Nom d'utilisateur requis",
+        description: "Veuillez saisir votre nom d'utilisateur.",
+        variant: "destructive",
+      });
+      return;
+    }
+    try {
+      setSendingReset(true);
+      const { error } = await supabase.functions.invoke('password-reset-request', {
+        body: {
+          username: username.toLowerCase().trim(),
+          origin: window.location.origin,
+        },
+      });
+      if (error) throw error;
+      setShowForgotPassword(true);
+      toast({
+        title: "Demande envoyée",
+        description: "L'administrateur a été notifié par email.",
+      });
+    } catch (err: any) {
+      toast({
+        title: "Échec de l'envoi",
+        description: err.message || "Impossible d'envoyer la demande. Réessayez plus tard.",
+        variant: "destructive",
+      });
+    } finally {
+      setSendingReset(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-subtle">
       <Card className="w-full max-w-md shadow-elegant">
@@ -59,6 +97,15 @@ export const LoginForm = ({ onLogin, usernames }: LoginFormProps) => {
           </p>
         </CardHeader>
         <CardContent>
+          {showForgotPassword && (
+            <Alert className="mb-4">
+              <Mail className="h-4 w-4" />
+              <AlertDescription>
+                Votre demande de réinitialisation de mot de passe a été envoyée à l'administrateur. 
+                Vous recevrez un email avec votre nouveau mot de passe.
+              </AlertDescription>
+            </Alert>
+          )}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="username" className="flex items-center gap-2">
@@ -118,15 +165,17 @@ export const LoginForm = ({ onLogin, usernames }: LoginFormProps) => {
             </Button>
           </form>
 
-          <div className="mt-6 p-4 bg-accent/50 rounded-lg text-sm">
-            <p className="font-medium mb-2">🔧 Comptes de démonstration :</p>
-            <div className="space-y-1 text-muted-foreground">
-              <p>• <strong>admin</strong> / admin2024 (Administrateur)</p>
-              <p>• <strong>Julie</strong> / julie2024 (Employé)</p>
-              <p>• <strong>Sherman</strong> / sherman2024 (Employé)</p>
-              <p>• <strong>Alvin</strong> / alvin2024 (Employé)</p>
-              <p>• <strong>Stef</strong> / stef2024 (Employé)</p>
-            </div>
+          <div className="mt-4 text-center">
+            <Button
+              type="button"
+              variant="link"
+              size="sm"
+              onClick={handleForgotPassword}
+              disabled={sendingReset}
+              className="text-muted-foreground hover:text-primary"
+            >
+              {sendingReset ? 'Envoi…' : 'Mot de passe oublié ?'}
+            </Button>
           </div>
         </CardContent>
       </Card>
