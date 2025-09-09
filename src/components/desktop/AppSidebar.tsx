@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
+import { useAuth } from "@/hooks/useAuth";
 
 interface AppSidebarProps {
   currentTab: string;
@@ -35,7 +36,11 @@ const adminItems = [
 export function AppSidebar({ currentTab, onTabChange, isAdmin }: AppSidebarProps) {
   const { state } = useSidebar();
   const { signOut, profile } = useSupabaseAuth();
+  const { currentUser } = useAuth();
   const collapsed = state === "collapsed";
+
+  const effectiveIsAdmin = (profile?.role === 'admin') || isAdmin || (currentUser?.role === 'admin');
+  const displayUsername = profile?.username || currentUser?.username || 'Invité';
 
   const isActive = (itemId: string) => currentTab === itemId;
 
@@ -110,16 +115,16 @@ export function AppSidebar({ currentTab, onTabChange, isAdmin }: AppSidebarProps
         {/* Profil utilisateur */}
         <div className="mt-auto p-4 border-t">
           <div className="flex items-center gap-3 mb-3">
-            {profile?.role === 'admin' ? (
+            {effectiveIsAdmin ? (
               <Crown className="h-4 w-4 text-primary" />
             ) : (
               <User className="h-4 w-4 text-primary" />
             )}
             {!collapsed && (
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">{profile?.username}</p>
+                <p className="text-sm font-medium truncate">{displayUsername}</p>
                 <p className="text-xs text-muted-foreground">
-                  {profile?.role === 'admin' ? 'Administrateur' : 'Employé'}
+                  {effectiveIsAdmin ? 'Administrateur' : 'Employé'}
                 </p>
               </div>
             )}
