@@ -12,7 +12,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useNavigate } from "react-router-dom";
 
 export const UserManager = () => {
-  const { users, addUser, removeUser, updatePassword } = useAuth();
+  const { users, addUser, removeUser, updatePassword, updateRole } = useAuth();
   const navigate = useNavigate();
   const [newUsername, setNewUsername] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -21,6 +21,8 @@ export const UserManager = () => {
   const [newPasswordChange, setNewPasswordChange] = useState("");
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showNewPasswordChange, setShowNewPasswordChange] = useState(false);
+  const [roleChangeUser, setRoleChangeUser] = useState("");
+  const [newRoleChange, setNewRoleChange] = useState<"admin" | "employee">("employee");
   const { toast } = useToast();
 
   const handleAddUser = () => {
@@ -122,6 +124,35 @@ export const UserManager = () => {
         variant: "destructive",
       });
     }
+  };
+
+  const handleRoleChange = () => {
+    if (!roleChangeUser) {
+      toast({
+        title: "Erreur",
+        description: "Utilisateur requis",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const result = updateRole(roleChangeUser, newRoleChange);
+    
+    if (result.success) {
+      setRoleChangeUser("");
+      setNewRoleChange("employee");
+      toast({
+        title: "Rôle modifié",
+        description: `Le rôle de ${roleChangeUser} a été mis à jour`,
+      });
+    } else {
+      toast({
+        title: "Erreur",
+        description: result.error,
+        variant: "destructive",
+      });
+    }
+  };
   };
 
   const employeeUsers = users.filter(u => u.role === "employee");
@@ -313,6 +344,50 @@ export const UserManager = () => {
           >
             <Key className="mr-2 h-4 w-4" />
             Changer le mot de passe
+          </Button>
+        </div>
+
+        <Separator />
+
+        {/* Change role */}
+        <div className="space-y-4">
+          <h3 className="font-medium">Changer le rôle d'un utilisateur</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="role-user">Utilisateur</Label>
+              <Select value={roleChangeUser} onValueChange={setRoleChangeUser}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Sélectionner un utilisateur" />
+                </SelectTrigger>
+                <SelectContent>
+                  {users.map((user) => (
+                    <SelectItem key={user.username} value={user.username}>
+                      {user.username} ({user.role === "admin" ? "Admin" : "Employé"})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="new-role-change">Nouveau rôle</Label>
+              <Select value={newRoleChange} onValueChange={(value: "admin" | "employee") => setNewRoleChange(value)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="employee">Employé</SelectItem>
+                  <SelectItem value="admin">Administrateur</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <Button
+            onClick={handleRoleChange}
+            variant="outline"
+            className="w-full md:w-auto"
+          >
+            <Settings className="mr-2 h-4 w-4" />
+            Changer le rôle
           </Button>
         </div>
       </CardContent>

@@ -98,6 +98,19 @@ export const useAuth = () => {
     return { success: true };
   };
 
+  const updateRole = (username: string, newRole: 'admin' | 'employee'): { success: boolean; error?: string } => {
+    if (username === "admin" && newRole === "employee") {
+      return { success: false, error: "Impossible de retirer les privilèges administrateur au compte admin principal" };
+    }
+
+    setUsers(prev => prev.map(u => 
+      u.username === username 
+        ? { ...u, role: newRole }
+        : u
+    ));
+    return { success: true };
+  };
+
   const updatePassword = (username: string, newPassword: string): { success: boolean; error?: string } => {
     setUsers(prev => prev.map(u => 
       u.username === username 
@@ -115,6 +128,7 @@ export const useAuth = () => {
     addUser,
     removeUser,
     updatePassword,
+    updateRole,
     isAuthenticated: !!currentUser,
     isAdmin: currentUser?.role === 'admin'
   };
