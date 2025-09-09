@@ -25,6 +25,12 @@ const DEFAULT_USERS: User[] = [
     password: "alvin2024",
     role: "employee",
     createdAt: new Date().toISOString()
+  },
+  {
+    username: "Stef",
+    password: "stef2024",
+    role: "employee",
+    createdAt: new Date().toISOString()
   }
 ];
 
