@@ -1,13 +1,31 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { LoginForm } from "@/components/LoginForm";
 import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 
 const AuthPage = () => {
   const navigate = useNavigate();
-  const { isAuthenticated: supabaseAuthenticated } = useSupabaseAuth();
-  const { isAuthenticated: localAuthenticated, login, users } = useAuth();
+  const { isAuthenticated: supabaseAuthenticated, signInWithUsername } = useSupabaseAuth();
+  const { isAuthenticated: localAuthenticated } = useAuth();
+  const [usernames, setUsernames] = useState<string[]>([]);
+
+  // Charger la liste des utilisateurs depuis Supabase
+  useEffect(() => {
+    const loadUsernames = async () => {
+      const { data, error } = await (supabase as any)
+        .schema('api')
+        .from('profiles')
+        .select('username')
+        .eq('is_active', true)
+        .order('username');
+      if (!error && data) {
+        setUsernames(data.map((p: any) => p.username));
+      }
+    };
+    loadUsernames();
+  }, []);
   
   // Rediriger si déjà connecté
   useEffect(() => {
@@ -25,8 +43,8 @@ const AuthPage = () => {
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <LoginForm 
-          onLogin={login}
-          usernames={users.map(u => u.username)}
+          onLogin={signInWithUsername}
+          usernames={usernames}
         />
       </div>
     </div>

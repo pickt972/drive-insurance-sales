@@ -5,9 +5,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { Download, Upload, ChevronDown, Settings, FileText, Cloud, File } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { supabase } from "@/integrations/supabase/client";
@@ -22,6 +23,26 @@ export const ExportPanel = ({ sales }: ExportPanelProps) => {
   const [isCredentialsOpen, setIsCredentialsOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [employees, setEmployees] = useState<Array<{ user_id: string; username: string }>>([]);
+  const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
+  const [isExporting, setIsExporting] = useState(false);
+
+  useEffect(() => {
+    const loadEmployees = async () => {
+      const { data, error } = await (supabase as any)
+        .schema('api')
+        .from('profiles')
+        .select('user_id, username')
+        .eq('is_active', true)
+        .order('username');
+      if (!error && data) {
+        setEmployees(data as any);
+      }
+    };
+    loadEmployees();
+  }, []);
 
   const exportToCSV = () => {
     if (sales.length === 0) {
@@ -230,6 +251,53 @@ export const ExportPanel = ({ sales }: ExportPanelProps) => {
     }
   };
 
+  const exportManualPDF = async () => {
+    if (!startDate || !endDate) {
+      toast({
+        title: "Période requise",
+        description: "Veuillez sélectionner une date de début et de fin.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsExporting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('export-sales-report', {
+        body: {
+          startDate,
+          endDate,
+          userIds: selectedUsers,
+          format: 'pdf',
+        }
+      });
+
+      if (error) throw error;
+
+      const base64 = data.fileData as string;
+      const byteCharacters = atob(base64);
+      const byteNumbers = new Array(byteCharacters.length);
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      }
+      const byteArray = new Uint8Array(byteNumbers);
+      const blob = new Blob([byteArray], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = data.fileName || `export-ventes.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+
+      toast({ title: 'Export réussi', description: 'Le PDF a été téléchargé.' });
+    } catch (error) {
+      console.error('Erreur export manuel:', error);
+      toast({ title: 'Erreur', description: "Impossible de générer le PDF.", variant: 'destructive' });
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   return (
     <Card className="shadow-card bg-gradient-card">
       <CardHeader>
@@ -238,7 +306,7 @@ export const ExportPanel = ({ sales }: ExportPanelProps) => {
           Export et sauvegarde
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Button onClick={exportToCSV} variant="outline" className="h-12">
             <FileText className="mr-2 h-4 w-4" />
@@ -255,6 +323,41 @@ export const ExportPanel = ({ sales }: ExportPanelProps) => {
             Exporter en Excel
           </Button>
         </div>
+
+        <section className="space-y-4">
+          <h3 className="text-base font-semibold">Export manuel (PDF)</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="startDate">Date de début</Label>
+              <Input id="startDate" type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="endDate">Date de fin</Label>
+              <Input id="endDate" type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label>Sélectionner des utilisateurs</Label>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+              {employees.map((emp) => (
+                <label key={emp.user_id} className="flex items-center gap-2">
+                  <Checkbox 
+                    checked={selectedUsers.includes(emp.user_id)}
+                    onCheckedChange={(checked) => {
+                      setSelectedUsers((prev) =>
+                        checked ? [...prev, emp.user_id] : prev.filter(id => id !== emp.user_id)
+                      );
+                    }}
+                  />
+                  <span className="text-sm">{emp.username}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+          <Button onClick={exportManualPDF} disabled={isExporting} className="w-full md:w-auto">
+            {isExporting ? 'Génération…' : 'Exporter le PDF'}
+          </Button>
+        </section>
 
         <Collapsible open={isCredentialsOpen} onOpenChange={setIsCredentialsOpen}>
           <CollapsibleTrigger asChild>

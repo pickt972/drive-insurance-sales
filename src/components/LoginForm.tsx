@@ -10,7 +10,7 @@ import { LogIn, User, Lock, Eye, EyeOff, Mail } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface LoginFormProps {
-  onLogin: (username: string, password: string) => { success: boolean; error?: string };
+  onLogin: (username: string, password: string) => Promise<{ success: boolean; error?: string }>;
   usernames: string[];
 }
 
@@ -37,7 +37,7 @@ export const LoginForm = ({ onLogin, usernames }: LoginFormProps) => {
 
     setIsLoading(true);
     
-    const result = onLogin(username, password);
+    const result = await onLogin(username, password);
     
     if (!result.success) {
       toast({

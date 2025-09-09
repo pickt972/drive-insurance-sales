@@ -239,6 +239,27 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      create_password_reset_token: {
+        Args: {
+          p_expires_at: string
+          p_token: string
+          p_user_id: string
+          p_username: string
+        }
+        Returns: undefined
+      }
+      get_valid_reset_token: {
+        Args: { p_token: string; p_username: string }
+        Returns: {
+          token: string
+          user_id: string
+          username: string
+        }[]
+      }
+      mark_reset_token_used: {
+        Args: { p_token: string }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
