@@ -37,6 +37,7 @@ const DEFAULT_USERS: User[] = [
 export const useAuth = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [users, setUsers] = useState<User[]>(DEFAULT_USERS);
+  const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
     const savedUsers = localStorage.getItem("app-users");
@@ -50,11 +51,14 @@ export const useAuth = () => {
     if (savedUser) {
       setCurrentUser(JSON.parse(savedUser));
     }
+
+    setHydrated(true);
   }, []);
 
   useEffect(() => {
+    if (!hydrated) return;
     localStorage.setItem("app-users", JSON.stringify(users));
-  }, [users]);
+  }, [users, hydrated]);
 
   const login = (username: string, password: string): { success: boolean; error?: string } => {
     const user = users.find(u => u.username === username && u.password === password);
@@ -85,7 +89,11 @@ export const useAuth = () => {
       createdAt: new Date().toISOString()
     };
 
-    setUsers(prev => [...prev, newUser]);
+    setUsers(prev => {
+      const updated = [...prev, newUser];
+      localStorage.setItem("app-users", JSON.stringify(updated));
+      return updated;
+    });
     return { success: true };
   };
 
@@ -94,7 +102,11 @@ export const useAuth = () => {
       return { success: false, error: "Impossible de supprimer l'administrateur" };
     }
 
-    setUsers(prev => prev.filter(u => u.username !== username));
+    setUsers(prev => {
+      const updated = prev.filter(u => u.username !== username);
+      localStorage.setItem("app-users", JSON.stringify(updated));
+      return updated;
+    });
     return { success: true };
   };
 
@@ -103,12 +115,14 @@ export const useAuth = () => {
       return { success: false, error: "Impossible de retirer les privilèges administrateur au compte admin principal" };
     }
 
-    // Update users list
-    setUsers(prev => prev.map(u => 
-      u.username === username 
-        ? { ...u, role: newRole }
-        : u
-    ));
+    // Update users list and persist immediately
+    setUsers(prev => {
+      const updated = prev.map(u =>
+        u.username === username ? { ...u, role: newRole } : u
+      );
+      localStorage.setItem("app-users", JSON.stringify(updated));
+      return updated;
+    });
 
     // If the updated user is the current user, also update currentUser and its persistence
     if (currentUser?.username === username) {
@@ -120,11 +134,13 @@ export const useAuth = () => {
     return { success: true };
   };
   const updatePassword = (username: string, newPassword: string): { success: boolean; error?: string } => {
-    setUsers(prev => prev.map(u => 
-      u.username === username 
-        ? { ...u, password: newPassword }
-        : u
-    ));
+    setUsers(prev => {
+      const updated = prev.map(u =>
+        u.username === username ? { ...u, password: newPassword } : u
+      );
+      localStorage.setItem("app-users", JSON.stringify(updated));
+      return updated;
+    });
     return { success: true };
   };
 
