@@ -1,37 +1,25 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { LoginForm } from "@/components/LoginForm";
-import { useAuth } from "@/hooks/useAuth";
+import { LoginPage } from "@/components/auth/LoginPage";
+import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
 
 const AuthPage = () => {
   const navigate = useNavigate();
-  const { isAuthenticated, users, login } = useAuth();
-  
-  // Récupérer les noms d'utilisateurs du système local
-  const usernames = users.map(user => user.username);
+  const { user, loading } = useSupabaseAuth();
   
   // Rediriger si déjà connecté
   useEffect(() => {
-    if (isAuthenticated) {
+    if (user && !loading) {
       navigate('/', { replace: true });
     }
-  }, [isAuthenticated, navigate]);
+  }, [user, loading, navigate]);
 
   // Si déjà connecté, ne pas afficher la page de connexion
-  if (isAuthenticated) {
+  if (user && !loading) {
     return null;
   }
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <LoginForm 
-          onLogin={login}
-          usernames={usernames}
-        />
-      </div>
-    </div>
-  );
+  return <LoginPage />;
 };
 
 export default AuthPage;
