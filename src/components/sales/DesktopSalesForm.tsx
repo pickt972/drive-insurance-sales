@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Plus, Check, FileText, DollarSign, X, Shield } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
+import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { InsuranceType } from "@/types/database";
 
@@ -78,7 +78,7 @@ export const DesktopSalesForm = ({ onSaleAdded }: DesktopSalesFormProps) => {
   const [insuranceTypes, setInsuranceTypes] = useState<InsuranceType[]>([]);
   const [showConfetti, setShowConfetti] = useState(false);
   
-  const { user, profile } = useSupabaseAuth();
+  const { currentUser } = useAuth();
   const { toast } = useToast();
 
   useEffect(() => {
@@ -168,8 +168,7 @@ export const DesktopSalesForm = ({ onSaleAdded }: DesktopSalesFormProps) => {
     
     console.log('🚀 Début de soumission du formulaire');
     console.log('📝 Données du formulaire:', { clientName, reservationNumber, selectedInsuranceIds });
-    console.log('👤 Utilisateur actuel:', user);
-    console.log('👤 Profil actuel:', profile);
+    console.log('👤 Utilisateur actuel:', currentUser);
     console.log('🛡️ Assurances sélectionnées:', selectedInsurances);
     
     if (!validateForm()) {
@@ -177,7 +176,7 @@ export const DesktopSalesForm = ({ onSaleAdded }: DesktopSalesFormProps) => {
       return;
     }
     
-    if (!user || !profile) {
+    if (!currentUser) {
       console.log('❌ Aucun utilisateur connecté');
       toast({
         title: "Erreur",
@@ -198,7 +197,7 @@ export const DesktopSalesForm = ({ onSaleAdded }: DesktopSalesFormProps) => {
       const totalCommission = selectedInsurances.reduce((sum, ins) => sum + ins.commission, 0);
       
       console.log('💾 Tentative d\'enregistrement:', {
-        employee_id: user.id,
+        employee_id: currentUser.username,
         client_name: clientName.trim(),
         reservation_number: reservationNumber.trim().toUpperCase(),
         insurance_type_id: selectedInsuranceIds[0],
@@ -209,7 +208,7 @@ export const DesktopSalesForm = ({ onSaleAdded }: DesktopSalesFormProps) => {
       const { data: sale, error } = await supabase
         .from('sales')
         .insert({
-          employee_id: user.id,
+          employee_id: currentUser.username,
           client_name: clientName.trim(),
           reservation_number: reservationNumber.trim().toUpperCase(),
           insurance_type_id: selectedInsuranceIds[0],
