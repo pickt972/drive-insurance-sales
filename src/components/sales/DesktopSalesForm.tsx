@@ -10,6 +10,7 @@ import { Plus, Check, FileText, DollarSign, X, Shield } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { SuccessPopup } from "@/components/ui/success-popup";
 import { InsuranceType } from "@/types/database";
 
 const ENCOURAGEMENTS = [
@@ -30,44 +31,6 @@ interface DesktopSalesFormProps {
 }
 
 // Composant d'animation de confettis
-const ConfettiAnimation = () => {
-  return (
-    <div className="fixed inset-0 pointer-events-none z-50 overflow-hidden">
-      {[...Array(50)].map((_, i) => (
-        <div
-          key={i}
-          className="absolute w-3 h-3 animate-ping"
-          style={{
-            left: `${Math.random() * 100}%`,
-            top: `${Math.random() * 20}%`,
-            backgroundColor: ['#FFD700', '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#FF8A80', '#C5E1A5'][Math.floor(Math.random() * 8)],
-            animationDelay: `${Math.random() * 1}s`,
-            animationDuration: `${0.8 + Math.random() * 1.2}s`,
-            transform: `rotate(${Math.random() * 360}deg)`,
-            borderRadius: Math.random() > 0.5 ? '50%' : '0%',
-            animationName: 'confetti-fall',
-            animationTimingFunction: 'ease-out',
-            animationFillMode: 'forwards'
-          }}
-        />
-      ))}
-      <style>
-        {`
-          @keyframes confetti-fall {
-            0% {
-              transform: translateY(-100vh) rotate(0deg);
-              opacity: 1;
-            }
-            100% {
-              transform: translateY(100vh) rotate(720deg);
-              opacity: 0;
-            }
-          }
-        `}
-      </style>
-    </div>
-  );
-};
 
 export const DesktopSalesForm = ({ onSaleAdded }: DesktopSalesFormProps) => {
   const [clientName, setClientName] = useState("");
@@ -76,7 +39,8 @@ export const DesktopSalesForm = ({ onSaleAdded }: DesktopSalesFormProps) => {
   const [notes, setNotes] = useState("");
   const [loading, setLoading] = useState(false);
   const [insuranceTypes, setInsuranceTypes] = useState<InsuranceType[]>([]);
-  const [showConfetti, setShowConfetti] = useState(false);
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
   
   const { currentUser } = useAuth();
   const { toast } = useToast();
@@ -236,16 +200,9 @@ export const DesktopSalesForm = ({ onSaleAdded }: DesktopSalesFormProps) => {
       const insuranceNames = selectedInsurances.map(ins => ins.name).join(", ");
       const finalCommission = selectedInsurances.reduce((sum, ins) => sum + ins.commission, 0);
       
-      // Déclencher l'animation de confettis
-      setShowConfetti(true);
-      setTimeout(() => setShowConfetti(false), 3000);
-      
-      toast({
-        title: encouragement,
-        description: `${insuranceNames} - Commission de ${finalCommission.toFixed(2)} € ajoutée ! 🎊`,
-        className: "success-toast border-green-500 bg-green-50",
-        duration: 5000,
-      });
+      // Afficher la popup de succès
+      setSuccessMessage(encouragement);
+      setShowSuccessPopup(true);
 
       resetForm();
       onSaleAdded?.();
@@ -263,7 +220,11 @@ export const DesktopSalesForm = ({ onSaleAdded }: DesktopSalesFormProps) => {
 
   return (
     <>
-      {showConfetti && <ConfettiAnimation />}
+      <SuccessPopup 
+        isOpen={showSuccessPopup}
+        onClose={() => setShowSuccessPopup(false)}
+        message={successMessage}
+      />
       <div className="max-w-4xl mx-auto">
       <Card className="shadow-card">
         <CardHeader>

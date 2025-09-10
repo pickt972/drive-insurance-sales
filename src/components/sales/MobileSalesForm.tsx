@@ -12,6 +12,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { InsuranceType } from "@/types/database";
 import { useSalesData } from "@/hooks/useSalesData";
+import { SuccessPopup } from "@/components/ui/success-popup";
 
 const ENCOURAGEMENTS = [
   "🎉 Fantastique ! Ta vente a été enregistrée !",
@@ -31,44 +32,6 @@ interface MobileSalesFormProps {
 }
 
 // Composant d'animation de confettis
-const ConfettiAnimation = () => {
-  return (
-    <div className="fixed inset-0 pointer-events-none z-50 overflow-hidden">
-      {[...Array(50)].map((_, i) => (
-        <div
-          key={i}
-          className="absolute w-3 h-3 animate-ping"
-          style={{
-            left: `${Math.random() * 100}%`,
-            top: `${Math.random() * 20}%`,
-            backgroundColor: ['#FFD700', '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#FF8A80', '#C5E1A5'][Math.floor(Math.random() * 8)],
-            animationDelay: `${Math.random() * 1}s`,
-            animationDuration: `${0.8 + Math.random() * 1.2}s`,
-            transform: `rotate(${Math.random() * 360}deg)`,
-            borderRadius: Math.random() > 0.5 ? '50%' : '0%',
-            animationName: 'confetti-fall',
-            animationTimingFunction: 'ease-out',
-            animationFillMode: 'forwards'
-          }}
-        />
-      ))}
-      <style>
-        {`
-          @keyframes confetti-fall {
-            0% {
-              transform: translateY(-100vh) rotate(0deg);
-              opacity: 1;
-            }
-            100% {
-              transform: translateY(100vh) rotate(720deg);
-              opacity: 0;
-            }
-          }
-        `}
-      </style>
-    </div>
-  );
-};
 
 export const MobileSalesForm = ({ onSaleAdded }: MobileSalesFormProps) => {
   const [clientName, setClientName] = useState("");
@@ -77,7 +40,8 @@ export const MobileSalesForm = ({ onSaleAdded }: MobileSalesFormProps) => {
   const [notes, setNotes] = useState("");
   const [loading, setLoading] = useState(false);
   const [insuranceTypes, setInsuranceTypes] = useState<InsuranceType[]>([]);
-  const [showConfetti, setShowConfetti] = useState(false);
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
   
   const { currentUser } = useAuth();
   const { addSale } = useSalesData();
@@ -237,16 +201,9 @@ export const MobileSalesForm = ({ onSaleAdded }: MobileSalesFormProps) => {
       const encouragement = ENCOURAGEMENTS[Math.floor(Math.random() * ENCOURAGEMENTS.length)];
       // Utiliser totalCommission déjà calculé
       
-      // Déclencher l'animation de confettis
-      setShowConfetti(true);
-      setTimeout(() => setShowConfetti(false), 3000);
-      
-      toast({
-        title: encouragement,
-        description: `${selectedInsurances.map(ins => ins.name).join(", ")} - Commission de ${totalCommission.toFixed(2)} € ajoutée ! 🎊`,
-        className: "success-toast border-green-500 bg-green-50",
-        duration: 5000,
-      });
+      // Afficher la popup de succès
+      setSuccessMessage(encouragement);
+      setShowSuccessPopup(true);
 
       resetForm();
       onSaleAdded?.();
@@ -264,7 +221,11 @@ export const MobileSalesForm = ({ onSaleAdded }: MobileSalesFormProps) => {
 
   return (
     <>
-      {showConfetti && <ConfettiAnimation />}
+      <SuccessPopup 
+        isOpen={showSuccessPopup}
+        onClose={() => setShowSuccessPopup(false)}
+        message={successMessage}
+      />
       <div className="space-y-4 animate-fadeInUp">
         <Card className="shadow-card">
           <CardHeader>
