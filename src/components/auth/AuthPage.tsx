@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+// Tabs removed to avoid Radix dependency issues
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2, Mail, Lock, User as UserIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -20,6 +20,7 @@ export const AuthPage = () => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   
+  const [activeTab, setActiveTab] = useState<'signin' | 'signup'>('signin');
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -128,13 +129,25 @@ export const AuthPage = () => {
         </CardHeader>
         
         <CardContent>
-          <Tabs defaultValue="signin" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="signin">Connexion</TabsTrigger>
-              <TabsTrigger value="signup">Inscription</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="signin">
+          <div className="w-full">
+            <div className="grid w-full grid-cols-2 gap-2 mb-4">
+              <Button
+                type="button"
+                variant={activeTab === 'signin' ? 'default' : 'outline'}
+                onClick={() => setActiveTab('signin')}
+              >
+                Connexion
+              </Button>
+              <Button
+                type="button"
+                variant={activeTab === 'signup' ? 'default' : 'outline'}
+                onClick={() => setActiveTab('signup')}
+              >
+                Inscription
+              </Button>
+            </div>
+
+            {activeTab === 'signin' ? (
               <form onSubmit={handleSignIn} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="signin-email" className="flex items-center gap-2">
@@ -183,9 +196,7 @@ export const AuthPage = () => {
                   )}
                 </Button>
               </form>
-            </TabsContent>
-            
-            <TabsContent value="signup">
+            ) : (
               <form onSubmit={handleSignUp} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="signup-username" className="flex items-center gap-2">
@@ -249,8 +260,8 @@ export const AuthPage = () => {
                   )}
                 </Button>
               </form>
-            </TabsContent>
-          </Tabs>
+            )}
+          </div>
         </CardContent>
       </Card>
     </div>
