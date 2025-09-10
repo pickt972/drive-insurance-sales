@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Plus, Check, FileText, DollarSign, X, Shield } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
+import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { InsuranceType } from "@/types/database";
 
@@ -78,7 +78,7 @@ export const DesktopSalesForm = ({ onSaleAdded }: DesktopSalesFormProps) => {
   const [insuranceTypes, setInsuranceTypes] = useState<InsuranceType[]>([]);
   const [showConfetti, setShowConfetti] = useState(false);
   
-  const { profile } = useSupabaseAuth();
+  const { currentUser } = useAuth();
   const { toast } = useToast();
 
   useEffect(() => {
@@ -166,18 +166,53 @@ export const DesktopSalesForm = ({ onSaleAdded }: DesktopSalesFormProps) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!validateForm() || !profile || selectedInsurances.length === 0) return;
+    console.log('🚀 Début de soumission du formulaire');
+    console.log('📝 Données du formulaire:', { clientName, reservationNumber, selectedInsuranceIds });
+    console.log('👤 Utilisateur actuel:', currentUser);
+    console.log('🛡️ Assurances sélectionnées:', selectedInsurances);
+    
+    if (!validateForm()) {
+      console.log('❌ Validation du formulaire échouée');
+      return;
+    }
+    
+    if (!currentUser) {
+      console.log('❌ Aucun utilisateur connecté');
+      toast({
+        title: "Erreur",
+        description: "Utilisateur non connecté",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (selectedInsurances.length === 0) {
+      console.log('❌ Aucune assurance sélectionnée');
+      return;
+    }
 
     setLoading(true);
 
     try {
       const totalCommission = selectedInsurances.reduce((sum, ins) => sum + ins.commission, 0);
       
+      // Créer un ID utilisateur temporaire basé sur le username pour Supabase
+      const tempUserId = `user_${currentUser.username.toLowerCase()}`;
+      
+      console.log('💾 Tentative d\'enregistrement:', {
+        employee_id: tempUserId,
+        client_name: clientName.trim(),
+        reservation_number: reservationNumber.trim().toUpperCase(),
+        insurance_type_id: selectedInsuranceIds[0],
+        commission_amount: totalCommission,
+        notes: notes.trim() || null,
+      });
+      
       const { data: sale, error } = await (supabase as any)
         .schema('api')
         .from('sales')
         .insert({
-          employee_id: profile.user_id,
+          employee_id: tempUserId,
           client_name: clientName.trim(),
           reservation_number: reservationNumber.trim().toUpperCase(),
           insurance_type_id: selectedInsuranceIds[0], // Premier pour compatibilité
