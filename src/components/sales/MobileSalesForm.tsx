@@ -29,8 +29,6 @@ interface MobileSalesFormProps {
 
 export const MobileSalesForm = ({ onSaleAdded }: MobileSalesFormProps) => {
   const [clientName, setClientName] = useState("");
-  const [clientEmail, setClientEmail] = useState("");
-  const [clientPhone, setClientPhone] = useState("");
   const [reservationNumber, setReservationNumber] = useState("");
   const [selectedInsuranceIds, setSelectedInsuranceIds] = useState<string[]>([]);
   const [notes, setNotes] = useState("");
@@ -86,8 +84,6 @@ export const MobileSalesForm = ({ onSaleAdded }: MobileSalesFormProps) => {
 
   const resetForm = () => {
     setClientName("");
-    setClientEmail("");
-    setClientPhone("");
     setReservationNumber("");
     setSelectedInsuranceIds([]);
     setNotes("");
@@ -140,8 +136,6 @@ export const MobileSalesForm = ({ onSaleAdded }: MobileSalesFormProps) => {
         .insert({
           employee_id: profile.user_id,
           client_name: clientName.trim(),
-          client_email: clientEmail.trim() || null,
-          client_phone: clientPhone.trim() || null,
           reservation_number: reservationNumber.trim().toUpperCase(),
           insurance_type_id: selectedInsuranceIds[0], // Premier pour compatibilité
           commission_amount: totalCommission,
@@ -220,37 +214,6 @@ export const MobileSalesForm = ({ onSaleAdded }: MobileSalesFormProps) => {
                   />
                 </div>
 
-                <div className="grid grid-cols-1 gap-3">
-                  <div>
-                    <Label htmlFor="clientEmail" className="text-xs text-muted-foreground flex items-center gap-1">
-                      <Mail className="h-3 w-3" />
-                      Email (optionnel)
-                    </Label>
-                    <Input
-                      id="clientEmail"
-                      type="email"
-                      value={clientEmail}
-                      onChange={(e) => setClientEmail(e.target.value)}
-                      placeholder="client@email.com"
-                      className="mt-1"
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="clientPhone" className="text-xs text-muted-foreground flex items-center gap-1">
-                      <Phone className="h-3 w-3" />
-                      Téléphone (optionnel)
-                    </Label>
-                    <Input
-                      id="clientPhone"
-                      type="tel"
-                      value={clientPhone}
-                      onChange={(e) => setClientPhone(e.target.value)}
-                      placeholder="06 12 34 56 78"
-                      className="mt-1"
-                    />
-                  </div>
-                </div>
               </div>
             </div>
 
