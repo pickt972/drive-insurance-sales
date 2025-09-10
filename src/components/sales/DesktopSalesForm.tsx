@@ -197,7 +197,7 @@ export const DesktopSalesForm = ({ onSaleAdded }: DesktopSalesFormProps) => {
       const totalCommission = selectedInsurances.reduce((sum, ins) => sum + ins.commission, 0);
       
       console.log('💾 Tentative d\'enregistrement:', {
-        employee_id: currentUser.username,
+        employee_name: currentUser.username,
         client_name: clientName.trim(),
         reservation_number: reservationNumber.trim().toUpperCase(),
         insurance_type_id: selectedInsuranceIds[0],
@@ -205,7 +205,8 @@ export const DesktopSalesForm = ({ onSaleAdded }: DesktopSalesFormProps) => {
         notes: notes.trim() || null,
       });
       
-      const { data: sale, error } = await supabase
+      const { data: sale, error } = await (supabase as any)
+        .schema('api')
         .from('sales')
         .insert({
           employee_name: currentUser.username,

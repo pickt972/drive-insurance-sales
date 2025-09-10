@@ -207,7 +207,8 @@ export const MobileSalesForm = ({ onSaleAdded }: MobileSalesFormProps) => {
         notes: notes.trim() || null,
       });
       
-      const { data: sale, error } = await supabase
+      const { data: sale, error } = await (supabase as any)
+        .schema('api')
         .from('sales')
         .insert({
           employee_name: currentUser.username,
