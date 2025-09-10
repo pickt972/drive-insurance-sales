@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Car, User, Lock, Mail, Eye, EyeOff } from "lucide-react";
@@ -18,6 +19,14 @@ export const LoginPage = () => {
   const [sendingReset, setSendingReset] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+
+  const availableUsers = [
+    { username: 'admin', role: 'admin' },
+    { username: 'julie', role: 'employee' },
+    { username: 'sherman', role: 'employee' },
+    { username: 'alvin', role: 'employee' },
+    { username: 'stef', role: 'employee' },
+  ];
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -99,16 +108,29 @@ export const LoginPage = () => {
               <div className="space-y-2">
                 <Label htmlFor="username" className="flex items-center gap-2">
                   <User className="h-4 w-4" />
-                  Nom d'utilisateur
+                  Utilisateur
                 </Label>
-                <Input
-                  id="username"
-                  type="text"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  placeholder="Votre nom d'utilisateur"
-                  required
-                />
+                <Select value={username} onValueChange={setUsername}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Choisir un utilisateur" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-background border shadow-lg z-50">
+                    {availableUsers.map((user) => (
+                      <SelectItem 
+                        key={user.username} 
+                        value={user.username}
+                        className="hover:bg-accent cursor-pointer"
+                      >
+                        <div className="flex items-center gap-2">
+                          <span className="capitalize">{user.username}</span>
+                          <span className="text-xs text-muted-foreground">
+                            ({user.role === 'admin' ? 'Admin' : 'Employé'})
+                          </span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               
               <div className="space-y-2">
