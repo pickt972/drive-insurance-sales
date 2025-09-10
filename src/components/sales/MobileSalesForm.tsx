@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { InsuranceType } from "@/types/database";
+import { useSalesData } from "@/hooks/useSalesData";
 
 const ENCOURAGEMENTS = [
   "🎉 Fantastique ! Ta vente a été enregistrée !",
@@ -79,6 +80,7 @@ export const MobileSalesForm = ({ onSaleAdded }: MobileSalesFormProps) => {
   const [showConfetti, setShowConfetti] = useState(false);
   
   const { currentUser } = useAuth();
+  const { addSale } = useSalesData();
   const { toast } = useToast();
 
   useEffect(() => {
@@ -205,18 +207,14 @@ export const MobileSalesForm = ({ onSaleAdded }: MobileSalesFormProps) => {
         notes: notes.trim() || null,
       });
       
-      const { data: sale, error } = await supabase
-        .from('sales')
-        .insert({
-          employee_id: currentUser.username,
-          client_name: clientName.trim(),
-          reservation_number: reservationNumber.trim().toUpperCase(),
-          insurance_type_id: selectedInsuranceIds[0],
-          commission_amount: totalCommission,
-          notes: notes.trim() || null,
-        })
-        .select()
-        .single();
+      const selectedInsuranceNames = selectedInsurances.map(ins => ins.name);
+      const newSale = addSale({
+        employeeName: currentUser.username,
+        clientName: clientName.trim(),
+        reservationNumber: reservationNumber.trim().toUpperCase(),
+        insuranceTypes: selectedInsuranceNames,
+        date: new Date().toISOString(),
+      });
 
       if (error) {
         console.error('❌ Erreur Supabase:', error);
