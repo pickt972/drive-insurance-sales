@@ -8,6 +8,7 @@ import { Car, User, Lock, Mail, Eye, EyeOff } from "lucide-react";
 import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { InitializeUsers } from "@/components/InitializeUsers";
 
 export const LoginPage = () => {
   const { signInWithUsername, loading } = useSupabaseAuth();
@@ -85,6 +86,8 @@ export const LoginPage = () => {
                 Accédez à votre espace de vente
               </p>
             </div>
+
+            <InitializeUsers />
 
             {showForgotPassword && (
               <Alert>
