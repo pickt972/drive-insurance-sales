@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Check, Phone, Mail, FileText, DollarSign, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,19 +13,43 @@ import { useToast } from "@/hooks/use-toast";
 import { InsuranceType } from "@/types/database";
 
 const ENCOURAGEMENTS = [
-  "🎉 Excellent ! Ta vente a été enregistrée avec succès !",
-  "💪 Bravo, ta performance est remarquable !",
-  "🚀 Encore une vente ! Tu es en feu !",
-  "💰 Commission enregistrée. Direction le sommet !",
-  "⭐ Bien joué, chaque vente compte !",
-  "🏆 Tes efforts paient, continue sur cette lancée !",
-  "🎯 Parfait ! Tu vises juste !",
-  "💎 Qualité premium, comme d'habitude !"
+  "🎉 Fantastique ! Ta vente a été enregistrée !",
+  "💪 Excellent travail ! Tu es sur la bonne voie !",
+  "🚀 Bravo ! Encore une vente de plus !",
+  "💰 Superbe ! Ta commission est ajoutée !",
+  "⭐ Génial ! Continue comme ça !",
+  "🏆 Champion ! Tes efforts paient !",
+  "🎯 Parfait ! Tu vises dans le mille !",
+  "💎 Top ! Qualité premium comme toujours !",
+  "🔥 En feu ! Tu déchires tout !",
+  "🌟 Magnifique ! Tu es une star !"
 ];
 
 interface DesktopSalesFormProps {
   onSaleAdded?: () => void;
 }
+
+// Composant d'animation de confettis
+const ConfettiAnimation = () => {
+  return (
+    <div className="fixed inset-0 pointer-events-none z-50 overflow-hidden">
+      {[...Array(50)].map((_, i) => (
+        <div
+          key={i}
+          className={`absolute w-2 h-2 animate-bounce`}
+          style={{
+            left: `${Math.random() * 100}%`,
+            top: `${Math.random() * 100}%`,
+            backgroundColor: ['#FFD700', '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7'][Math.floor(Math.random() * 6)],
+            animationDelay: `${Math.random() * 2}s`,
+            animationDuration: `${1 + Math.random() * 2}s`,
+            transform: `rotate(${Math.random() * 360}deg)`
+          }}
+        />
+      ))}
+    </div>
+  );
+};
 
 export const DesktopSalesForm = ({ onSaleAdded }: DesktopSalesFormProps) => {
   const [clientName, setClientName] = useState("");
@@ -34,6 +58,7 @@ export const DesktopSalesForm = ({ onSaleAdded }: DesktopSalesFormProps) => {
   const [notes, setNotes] = useState("");
   const [loading, setLoading] = useState(false);
   const [insuranceTypes, setInsuranceTypes] = useState<InsuranceType[]>([]);
+  const [showConfetti, setShowConfetti] = useState(false);
   
   const { profile } = useSupabaseAuth();
   const { toast } = useToast();
@@ -153,15 +178,20 @@ export const DesktopSalesForm = ({ onSaleAdded }: DesktopSalesFormProps) => {
         return;
       }
 
-      // Message de succès amusant
+      // Message de succès avec animation
       const encouragement = ENCOURAGEMENTS[Math.floor(Math.random() * ENCOURAGEMENTS.length)];
       const insuranceNames = selectedInsurances.map(ins => ins.name).join(", ");
       const finalCommission = selectedInsurances.reduce((sum, ins) => sum + ins.commission, 0);
       
+      // Déclencher l'animation de confettis
+      setShowConfetti(true);
+      setTimeout(() => setShowConfetti(false), 3000);
+      
       toast({
         title: encouragement,
-        description: `${insuranceNames} - Commission de ${finalCommission.toFixed(2)} € ajoutée ! 🚀`,
-        className: "success-toast",
+        description: `${insuranceNames} - Commission de ${finalCommission.toFixed(2)} € ajoutée ! 🎊`,
+        className: "success-toast border-green-500 bg-green-50",
+        duration: 5000,
       });
 
       resetForm();
@@ -179,7 +209,9 @@ export const DesktopSalesForm = ({ onSaleAdded }: DesktopSalesFormProps) => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <>
+      {showConfetti && <ConfettiAnimation />}
+      <div className="max-w-4xl mx-auto">
       <Card className="shadow-card">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-xl">
@@ -244,31 +276,36 @@ export const DesktopSalesForm = ({ onSaleAdded }: DesktopSalesFormProps) => {
                     Type d'Assurance
                   </h3>
                   
-                  <div className="space-y-3">
-                    <Label className="text-sm font-medium">
-                      Types d'assurance * (sélection multiple)
-                    </Label>
-                    <div className="grid grid-cols-1 gap-3">
-                      {insuranceTypes.map((insurance) => (
-                        <div key={insurance.id} className="flex items-center space-x-3 p-4 border rounded-lg hover:bg-accent/50 transition-colors">
-                          <Checkbox
-                            id={insurance.id}
-                            checked={selectedInsuranceIds.includes(insurance.id)}
-                            onCheckedChange={(checked) => {
-                              if (checked) {
-                                setSelectedInsuranceIds([...selectedInsuranceIds, insurance.id]);
-                              } else {
-                                setSelectedInsuranceIds(selectedInsuranceIds.filter(id => id !== insurance.id));
-                              }
-                            }}
-                          />
-                          <Label htmlFor={insurance.id} className="flex-1 cursor-pointer">
-                            <span className="font-medium">{insurance.name}</span>
-                          </Label>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
+                   <div className="space-y-3">
+                     <Label className="text-sm font-medium">
+                       Types d'assurance * (sélection multiple)
+                     </Label>
+                     <Select 
+                       onValueChange={(value) => {
+                         if (!selectedInsuranceIds.includes(value)) {
+                           setSelectedInsuranceIds([...selectedInsuranceIds, value]);
+                         }
+                       }}
+                     >
+                       <SelectTrigger className="w-full">
+                         <SelectValue placeholder="Sélectionner une assurance à ajouter" />
+                       </SelectTrigger>
+                       <SelectContent className="bg-background border shadow-lg z-50">
+                         {insuranceTypes
+                           .filter(insurance => !selectedInsuranceIds.includes(insurance.id))
+                           .map((insurance) => (
+                             <SelectItem key={insurance.id} value={insurance.id}>
+                               <div className="flex items-center justify-between w-full">
+                                 <span>{insurance.name}</span>
+                                 <span className="text-sm text-muted-foreground ml-2">
+                                   {insurance.commission.toFixed(2)} €
+                                 </span>
+                               </div>
+                             </SelectItem>
+                           ))}
+                       </SelectContent>
+                     </Select>
+                   </div>
                 </div>
 
                 {/* Résumé des sélections */}
@@ -336,5 +373,6 @@ export const DesktopSalesForm = ({ onSaleAdded }: DesktopSalesFormProps) => {
         </CardContent>
       </Card>
     </div>
+    </>
   );
 };

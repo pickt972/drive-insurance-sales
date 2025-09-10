@@ -4,28 +4,52 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Check, Phone, Mail, FileText, X } from "lucide-react";
+import { Plus, Check, FileText, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
 import { useToast } from "@/hooks/use-toast";
 import { InsuranceType } from "@/types/database";
 
 const ENCOURAGEMENTS = [
-  "🎉 Excellent ! Ta vente a été enregistrée avec succès !",
-  "💪 Bravo, ta performance est remarquable !",
-  "🚀 Encore une vente ! Tu es en feu !",
-  "💰 Commission enregistrée. Direction le sommet !",
-  "⭐ Bien joué, chaque vente compte !",
-  "🏆 Tes efforts paient, continue sur cette lancée !",
-  "🎯 Parfait ! Tu vises juste !",
-  "💎 Qualité premium, comme d'habitude !"
+  "🎉 Fantastique ! Ta vente a été enregistrée !",
+  "💪 Excellent travail ! Tu es sur la bonne voie !",
+  "🚀 Bravo ! Encore une vente de plus !",
+  "💰 Superbe ! Ta commission est ajoutée !",
+  "⭐ Génial ! Continue comme ça !",
+  "🏆 Champion ! Tes efforts paient !",
+  "🎯 Parfait ! Tu vises dans le mille !",
+  "💎 Top ! Qualité premium comme toujours !",
+  "🔥 En feu ! Tu déchires tout !",
+  "🌟 Magnifique ! Tu es une star !"
 ];
 
 interface MobileSalesFormProps {
   onSaleAdded?: () => void;
 }
+
+// Composant d'animation de confettis
+const ConfettiAnimation = () => {
+  return (
+    <div className="fixed inset-0 pointer-events-none z-50 overflow-hidden">
+      {[...Array(30)].map((_, i) => (
+        <div
+          key={i}
+          className={`absolute w-2 h-2 animate-bounce`}
+          style={{
+            left: `${Math.random() * 100}%`,
+            top: `${Math.random() * 100}%`,
+            backgroundColor: ['#FFD700', '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7'][Math.floor(Math.random() * 6)],
+            animationDelay: `${Math.random() * 2}s`,
+            animationDuration: `${1 + Math.random() * 2}s`,
+            transform: `rotate(${Math.random() * 360}deg)`
+          }}
+        />
+      ))}
+    </div>
+  );
+};
 
 export const MobileSalesForm = ({ onSaleAdded }: MobileSalesFormProps) => {
   const [clientName, setClientName] = useState("");
@@ -34,6 +58,7 @@ export const MobileSalesForm = ({ onSaleAdded }: MobileSalesFormProps) => {
   const [notes, setNotes] = useState("");
   const [loading, setLoading] = useState(false);
   const [insuranceTypes, setInsuranceTypes] = useState<InsuranceType[]>([]);
+  const [showConfetti, setShowConfetti] = useState(false);
   
   const { profile } = useSupabaseAuth();
   const { toast } = useToast();
@@ -156,15 +181,20 @@ export const MobileSalesForm = ({ onSaleAdded }: MobileSalesFormProps) => {
       // Pour l'instant, on simplifie sans la table sale_insurances
       // car elle n'est pas dans les types générés
 
-      // Message de succès amusant
+      // Message de succès avec animation
       const encouragement = ENCOURAGEMENTS[Math.floor(Math.random() * ENCOURAGEMENTS.length)];
       const insuranceNames = selectedInsurances.map(ins => ins.name).join(", ");
       const finalCommission = selectedInsurances.reduce((sum, ins) => sum + ins.commission, 0);
       
+      // Déclencher l'animation de confettis
+      setShowConfetti(true);
+      setTimeout(() => setShowConfetti(false), 3000);
+      
       toast({
         title: encouragement,
-        description: `${insuranceNames} - Commission de ${finalCommission.toFixed(2)} € ajoutée ! 🚀`,
-        className: "success-toast",
+        description: `${insuranceNames} - Commission de ${finalCommission.toFixed(2)} € ajoutée ! 🎊`,
+        className: "success-toast border-green-500 bg-green-50",
+        duration: 5000,
       });
 
       resetForm();
@@ -182,148 +212,155 @@ export const MobileSalesForm = ({ onSaleAdded }: MobileSalesFormProps) => {
   };
 
   return (
-    <div className="space-y-4 animate-fadeInUp">
-      <Card className="shadow-card">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <Plus className="h-5 w-5 text-primary" />
-            Nouvelle Vente
-          </CardTitle>
-        </CardHeader>
-        
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Informations client */}
-            <div className="space-y-3">
-              <Label className="text-sm font-medium flex items-center gap-2">
-                <FileText className="h-4 w-4" />
-                Informations Client
-              </Label>
-              
+    <>
+      {showConfetti && <ConfettiAnimation />}
+      <div className="space-y-4 animate-fadeInUp">
+        <Card className="shadow-card">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <Plus className="h-5 w-5 text-primary" />
+              Nouvelle Vente
+            </CardTitle>
+          </CardHeader>
+          
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Informations client */}
               <div className="space-y-3">
-                <div>
-                  <Label htmlFor="clientName" className="text-xs text-muted-foreground">
-                    Nom complet *
-                  </Label>
-                  <Input
-                    id="clientName"
-                    value={clientName}
-                    onChange={(e) => setClientName(e.target.value)}
-                    placeholder="Ex: Dupont Jean"
-                    className="mt-1"
-                  />
-                </div>
-
-              </div>
-            </div>
-
-            {/* Réservation */}
-            <div>
-              <Label htmlFor="reservationNumber" className="text-xs text-muted-foreground">
-                N° de réservation *
-              </Label>
-              <Input
-                id="reservationNumber"
-                value={reservationNumber}
-                onChange={(e) => setReservationNumber(e.target.value)}
-                placeholder="Ex: RES12345"
-                className="mt-1 font-mono"
-              />
-            </div>
-
-            {/* Types d'assurance */}
-            <div>
-              <Label className="text-xs text-muted-foreground">
-                Types d'assurance * (sélection multiple)
-              </Label>
-              <div className="mt-2 space-y-2">
-                {insuranceTypes.map((insurance) => (
-                  <div key={insurance.id} className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-accent/50 transition-colors">
-                    <Checkbox
-                      id={insurance.id}
-                      checked={selectedInsuranceIds.includes(insurance.id)}
-                      onCheckedChange={(checked) => {
-                        if (checked) {
-                          setSelectedInsuranceIds([...selectedInsuranceIds, insurance.id]);
-                        } else {
-                          setSelectedInsuranceIds(selectedInsuranceIds.filter(id => id !== insurance.id));
-                        }
-                      }}
-                    />
-                    <Label htmlFor={insurance.id} className="flex-1 cursor-pointer">
-                      <span>{insurance.name}</span>
+                <Label className="text-sm font-medium flex items-center gap-2">
+                  <FileText className="h-4 w-4" />
+                  Informations Client
+                </Label>
+                
+                <div className="space-y-3">
+                  <div>
+                    <Label htmlFor="clientName" className="text-xs text-muted-foreground">
+                      Nom complet *
                     </Label>
+                    <Input
+                      id="clientName"
+                      value={clientName}
+                      onChange={(e) => setClientName(e.target.value)}
+                      placeholder="Ex: Dupont Jean"
+                      className="mt-1"
+                    />
                   </div>
-                ))}
+                </div>
               </div>
-              
-              {/* Résumé des sélections */}
-              {selectedInsurances.length > 0 && (
-                <div className="mt-3 p-3 bg-primary-light rounded-lg">
-                  <div className="text-sm font-medium text-primary mb-2">
-                    Assurances sélectionnées ({selectedInsurances.length})
-                  </div>
-                  <div className="flex flex-wrap gap-2 mb-2">
-                    {selectedInsurances.map((insurance) => (
-                      <Badge 
-                        key={insurance.id} 
-                        variant="secondary" 
-                        className="flex items-center gap-1"
-                      >
-                        {insurance.name}
-                        <button
-                          type="button"
-                          onClick={() => setSelectedInsuranceIds(selectedInsuranceIds.filter(id => id !== insurance.id))}
-                          className="ml-1 hover:bg-destructive/10 rounded-full p-0.5"
+
+              {/* Réservation */}
+              <div>
+                <Label htmlFor="reservationNumber" className="text-xs text-muted-foreground">
+                  N° de réservation *
+                </Label>
+                <Input
+                  id="reservationNumber"
+                  value={reservationNumber}
+                  onChange={(e) => setReservationNumber(e.target.value)}
+                  placeholder="Ex: RES12345"
+                  className="mt-1 font-mono"
+                />
+              </div>
+
+              {/* Types d'assurance */}
+              <div>
+                <Label className="text-xs text-muted-foreground">
+                  Types d'assurance * (sélection multiple)
+                </Label>
+                <Select 
+                  onValueChange={(value) => {
+                    if (!selectedInsuranceIds.includes(value)) {
+                      setSelectedInsuranceIds([...selectedInsuranceIds, value]);
+                    }
+                  }}
+                >
+                  <SelectTrigger className="w-full mt-2">
+                    <SelectValue placeholder="Sélectionner une assurance à ajouter" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-background border shadow-lg z-50">
+                    {insuranceTypes
+                      .filter(insurance => !selectedInsuranceIds.includes(insurance.id))
+                      .map((insurance) => (
+                        <SelectItem key={insurance.id} value={insurance.id}>
+                          <div className="flex items-center justify-between w-full">
+                            <span>{insurance.name}</span>
+                            <span className="text-xs text-muted-foreground ml-2">
+                              {insurance.commission.toFixed(2)} €
+                            </span>
+                          </div>
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+                
+                {/* Résumé des sélections */}
+                {selectedInsurances.length > 0 && (
+                  <div className="mt-3 p-3 bg-primary-light rounded-lg">
+                    <div className="text-sm font-medium text-primary mb-2">
+                      Assurances sélectionnées ({selectedInsurances.length})
+                    </div>
+                    <div className="flex flex-wrap gap-2 mb-2">
+                      {selectedInsurances.map((insurance) => (
+                        <Badge 
+                          key={insurance.id} 
+                          variant="secondary" 
+                          className="flex items-center gap-1"
                         >
-                          <X className="h-3 w-3" />
-                        </button>
-                      </Badge>
-                    ))}
+                          {insurance.name}
+                          <button
+                            type="button"
+                            onClick={() => setSelectedInsuranceIds(selectedInsuranceIds.filter(id => id !== insurance.id))}
+                            className="ml-1 hover:bg-destructive/10 rounded-full p-0.5"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </Badge>
+                      ))}
+                    </div>
+                    <div className="text-sm font-bold text-primary">
+                      Commission totale: {selectedInsurances.reduce((sum, ins) => sum + ins.commission, 0).toFixed(2)} €
+                    </div>
                   </div>
-                  <div className="text-sm font-bold text-primary">
-                    Commission totale: {selectedInsurances.reduce((sum, ins) => sum + ins.commission, 0).toFixed(2)} €
+                )}
+              </div>
+
+              {/* Notes */}
+              <div>
+                <Label htmlFor="notes" className="text-xs text-muted-foreground">
+                  Notes (optionnel)
+                </Label>
+                <Textarea
+                  id="notes"
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  placeholder="Informations supplémentaires..."
+                  className="mt-1 resize-none"
+                  rows={3}
+                />
+              </div>
+
+              {/* Bouton de soumission */}
+              <Button
+                type="submit"
+                className="w-full primary-button h-12 text-base font-medium"
+                disabled={loading}
+              >
+                {loading ? (
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Enregistrement...
                   </div>
-                </div>
-              )}
-            </div>
-
-            {/* Notes */}
-            <div>
-              <Label htmlFor="notes" className="text-xs text-muted-foreground">
-                Notes (optionnel)
-              </Label>
-              <Textarea
-                id="notes"
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                placeholder="Informations supplémentaires..."
-                className="mt-1 resize-none"
-                rows={3}
-              />
-            </div>
-
-            {/* Bouton de soumission */}
-            <Button
-              type="submit"
-              className="w-full primary-button h-12 text-base font-medium"
-              disabled={loading}
-            >
-              {loading ? (
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  Enregistrement...
-                </div>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <Check className="h-5 w-5" />
-                  Enregistrer la vente
-                </div>
-              )}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
-    </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <Check className="h-5 w-5" />
+                    Enregistrer la vente
+                  </div>
+                )}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
+    </>
   );
 };
