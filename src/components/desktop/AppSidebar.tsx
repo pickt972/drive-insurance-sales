@@ -25,10 +25,10 @@ const navigationItems = [
   { id: "dashboard", title: "Tableau de bord", icon: BarChart3 },
   { id: "add", title: "Nouvelle vente", icon: Plus },
   { id: "sales", title: "Historique", icon: FileText },
-  { id: "export", title: "Export", icon: Download },
 ];
 
 const adminItems = [
+  { id: "export", title: "Export", icon: Download },
   { id: "admin", title: "Commissions", icon: Settings },
   { id: "users", title: "Utilisateurs", icon: Users },
 ];

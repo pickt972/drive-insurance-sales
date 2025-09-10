@@ -1,4 +1,4 @@
-import { BarChart3, Plus, FileText, Settings, Users } from "lucide-react";
+import { BarChart3, Plus, FileText, Settings, Users, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface MobileBottomNavProps {
@@ -13,6 +13,7 @@ export const MobileBottomNav = ({ currentTab, onTabChange, isAdmin }: MobileBott
     { id: 'add', icon: Plus, label: 'Nouvelle' },
     { id: 'sales', icon: FileText, label: 'Historique' },
     ...(isAdmin ? [
+      { id: 'export', icon: Download, label: 'Export' },
       { id: 'admin', icon: Settings, label: 'Admin' },
       { id: 'users', icon: Users, label: 'Équipe' }
     ] : [])
