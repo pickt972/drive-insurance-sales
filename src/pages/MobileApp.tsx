@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
 import { useSalesData } from "@/hooks/useSalesData";
 import { LoginForm } from "@/components/LoginForm";
+import { AuthPage } from "@/components/auth/AuthPage";
 import { MobileLayout } from "@/components/mobile/MobileLayout";
 import { DesktopLayout } from "@/components/desktop/DesktopLayout";
 import { MobileDashboard } from "@/components/dashboard/MobileDashboard";
@@ -30,6 +32,7 @@ const useResponsive = () => {
 const ResponsiveApp = () => {
   const [currentTab, setCurrentTab] = useState("dashboard");
   const { currentUser, users, login, isAuthenticated, isAdmin } = useAuth();
+  const { user, profile, loading, isAuthenticated: supabaseAuth, signOut } = useSupabaseAuth();
   const { sales, addSale, getStats } = useSalesData();
   const isMobile = useResponsive();
   
@@ -66,13 +69,39 @@ const ResponsiveApp = () => {
     weeklyEvolution: [] // Simplified for now
   };
 
-  // Not authenticated
-  if (!isAuthenticated) {
+  // Show loading while checking auth
+  if (loading) {
     return (
-      <LoginForm 
-        onLogin={login}
-        usernames={users.map(u => u.username)}
-      />
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+          <p>Chargement...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Not authenticated with Supabase - show auth page
+  if (!supabaseAuth) {
+    return <AuthPage />;
+  }
+
+  // Profile required after auth
+  if (!profile) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle>Configuration du profil</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-center py-4">
+              <p>Configuration de votre profil en cours...</p>
+              <Loader2 className="h-6 w-6 animate-spin mx-auto mt-4" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     );
   }
 
