@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
-import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
+import { useAuth } from "@/hooks/useAuth";
 import { useSalesData } from "@/hooks/useSalesData";
-import { LoginForm } from "@/components/LoginForm";
-import { AuthPage } from "@/components/auth/AuthPage";
+import { useNavigate } from "react-router-dom";
 import { MobileLayout } from "@/components/mobile/MobileLayout";
 import { DesktopLayout } from "@/components/desktop/DesktopLayout";
 import { MobileDashboard } from "@/components/dashboard/MobileDashboard";
@@ -30,12 +29,10 @@ const useResponsive = () => {
 
 const ResponsiveApp = () => {
   const [currentTab, setCurrentTab] = useState("dashboard");
-  const { user, profile, loading, isAuthenticated: supabaseAuth, signOut } = useSupabaseAuth();
+  const { currentUser, isAuthenticated, isAdmin } = useAuth();
+  const navigate = useNavigate();
   const { sales, addSale, getStats } = useSalesData();
   const isMobile = useResponsive();
-  
-  // Determine if user is admin from Supabase profile
-  const isAdmin = profile?.role === 'admin';
   
   const salesStats = getStats();
   
@@ -53,7 +50,7 @@ const ResponsiveApp = () => {
       .sort((a, b) => b.total_commission - a.total_commission),
     recentSales: sales.slice(0, 10).map(sale => ({
       id: sale.id,
-      employee_id: sale.employeeName,
+      employee_id: currentUser?.username || sale.employeeName,
       client_name: sale.clientName,
       client_email: undefined,
       client_phone: undefined,
@@ -70,40 +67,10 @@ const ResponsiveApp = () => {
     weeklyEvolution: [] // Simplified for now
   };
 
-  // Show loading while checking auth
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-          <p>Chargement...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Not authenticated with Supabase - show auth page
-  if (!supabaseAuth) {
-    return <AuthPage />;
-  }
-
-  // Profile required after auth
-  if (!profile) {
-    return (
-      <div className="min-h-screen flex items-center justify-center p-4">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle>Configuration du profil</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-center py-4">
-              <p>Configuration de votre profil en cours...</p>
-              <Loader2 className="h-6 w-6 animate-spin mx-auto mt-4" />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
+  // Not authenticated - redirect to auth page
+  if (!isAuthenticated) {
+    navigate('/auth');
+    return null;
   }
 
   const handleSaleAdded = () => {
