@@ -5,12 +5,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Car, User, Lock, Mail, Eye, EyeOff } from "lucide-react";
-import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
+import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
 
 export const LoginPage = () => {
-  const { signInWithUsername, loading } = useSupabaseAuth();
+  const { login } = useAuth();
+  const navigate = useNavigate();
   const { toast } = useToast();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -24,42 +25,29 @@ export const LoginPage = () => {
     if (!username || !password) return;
     
     setIsLoading(true);
-    await signInWithUsername(username.toLowerCase().trim(), password);
+    const result = await login(username.trim(), password);
+    
+    if (result.success) {
+      toast({
+        title: "Connexion réussie",
+        description: "Bienvenue !",
+      });
+      navigate('/');
+    } else {
+      toast({
+        title: "Erreur de connexion",
+        description: result.error || "Identifiant ou mot de passe incorrect",
+        variant: "destructive",
+      });
+    }
     setIsLoading(false);
   };
 
   const handleForgotPassword = async () => {
-    if (!username) {
-      toast({
-        title: "Nom d'utilisateur requis",
-        description: "Veuillez saisir votre nom d'utilisateur.",
-        variant: "destructive",
-      });
-      return;
-    }
-    try {
-      setSendingReset(true);
-      const { error } = await supabase.functions.invoke('password-reset-request', {
-        body: {
-          username: username.toLowerCase().trim(),
-          origin: window.location.origin,
-        },
-      });
-      if (error) throw error;
-      setShowForgotPassword(true);
-      toast({
-        title: "Demande envoyée",
-        description: "L'administrateur a été notifié par email.",
-      });
-    } catch (err: any) {
-      toast({
-        title: "Échec de l'envoi",
-        description: err.message || "Impossible d'envoyer la demande. Réessayez plus tard.",
-        variant: "destructive",
-      });
-    } finally {
-      setSendingReset(false);
-    }
+    toast({
+      title: "Mot de passe oublié",
+      description: "Contactez votre administrateur pour réinitialiser votre mot de passe.",
+    });
   };
 
   return (
@@ -86,15 +74,6 @@ export const LoginPage = () => {
               </p>
             </div>
 
-            {showForgotPassword && (
-              <Alert>
-                <Mail className="h-4 w-4" />
-                <AlertDescription>
-                  Votre demande de réinitialisation de mot de passe a été envoyée à l'administrateur. 
-                  Vous recevrez un email avec votre nouveau mot de passe.
-                </AlertDescription>
-              </Alert>
-            )}
             
             <form onSubmit={handleSignIn} className="space-y-4">
               <div className="space-y-2">
@@ -159,10 +138,9 @@ export const LoginPage = () => {
                 variant="link"
                 size="sm"
                 onClick={handleForgotPassword}
-                disabled={sendingReset}
                 className="text-muted-foreground hover:text-primary"
               >
-                {sendingReset ? 'Envoi…' : 'Mot de passe oublié ?'}
+                Mot de passe oublié ?
               </Button>
             </div>
 
