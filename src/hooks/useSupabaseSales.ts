@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
+import { useAuth } from '@/hooks/useAuth';
 import { DashboardStats, SaleWithDetails } from '@/types/database';
 
 export const useSupabaseSales = () => {
@@ -13,7 +13,7 @@ export const useSupabaseSales = () => {
     weeklyEvolution: [],
   });
   const [loading, setLoading] = useState(true);
-  const { profile } = useSupabaseAuth();
+  const { currentUser } = useAuth();
 
   const fetchStats = async () => {
     try {
@@ -30,8 +30,7 @@ export const useSupabaseSales = () => {
         .from('sales')
         .select(`
           *,
-          employee:profiles!sales_employee_id_fkey(username),
-          insurance_type:insurance_types(name, commission)
+          insurance_types!inner(name, commission)
         `)
         .eq('status', 'active')
         .order('created_at', { ascending: false });
@@ -43,14 +42,13 @@ export const useSupabaseSales = () => {
 
       const salesWithDetails: SaleWithDetails[] = sales?.map(sale => ({
         ...sale,
-        employee_name: sale.employee?.username || 'Inconnu',
-        insurance_name: sale.insurance_type?.name || 'Inconnu',
+        insurance_name: sale.insurance_types?.name || 'Inconnu',
       } as SaleWithDetails)) || [];
 
-      // Filtrer selon le rôle
-      const filteredSales = profile?.role === 'admin' 
+      // Filtrer selon le rôle (pour l'instant on affiche toutes les ventes)
+      const filteredSales = currentUser?.role === 'admin' 
         ? salesWithDetails 
-        : salesWithDetails.filter(sale => sale.employee_id === profile?.user_id);
+        : salesWithDetails.filter(sale => sale.employee_name === currentUser?.username);
 
       // Calculer les statistiques
       const totalSales = filteredSales.length;
@@ -61,7 +59,7 @@ export const useSupabaseSales = () => {
       ).length;
 
       // Top vendeurs (seulement pour admin)
-      const topSellers = profile?.role === 'admin' ? (() => {
+      const topSellers = currentUser?.role === 'admin' ? (() => {
         const sellerStats = salesWithDetails.reduce((acc, sale) => {
           const employeeName = sale.employee_name;
           if (!acc[employeeName]) {
@@ -119,10 +117,10 @@ export const useSupabaseSales = () => {
   };
 
   useEffect(() => {
-    if (profile) {
+    if (currentUser) {
       fetchStats();
     }
-  }, [profile]);
+  }, [currentUser]);
 
   return {
     stats,

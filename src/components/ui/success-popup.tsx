@@ -117,11 +117,15 @@ export const SuccessPopup = ({ isOpen, onClose, message, title = "Félicitations
             opacity: 1;
           }
           10% {
-            transform: translateY(-20px) translateX(0) rotate(180deg) scale(1);
+            transform: translateY(-50px) translateX(10px) rotate(180deg) scale(1);
+            opacity: 1;
+          }
+          50% {
+            transform: translateY(-30px) translateX(-20px) rotate(360deg) scale(1);
             opacity: 1;
           }
           100% {
-            transform: translateY(200px) translateX(${Math.random() > 0.5 ? '' : '-'}${50 + Math.random() * 100}px) rotate(720deg) scale(0.3);
+            transform: translateY(100vh) translateX(80px) rotate(720deg) scale(0.2);
             opacity: 0;
           }
         }

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { useSalesData } from "@/hooks/useSalesData";
+import { useSupabaseSales } from "@/hooks/useSupabaseSales";
 import { useNavigate } from "react-router-dom";
 import { MobileLayout } from "@/components/mobile/MobileLayout";
 import { DesktopLayout } from "@/components/desktop/DesktopLayout";
@@ -31,41 +31,8 @@ const ResponsiveApp = () => {
   const [currentTab, setCurrentTab] = useState("dashboard");
   const { currentUser, isAuthenticated, isAdmin } = useAuth();
   const navigate = useNavigate();
-  const { sales, addSale, getStats } = useSalesData();
+  const { stats, loading, refreshStats } = useSupabaseSales();
   const isMobile = useResponsive();
-  
-  const salesStats = getStats();
-  
-  // Convert SalesStats to DashboardStats format
-  const stats = {
-    totalSales: salesStats.totalSales,
-    totalCommission: salesStats.totalCommissions,
-    salesThisWeek: salesStats.totalSales, // Simplified for now
-    topSellers: Object.entries(salesStats.commissionsByEmployee)
-      .map(([name, commission]) => ({ 
-        employee_name: name, 
-        sales_count: salesStats.salesByEmployee[name] || 0,
-        total_commission: commission 
-      }))
-      .sort((a, b) => b.total_commission - a.total_commission),
-    recentSales: sales.slice(0, 10).map(sale => ({
-      id: sale.id,
-      employee_id: currentUser?.username || sale.employeeName,
-      client_name: sale.clientName,
-      client_email: undefined,
-      client_phone: undefined,
-      reservation_number: sale.reservationNumber,
-      insurance_type_id: "1",
-      commission_amount: sale.commissions,
-      notes: undefined,
-      status: 'active' as const,
-      created_at: new Date(sale.timestamp).toISOString(),
-      updated_at: new Date(sale.timestamp).toISOString(),
-      employee_name: sale.employeeName,
-      insurance_name: sale.insuranceTypes.join(", ")
-    })),
-    weeklyEvolution: [] // Simplified for now
-  };
 
   // Not authenticated - redirect to auth page
   if (!isAuthenticated) {
@@ -74,6 +41,7 @@ const ResponsiveApp = () => {
   }
 
   const handleSaleAdded = () => {
+    refreshStats(); // Refresh data after adding a sale
     setCurrentTab("dashboard");
   };
 
