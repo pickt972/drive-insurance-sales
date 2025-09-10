@@ -36,17 +36,35 @@ const ConfettiAnimation = () => {
       {[...Array(50)].map((_, i) => (
         <div
           key={i}
-          className={`absolute w-2 h-2 animate-bounce`}
+          className="absolute w-3 h-3 animate-ping"
           style={{
             left: `${Math.random() * 100}%`,
-            top: `${Math.random() * 100}%`,
-            backgroundColor: ['#FFD700', '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7'][Math.floor(Math.random() * 6)],
-            animationDelay: `${Math.random() * 2}s`,
-            animationDuration: `${1 + Math.random() * 2}s`,
-            transform: `rotate(${Math.random() * 360}deg)`
+            top: `${Math.random() * 20}%`,
+            backgroundColor: ['#FFD700', '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#FF8A80', '#C5E1A5'][Math.floor(Math.random() * 8)],
+            animationDelay: `${Math.random() * 1}s`,
+            animationDuration: `${0.8 + Math.random() * 1.2}s`,
+            transform: `rotate(${Math.random() * 360}deg)`,
+            borderRadius: Math.random() > 0.5 ? '50%' : '0%',
+            animationName: 'confetti-fall',
+            animationTimingFunction: 'ease-out',
+            animationFillMode: 'forwards'
           }}
         />
       ))}
+      <style>
+        {`
+          @keyframes confetti-fall {
+            0% {
+              transform: translateY(-100vh) rotate(0deg);
+              opacity: 1;
+            }
+            100% {
+              transform: translateY(100vh) rotate(720deg);
+              opacity: 0;
+            }
+          }
+        `}
+      </style>
     </div>
   );
 };
