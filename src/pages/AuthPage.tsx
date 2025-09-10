@@ -1,12 +1,14 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { LoginPage } from "@/components/auth/LoginPage";
-import { InitializeUsers } from "@/components/InitializeUsers";
-import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
+import { LoginForm } from "@/components/LoginForm";
+import { useAuth } from "@/hooks/useAuth";
 
 const AuthPage = () => {
   const navigate = useNavigate();
-  const { isAuthenticated } = useSupabaseAuth();
+  const { isAuthenticated, users, login } = useAuth();
+  
+  // Récupérer les noms d'utilisateurs du système local
+  const usernames = users.map(user => user.username);
   
   // Rediriger si déjà connecté
   useEffect(() => {
@@ -22,9 +24,11 @@ const AuthPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5 flex items-center justify-center p-4">
-      <div className="w-full max-w-md space-y-4">
-        <InitializeUsers />
-        <LoginPage />
+      <div className="w-full max-w-md">
+        <LoginForm 
+          onLogin={login}
+          usernames={usernames}
+        />
       </div>
     </div>
   );
