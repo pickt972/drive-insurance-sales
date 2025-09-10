@@ -10,9 +10,13 @@ export const InitializeUsers = () => {
   const handleCreateUsers = async () => {
     setIsCreating(true);
     try {
+      console.log('Creating users...');
       const { data, error } = await supabase.functions.invoke('create-default-users');
       
-      if (error) throw error;
+      if (error) {
+        console.error('Edge function error:', error);
+        throw error;
+      }
 
       console.log('User creation results:', data);
       
