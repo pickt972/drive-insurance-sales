@@ -234,7 +234,7 @@ export const MobileSalesForm = ({ onSaleAdded }: MobileSalesFormProps) => {
       
       // Message de succès avec animation
       const encouragement = ENCOURAGEMENTS[Math.floor(Math.random() * ENCOURAGEMENTS.length)];
-      const finalCommission = selectedInsurances.reduce((sum, ins) => sum + ins.commission, 0);
+      // Utiliser totalCommission déjà calculé
       
       // Déclencher l'animation de confettis
       setShowConfetti(true);
@@ -242,7 +242,7 @@ export const MobileSalesForm = ({ onSaleAdded }: MobileSalesFormProps) => {
       
       toast({
         title: encouragement,
-        description: `${selectedInsurances.map(ins => ins.name).join(", ")} - Commission de ${finalCommission.toFixed(2)} € ajoutée ! 🎊`,
+        description: `${selectedInsurances.map(ins => ins.name).join(", ")} - Commission de ${totalCommission.toFixed(2)} € ajoutée ! 🎊`,
         className: "success-toast border-green-500 bg-green-50",
         duration: 5000,
       });
