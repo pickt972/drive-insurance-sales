@@ -58,7 +58,7 @@ export const SuccessPopup = ({ isOpen, onClose, message, title = "Félicitations
 
   return (
     <>
-      <Dialog open={isOpen} onOpenChange={onClose}>
+      <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
         <DialogContent className="max-w-md mx-auto text-center border-0 bg-gradient-to-br from-background via-background to-muted/20 shadow-2xl">
           <div className="space-y-6 py-6">
             {/* Icon avec animation */}

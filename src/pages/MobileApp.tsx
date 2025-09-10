@@ -35,10 +35,12 @@ const ResponsiveApp = () => {
   const isMobile = useResponsive();
 
   // Not authenticated - redirect to auth page
-  if (!isAuthenticated) {
-    navigate('/auth');
-    return null;
-  }
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate('/auth');
+    }
+  }, [isAuthenticated, navigate]);
+  if (!isAuthenticated) return null;
 
   const handleSaleAdded = () => {
     refreshStats(); // Refresh data after adding a sale
