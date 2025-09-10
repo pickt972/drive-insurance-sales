@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { useAuth } from "@/hooks/useAuth";
 import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
 import { useSalesData } from "@/hooks/useSalesData";
 import { LoginForm } from "@/components/LoginForm";
@@ -31,10 +30,12 @@ const useResponsive = () => {
 
 const ResponsiveApp = () => {
   const [currentTab, setCurrentTab] = useState("dashboard");
-  const { currentUser, users, login, isAuthenticated, isAdmin } = useAuth();
   const { user, profile, loading, isAuthenticated: supabaseAuth, signOut } = useSupabaseAuth();
   const { sales, addSale, getStats } = useSalesData();
   const isMobile = useResponsive();
+  
+  // Determine if user is admin from Supabase profile
+  const isAdmin = profile?.role === 'admin';
   
   const salesStats = getStats();
   
