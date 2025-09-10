@@ -26,11 +26,10 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Client pour lire la table profiles (schema api)
+    // Client pour lire la table profiles (schema public)
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      { db: { schema: 'api' } }
+      Deno.env.get('SUPABASE_ANON_KEY') ?? ''
     );
 
     // Client admin pour lire l'email dans auth.users
