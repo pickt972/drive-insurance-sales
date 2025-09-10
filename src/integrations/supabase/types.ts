@@ -177,7 +177,7 @@ export type Database = {
           client_phone: string | null
           commission_amount: number
           created_at: string
-          employee_id: string
+          employee_name: string
           id: string
           insurance_type_id: string
           notes: string | null
@@ -191,7 +191,7 @@ export type Database = {
           client_phone?: string | null
           commission_amount: number
           created_at?: string
-          employee_id: string
+          employee_name: string
           id?: string
           insurance_type_id: string
           notes?: string | null
@@ -205,7 +205,7 @@ export type Database = {
           client_phone?: string | null
           commission_amount?: number
           created_at?: string
-          employee_id?: string
+          employee_name?: string
           id?: string
           insurance_type_id?: string
           notes?: string | null
@@ -214,13 +214,6 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "sales_employee_id_fkey"
-            columns: ["employee_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["user_id"]
-          },
           {
             foreignKeyName: "sales_insurance_type_id_fkey"
             columns: ["insurance_type_id"]

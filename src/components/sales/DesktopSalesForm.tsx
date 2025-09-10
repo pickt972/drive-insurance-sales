@@ -208,7 +208,7 @@ export const DesktopSalesForm = ({ onSaleAdded }: DesktopSalesFormProps) => {
       const { data: sale, error } = await supabase
         .from('sales')
         .insert({
-          employee_id: currentUser.username,
+          employee_name: currentUser.username,
           client_name: clientName.trim(),
           reservation_number: reservationNumber.trim().toUpperCase(),
           insurance_type_id: selectedInsuranceIds[0],
@@ -219,13 +219,16 @@ export const DesktopSalesForm = ({ onSaleAdded }: DesktopSalesFormProps) => {
         .single();
 
       if (error) {
+        console.error('❌ Erreur Supabase:', error);
         toast({
           title: "Erreur",
-          description: "Impossible d'enregistrer la vente",
+          description: `Impossible d'enregistrer la vente: ${error.message}`,
           variant: "destructive",
         });
         return;
       }
+      
+      console.log('✅ Vente enregistrée avec succès:', sale);
 
       // Message de succès avec animation
       const encouragement = ENCOURAGEMENTS[Math.floor(Math.random() * ENCOURAGEMENTS.length)];

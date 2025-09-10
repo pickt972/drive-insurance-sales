@@ -199,7 +199,7 @@ export const MobileSalesForm = ({ onSaleAdded }: MobileSalesFormProps) => {
       const totalCommission = selectedInsurances.reduce((sum, ins) => sum + ins.commission, 0);
       
       console.log('💾 Tentative d\'enregistrement:', {
-        employee_id: currentUser.username,
+        employee_name: currentUser.username,
         client_name: clientName.trim(),
         reservation_number: reservationNumber.trim().toUpperCase(),
         insurance_type_id: selectedInsuranceIds[0],
@@ -207,15 +207,30 @@ export const MobileSalesForm = ({ onSaleAdded }: MobileSalesFormProps) => {
         notes: notes.trim() || null,
       });
       
-      // Pour l'instant, créons une entrée locale en attendant d'adapter Supabase
-      const selectedInsuranceNames = selectedInsurances.map(ins => ins.name);
-      const newSale = addSale({
-        employeeName: currentUser.username,
-        clientName: clientName.trim(),
-        reservationNumber: reservationNumber.trim().toUpperCase(),
-        insuranceTypes: selectedInsuranceNames,
-        date: new Date().toISOString(),
-      });
+      const { data: sale, error } = await supabase
+        .from('sales')
+        .insert({
+          employee_name: currentUser.username,
+          client_name: clientName.trim(),
+          reservation_number: reservationNumber.trim().toUpperCase(),
+          insurance_type_id: selectedInsuranceIds[0],
+          commission_amount: totalCommission,
+          notes: notes.trim() || null,
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('❌ Erreur Supabase:', error);
+        toast({
+          title: "Erreur",
+          description: `Impossible d'enregistrer la vente: ${error.message}`,
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      console.log('✅ Vente enregistrée avec succès:', sale);
       
       // Message de succès avec animation
       const encouragement = ENCOURAGEMENTS[Math.floor(Math.random() * ENCOURAGEMENTS.length)];
@@ -227,7 +242,7 @@ export const MobileSalesForm = ({ onSaleAdded }: MobileSalesFormProps) => {
       
       toast({
         title: encouragement,
-        description: `${selectedInsuranceNames.join(", ")} - Commission de ${finalCommission.toFixed(2)} € ajoutée ! 🎊`,
+        description: `${selectedInsurances.map(ins => ins.name).join(", ")} - Commission de ${finalCommission.toFixed(2)} € ajoutée ! 🎊`,
         className: "success-toast border-green-500 bg-green-50",
         duration: 5000,
       });
