@@ -64,21 +64,29 @@ const ResponsiveApp = () => {
         );
 
       case "sales":
-        return (
+        return loading ? (
           <Card className="shadow-card">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <FileText className="h-5 w-5 text-primary" />
-                Historique des Ventes
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8 text-muted-foreground">
-                <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>Fonctionnalité en cours de développement</p>
-              </div>
+            <CardContent className="flex items-center justify-center py-8">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </CardContent>
           </Card>
+        ) : (
+          <SalesTable 
+            sales={stats.recentSales.map(sale => ({
+              id: sale.id || '',
+              employeeName: sale.employee_name || '',
+              clientName: sale.client_name || '',
+              reservationNumber: sale.reservation_number || '',
+              insuranceTypes: sale.insurance_name ? [sale.insurance_name] : [],
+              date: sale.created_at || new Date().toISOString(),
+              timestamp: new Date(sale.created_at || Date.now()).getTime(),
+              commissions: sale.commission_amount || 0
+            }))}
+            onDeleteSale={(saleId) => {
+              console.log('Delete sale:', saleId);
+              refreshStats();
+            }} 
+          />
         );
 
       case "admin":

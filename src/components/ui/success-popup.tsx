@@ -36,8 +36,11 @@ export const SuccessPopup = ({ isOpen, onClose, message, title = "Félicitations
   useEffect(() => {
     if (isOpen) {
       setShowConfetti(true);
-      const timer = setTimeout(() => setShowConfetti(false), 3000);
+      // Garder les confettis plus longtemps
+      const timer = setTimeout(() => setShowConfetti(false), 5000);
       return () => clearTimeout(timer);
+    } else {
+      setShowConfetti(false);
     }
   }, [isOpen]);
 
@@ -47,11 +50,11 @@ export const SuccessPopup = ({ isOpen, onClose, message, title = "Félicitations
     '#DDA0DD', '#98FB98', '#F0E68C', '#FFA07A'
   ];
 
-  const confettiParticles = Array.from({ length: 60 }, (_, i) => ({
+  const confettiParticles = Array.from({ length: 80 }, (_, i) => ({
     id: i,
-    delay: Math.random() * 0.8,
-    x: 20 + Math.random() * 60,
-    y: 30 + Math.random() * 40,
+    delay: Math.random() * 1.2,
+    x: 10 + Math.random() * 80,
+    y: 20 + Math.random() * 50,
     color: confettiColors[Math.floor(Math.random() * confettiColors.length)],
     shape: Math.random() > 0.5 ? 'circle' : 'square'
   }));
@@ -116,16 +119,20 @@ export const SuccessPopup = ({ isOpen, onClose, message, title = "Félicitations
             transform: translateY(0) translateX(0) rotate(0deg) scale(0);
             opacity: 1;
           }
-          10% {
-            transform: translateY(-50px) translateX(10px) rotate(180deg) scale(1);
+          15% {
+            transform: translateY(-80px) translateX(${Math.random() > 0.5 ? '' : '-'}30px) rotate(180deg) scale(1);
             opacity: 1;
           }
-          50% {
-            transform: translateY(-30px) translateX(-20px) rotate(360deg) scale(1);
+          35% {
+            transform: translateY(-120px) translateX(${Math.random() > 0.5 ? '' : '-'}60px) rotate(360deg) scale(1);
             opacity: 1;
+          }
+          65% {
+            transform: translateY(-50px) translateX(${Math.random() > 0.5 ? '' : '-'}90px) rotate(540deg) scale(0.8);
+            opacity: 0.8;
           }
           100% {
-            transform: translateY(100vh) translateX(80px) rotate(720deg) scale(0.2);
+            transform: translateY(100vh) translateX(${Math.random() > 0.5 ? '' : '-'}150px) rotate(720deg) scale(0.1);
             opacity: 0;
           }
         }
