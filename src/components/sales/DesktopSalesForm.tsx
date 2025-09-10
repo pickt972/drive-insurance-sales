@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Check, Phone, Mail, FileText, DollarSign, X } from "lucide-react";
+import { Plus, Check, FileText, DollarSign, X, Shield } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -295,11 +295,9 @@ export const DesktopSalesForm = ({ onSaleAdded }: DesktopSalesFormProps) => {
                            .filter(insurance => !selectedInsuranceIds.includes(insurance.id))
                            .map((insurance) => (
                              <SelectItem key={insurance.id} value={insurance.id}>
-                               <div className="flex items-center justify-between w-full">
+                               <div className="flex items-center gap-2">
+                                 <Shield className="h-4 w-4 text-primary" />
                                  <span>{insurance.name}</span>
-                                 <span className="text-sm text-muted-foreground ml-2">
-                                   {insurance.commission.toFixed(2)} €
-                                 </span>
                                </div>
                              </SelectItem>
                            ))}
