@@ -68,6 +68,15 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
+    // Check if profile has a user_id linked
+    if (!profile.user_id) {
+      console.log('Profile not linked to auth user for username:', inputUsername);
+      return new Response(
+        JSON.stringify({ error: 'Compte non activé. Veuillez vous connecter d\'abord pour activer votre compte.' }), 
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     // Get user email from auth.users using admin API
     const { data: authUser, error: authError } = await supabaseAdmin.auth.admin.getUserById(profile.user_id);
 
