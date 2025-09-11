@@ -14,14 +14,12 @@ import type { Session, User } from "@supabase/supabase-js";
 export const AuthPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [username, setUsername] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   
-  const [activeTab, setActiveTab] = useState<'signin' | 'signup'>('signin');
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -53,42 +51,6 @@ export const AuthPage = () => {
     return () => subscription.unsubscribe();
   }, [navigate]);
 
-  const handleSignUp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
-
-    try {
-      const redirectUrl = `${window.location.origin}/`;
-      
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: redirectUrl,
-          data: {
-            username: username || email.split('@')[0]
-          }
-        }
-      });
-
-      if (error) {
-        setError(error.message);
-        return;
-      }
-
-      if (data.user && !data.session) {
-        toast({
-          title: "Vérifiez votre email",
-          description: "Un lien de confirmation a été envoyé à votre adresse email.",
-        });
-      }
-    } catch (error: any) {
-      setError(error.message);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -130,26 +92,7 @@ export const AuthPage = () => {
         </CardHeader>
         
         <CardContent>
-          <div className="w-full">
-            <div className="grid w-full grid-cols-2 gap-2 mb-4">
-              <Button
-                type="button"
-                variant={activeTab === 'signin' ? 'default' : 'outline'}
-                onClick={() => setActiveTab('signin')}
-              >
-                Connexion
-              </Button>
-              <Button
-                type="button"
-                variant={activeTab === 'signup' ? 'default' : 'outline'}
-                onClick={() => setActiveTab('signup')}
-              >
-                Inscription
-              </Button>
-            </div>
-
-            {activeTab === 'signin' ? (
-              <form onSubmit={handleSignIn} className="space-y-4">
+          <form onSubmit={handleSignIn} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="signin-email" className="flex items-center gap-2">
                     <Mail className="h-4 w-4" />
@@ -225,72 +168,6 @@ export const AuthPage = () => {
                   </AlertDescription>
                 </Alert>
               </form>
-            ) : (
-              <form onSubmit={handleSignUp} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="signup-username" className="flex items-center gap-2">
-                    <UserIcon className="h-4 w-4" />
-                    Nom d'utilisateur (optionnel)
-                  </Label>
-                  <Input
-                    id="signup-username"
-                    type="text"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    placeholder="votre-nom"
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="signup-email" className="flex items-center gap-2">
-                    <Mail className="h-4 w-4" />
-                    Email
-                  </Label>
-                  <Input
-                    id="signup-email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="votre@email.com"
-                    required
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="signup-password" className="flex items-center gap-2">
-                    <Lock className="h-4 w-4" />
-                    Mot de passe
-                  </Label>
-                  <Input
-                    id="signup-password"
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
-                    required
-                    minLength={6}
-                  />
-                </div>
-
-                {error && (
-                  <Alert variant="destructive">
-                    <AlertDescription>{error}</AlertDescription>
-                  </Alert>
-                )}
-
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Inscription...
-                    </>
-                  ) : (
-                    "S'inscrire"
-                  )}
-                </Button>
-              </form>
-            )}
-          </div>
         </CardContent>
       </Card>
     </div>
