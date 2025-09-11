@@ -91,7 +91,7 @@ async function createUser(supabaseAdmin: any, { username, email, password, role 
       throw new Error(`Erreur création auth: ${authError.message}`);
     }
 
-    // Créer le profil dans la table profiles
+    // Créer le profil dans la table profiles (schéma public)
     const { data: profileData, error: profileError } = await supabaseAdmin
       .from('profiles')
       .insert({
@@ -133,7 +133,7 @@ async function createUser(supabaseAdmin: any, { username, email, password, role 
 
 async function updateUser(supabaseAdmin: any, { username, newPassword, newRole, userEmail }: UpdateUserRequest) {
   try {
-    // Récupérer le profil utilisateur
+    // Récupérer le profil utilisateur (schéma public)
     const { data: profile, error: profileError } = await supabaseAdmin
       .from('profiles')
       .select('user_id')
@@ -186,7 +186,7 @@ async function updateUser(supabaseAdmin: any, { username, newPassword, newRole, 
       }
     }
 
-    // Mettre à jour le rôle si fourni
+    // Mettre à jour le rôle si fourni (schéma public)
     if (newRole) {
       const { error: roleError } = await supabaseAdmin
         .from('profiles')
@@ -223,7 +223,7 @@ async function deleteUser(supabaseAdmin: any, { username }: DeleteUserRequest) {
       throw new Error('Impossible de supprimer l\'administrateur principal');
     }
 
-    // Récupérer le profil utilisateur
+    // Récupérer le profil utilisateur (schéma public)
     const { data: profile, error: profileError } = await supabaseAdmin
       .from('profiles')
       .select('user_id')
@@ -262,6 +262,7 @@ async function deleteUser(supabaseAdmin: any, { username }: DeleteUserRequest) {
 
 async function listUsers(supabaseAdmin: any) {
   try {
+    // Utiliser le schéma public (par défaut) au lieu du schéma api
     const { data: profiles, error } = await supabaseAdmin
       .from('profiles')
       .select('*')
