@@ -13,7 +13,7 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { supabase } from "@/integrations/supabase/client";
 import { SaleWithDetails } from "@/types/database";
-import { useAuth } from "@/hooks/useAuth";
+import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
 
 interface ExportPanelProps {
   sales: SaleWithDetails[];
@@ -28,7 +28,7 @@ export const ExportPanel = ({ sales }: ExportPanelProps) => {
   const [endDate, setEndDate] = useState("");
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [isExporting, setIsExporting] = useState(false);
-  const { users } = useAuth();
+  const { users } = useSupabaseAuth();
 
   // Créer une liste des utilisateurs avec des IDs factices pour la compatibilité
   const employees = users.map(user => ({

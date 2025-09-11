@@ -9,9 +9,10 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, Check, FileText, X, Shield } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
+import { useSupabaseSalesOperations } from "@/hooks/useSupabaseSalesOperations";
 import { useToast } from "@/hooks/use-toast";
+
 import { InsuranceType } from "@/types/database";
-import { useSalesData } from "@/hooks/useSalesData";
 import { SuccessPopup } from "@/components/ui/success-popup";
 
 const ENCOURAGEMENTS = [
@@ -44,7 +45,7 @@ export const MobileSalesForm = ({ onSaleAdded }: MobileSalesFormProps) => {
   const [successMessage, setSuccessMessage] = useState("");
   
   const { profile } = useSupabaseAuth();
-  const { addSale } = useSalesData();
+  const { addSale, loading: saleLoading } = useSupabaseSalesOperations();
   const { toast } = useToast();
 
   useEffect(() => {

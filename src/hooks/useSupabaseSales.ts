@@ -25,8 +25,7 @@ export const useSupabaseSales = () => {
       const weekAgoIso = weekAgo.toISOString();
 
       // Récupérer toutes les ventes avec les détails
-      const { data: sales, error } = await (supabase as any)
-        .schema('api')
+      const { data: sales, error } = await supabase
         .from('sales')
         .select(`
           *,
@@ -43,9 +42,10 @@ export const useSupabaseSales = () => {
       const salesWithDetails: SaleWithDetails[] = sales?.map(sale => ({
         ...sale,
         insurance_name: sale.insurance_types?.name || 'Inconnu',
+        employee_id: sale.employee_name, // Utiliser employee_name comme employee_id pour la compatibilité
       } as SaleWithDetails)) || [];
 
-      // Filtrer selon le rôle (pour l'instant on affiche toutes les ventes)
+      // Filtrer selon le rôle
       const filteredSales = profile?.role === 'admin' 
         ? salesWithDetails 
         : salesWithDetails.filter(sale => sale.employee_name === profile?.username);
@@ -58,7 +58,7 @@ export const useSupabaseSales = () => {
         sale => new Date(sale.created_at) >= weekAgo
       ).length;
 
-      // Top vendeurs - calculé pour tous les utilisateurs
+      // Top vendeurs
       const topSellers = (() => {
         const sellerStats = filteredSales.reduce((acc, sale) => {
           const employeeName = sale.employee_name;
@@ -116,6 +116,26 @@ export const useSupabaseSales = () => {
     }
   };
 
+  // Fonction pour supprimer une vente
+  const deleteSale = async (saleId: string) => {
+    try {
+      const { error } = await supabase
+        .from('sales')
+        .update({ status: 'deleted' })
+        .eq('id', saleId);
+
+      if (error) throw error;
+
+      // Recharger les stats après suppression
+      await fetchStats();
+      
+      return { success: true };
+    } catch (error: any) {
+      console.error('Erreur suppression vente:', error);
+      return { success: false, error: error.message };
+    }
+  };
+
   useEffect(() => {
     if (profile) {
       fetchStats();
@@ -126,5 +146,6 @@ export const useSupabaseSales = () => {
     stats,
     loading,
     refreshStats: fetchStats,
+    deleteSale,
   };
 };

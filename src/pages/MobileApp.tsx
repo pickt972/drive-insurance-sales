@@ -31,7 +31,7 @@ const ResponsiveApp = () => {
   const [currentTab, setCurrentTab] = useState("dashboard");
   const { user, isAuthenticated, isAdmin, profile, loading: authLoading } = useSupabaseAuth();
   const navigate = useNavigate();
-  const { stats, loading, refreshStats } = useSupabaseSales();
+  const { stats, loading, refreshStats, deleteSale } = useSupabaseSales();
   const isMobile = useResponsive();
 
   // Debug logs
@@ -106,10 +106,12 @@ const ResponsiveApp = () => {
               timestamp: new Date(sale.created_at || Date.now()).getTime(),
               commissions: sale.commission_amount || 0
             }))}
-            onDeleteSale={(saleId) => {
-              console.log('Delete sale:', saleId);
-              refreshStats();
-            }} 
+            onDeleteSale={async (saleId) => {
+              const result = await deleteSale(saleId);
+              if (result?.success) {
+                refreshStats();
+              }
+            }}
           />
         );
 
