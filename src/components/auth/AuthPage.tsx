@@ -16,7 +16,8 @@ const availableEmails = [
   "admin@aloelocation.com",
   "julie@aloelocation.com", 
   "sherman@aloelocation.com",
-  "alvin@aloelocation.com"
+  "alvin@aloelocation.com",
+  "stef@aloelocation.com"
 ];
 
 export const AuthPage = () => {

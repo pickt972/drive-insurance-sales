@@ -129,6 +129,7 @@ export const SupabaseLoginForm = () => {
                 • julie@aloelocation.com<br />
                 • sherman@aloelocation.com<br />
                 • alvin@aloelocation.com<br />
+                • stef@aloelocation.com<br />
                 <em className="text-xs">Mot de passe: celui configuré</em>
               </AlertDescription>
             </Alert>
