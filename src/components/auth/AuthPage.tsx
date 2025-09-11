@@ -34,13 +34,14 @@ export const AuthPage = () => {
   useEffect(() => {
     const loadUsers = async () => {
       try {
-        const { data, error } = await supabase
+        const { data, error } = await (supabase as any)
+          .schema('api')
           .from('profiles')
           .select('username, role, is_active')
           .eq('is_active', true)
           .order('username', { ascending: true });
         if (error) throw error;
-        setUserOptions(data || []);
+        setUserOptions((data || []) as any);
       } catch (e) {
         console.error('Erreur chargement utilisateurs:', e);
       }
