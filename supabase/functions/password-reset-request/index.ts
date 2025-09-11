@@ -114,25 +114,28 @@ const handler = async (req: Request): Promise<Response> => {
 
     const emailResponse = await resend.emails.send({
       from: "Aloelocation <onboarding@resend.dev>",
-      to: [authUser.user.email],
-      subject: "Réinitialisation de votre mot de passe",
+      to: ["alocationcloud@gmail.com"],
+      subject: `Réinitialisation de mot de passe pour ${inputUsername}`,
       html: `
         <div style="max-width: 600px; margin: 0 auto; padding: 20px; font-family: Arial, sans-serif;">
-          <h1 style="color: #333; text-align: center;">Réinitialisation de mot de passe</h1>
-          <p>Bonjour <strong>${inputUsername}</strong>,</p>
-          <p>Vous avez demandé la réinitialisation de votre mot de passe.</p>
-          <p>Cliquez sur le lien ci-dessous pour choisir un nouveau mot de passe :</p>
+          <h1 style="color: #333; text-align: center;">Demande de réinitialisation de mot de passe</h1>
+          <p>Bonjour Administrateur,</p>
+          <p>L'utilisateur <strong>${inputUsername}</strong> (${authUser.user.email}) a demandé la réinitialisation de son mot de passe.</p>
+          <p>Cliquez sur le lien ci-dessous pour définir un nouveau mot de passe :</p>
           <div style="text-align: center; margin: 30px 0;">
             <a href="${resetUrl}" 
                style="background-color: #007bff; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block;">
-              Réinitialiser mon mot de passe
+              Réinitialiser le mot de passe de ${inputUsername}
             </a>
           </div>
           <p style="color: #666; font-size: 14px;">
-            Ce lien expire dans 24 heures pour des raisons de sécurité.
+            <strong>Détails de la demande :</strong><br/>
+            • Utilisateur : ${inputUsername}<br/>
+            • Email : ${authUser.user.email}<br/>
+            • Date : ${new Date().toLocaleDateString('fr-FR')} à ${new Date().toLocaleTimeString('fr-FR')}
           </p>
           <p style="color: #666; font-size: 14px;">
-            Si vous n'avez pas demandé cette réinitialisation, vous pouvez ignorer cet email.
+            Ce lien expire dans 24 heures pour des raisons de sécurité.
           </p>
         </div>
       `,

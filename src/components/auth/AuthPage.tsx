@@ -27,6 +27,7 @@ export const AuthPage = () => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [showPassword, setShowPassword] = useState(false);
+  const [sendingReset, setSendingReset] = useState(false);
   
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -84,6 +85,45 @@ export const AuthPage = () => {
       setError(error.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    if (!email) {
+      toast({
+        title: "Email requis",
+        description: "Veuillez sélectionner un email avant de demander la réinitialisation.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Extraire le nom d'utilisateur de l'email
+    const username = email.split('@')[0];
+    
+    try {
+      setSendingReset(true);
+      const { error } = await supabase.functions.invoke('password-reset-request', {
+        body: {
+          username: username,
+          origin: window.location.origin,
+        },
+      });
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Demande envoyée",
+        description: "L'administrateur a été notifié par email de votre demande de réinitialisation.",
+      });
+    } catch (err: any) {
+      toast({
+        title: "Échec de l'envoi",
+        description: err.message || "Impossible d'envoyer la demande. Réessayez plus tard.",
+        variant: "destructive",
+      });
+    } finally {
+      setSendingReset(false);
     }
   };
 
@@ -174,16 +214,11 @@ export const AuthPage = () => {
               type="button"
               variant="link"
               size="sm"
-              onClick={() => {
-                // Logique pour mot de passe oublié - peut être ajoutée plus tard
-                toast({
-                  title: "Fonction disponible bientôt",
-                  description: "Contactez l'administrateur pour réinitialiser votre mot de passe.",
-                });
-              }}
+              onClick={handleForgotPassword}
+              disabled={sendingReset}
               className="text-muted-foreground hover:text-primary"
             >
-              Mot de passe oublié ?
+              {sendingReset ? 'Envoi en cours...' : 'Mot de passe oublié ?'}
             </Button>
           </div>
         </CardContent>
