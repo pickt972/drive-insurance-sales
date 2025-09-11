@@ -8,7 +8,6 @@ import NotFound from "./pages/NotFound";
 import AuthPage from "./pages/AuthPage";
 import { AdminResetPassword } from "./components/auth/AdminResetPassword";
 import { ResetPassword } from "./components/auth/ResetPassword";
-import "./utils/createUsersNow";
 
 const queryClient = new QueryClient();
 
