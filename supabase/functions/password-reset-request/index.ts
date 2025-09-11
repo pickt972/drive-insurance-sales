@@ -30,7 +30,7 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Initialize Supabase admin client
+    // Initialize Supabase admin client with API schema
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
@@ -38,11 +38,14 @@ const handler = async (req: Request): Promise<Response> => {
         auth: {
           autoRefreshToken: false,
           persistSession: false,
+        },
+        db: { 
+          schema: 'api' 
         }
       }
     );
 
-    // Find user profile using public schema
+    // Find user profile using API schema
     const { data: profile, error: profileError } = await supabaseAdmin
       .from('profiles')
       .select('user_id, username')
