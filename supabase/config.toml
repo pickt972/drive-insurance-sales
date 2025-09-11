@@ -20,3 +20,6 @@ verify_jwt = false
 
 [functions.export-sales-report]
 verify_jwt = false
+
+[functions.sync-check]
+verify_jwt = false
