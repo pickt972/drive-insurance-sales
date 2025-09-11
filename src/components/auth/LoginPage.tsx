@@ -66,62 +66,26 @@ export const LoginPage = () => {
   const createDefaultUsers = async () => {
     setCreatingUsers(true);
     try {
-      // Créer les utilisateurs par défaut
-      const defaultUsers = [
-        { email: 'admin@aloelocation.com', password: 'admin2024', username: 'admin', role: 'admin' },
-        { email: 'julie@aloelocation.com', password: 'julie2024', username: 'Julie', role: 'employee' },
-        { email: 'sherman@aloelocation.com', password: 'sherman2024', username: 'Sherman', role: 'employee' },
-        { email: 'alvin@aloelocation.com', password: 'alvin2024', username: 'Alvin', role: 'employee' },
-        { email: 'stef@aloelocation.com', password: 'stef2024', username: 'Stef', role: 'employee' }
-      ];
-
-      for (const user of defaultUsers) {
-        try {
-          // Créer l'utilisateur avec Supabase Auth
-          const { data: authData, error: authError } = await supabase.auth.signUp({
-            email: user.email,
-            password: user.password,
-            options: {
-              data: {
-                username: user.username,
-                role: user.role
-              }
-            }
-          });
-
-          if (authError && !authError.message.includes('already registered')) {
-            console.error(`Erreur création utilisateur ${user.username}:`, authError);
-            continue;
-          }
-
-          // Si l'utilisateur a été créé avec succès
-          if (authData.user) {
-            // Créer le profil dans la table profiles
-            const { error: profileError } = await supabase
-              .from('profiles')
-              .insert({
-                user_id: authData.user.id,
-                username: user.username,
-                role: user.role
-              });
-
-            if (profileError && !profileError.message.includes('duplicate key')) {
-              console.error(`Erreur création profil ${user.username}:`, profileError);
-            }
-          }
-        } catch (error) {
-          console.error(`Erreur pour ${user.username}:`, error);
-        }
+      const { data, error } = await supabase.functions.invoke('create-default-users');
+      
+      if (error) {
+        throw error;
       }
 
       toast({
         title: "Utilisateurs créés",
-        description: "Les utilisateurs par défaut ont été créés avec succès.",
+        description: data.message || "Les utilisateurs par défaut ont été créés avec succès.",
       });
+      
+      // Afficher les détails si disponibles
+      if (data.results) {
+        console.log('Résultats création utilisateurs:', data.results);
+      }
+      
     } catch (error: any) {
       toast({
         title: "Erreur",
-        description: "Erreur lors de la création des utilisateurs: " + error.message,
+        description: error.message || "Erreur lors de la création des utilisateurs.",
         variant: "destructive",
       });
     } finally {

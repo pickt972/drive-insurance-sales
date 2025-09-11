@@ -23,3 +23,6 @@ verify_jwt = false
 
 [functions.sync-check]
 verify_jwt = false
+
+[functions.create-default-users]
+verify_jwt = false
