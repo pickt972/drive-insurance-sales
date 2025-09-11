@@ -40,7 +40,7 @@ const handler = async (req: Request): Promise<Response> => {
         persistSession: false
       },
       db: {
-        schema: 'api'
+        schema: 'public' // Utiliser le schéma public pour accéder aux tables d'application
       }
     });
 

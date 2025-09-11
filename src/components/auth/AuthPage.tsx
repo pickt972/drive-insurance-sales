@@ -18,6 +18,7 @@ export const AuthPage = () => {
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [sendingReset, setSendingReset] = useState(false);
+  const [initializingUsers, setInitializingUsers] = useState(false);
   
   // Liste locale d'utilisateurs pour le sélecteur
   const [userOptions, setUserOptions] = useState<{ username: string; role: string; is_active: boolean }[]>([]);
@@ -31,8 +32,19 @@ export const AuthPage = () => {
     signInWithUsername
   } = useSupabaseAuth();
 
-  useEffect(() => {
-    const loadUsers = async () => {
+  const loadUsers = async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke('user-management', {
+        body: { action: 'list' },
+      });
+      if (error) throw error;
+      const users = (data?.users || []) as any[];
+      const active = users
+        .filter((u) => u.is_active !== false)
+        .map((u) => ({ username: u.username, role: u.role, is_active: u.is_active }));
+      setUserOptions(active);
+    } catch (e) {
+      console.error('Erreur chargement utilisateurs (fallback direct):', e);
       try {
         const { data, error } = await (supabase as any)
           .from('profiles')
@@ -41,10 +53,14 @@ export const AuthPage = () => {
           .order('username', { ascending: true });
         if (error) throw error;
         setUserOptions((data || []) as any);
-      } catch (e) {
-        console.error('Erreur chargement utilisateurs:', e);
+      } catch (inner) {
+        console.error('Erreur chargement utilisateurs:', inner);
+        setUserOptions([]);
       }
-    };
+    }
+  };
+
+  useEffect(() => {
     loadUsers();
   }, []);
 
@@ -111,6 +127,28 @@ export const AuthPage = () => {
       });
     } finally {
       setSendingReset(false);
+    }
+  };
+
+  const handleInitDefaultUsers = async () => {
+    try {
+      setInitializingUsers(true);
+      const { data, error } = await supabase.functions.invoke('create-default-users', { body: {} });
+      if (error) throw error;
+      toast({
+        title: "Utilisateurs par défaut",
+        description: data?.message || "Initialisation terminée.",
+      });
+      // Recharger la liste
+      await loadUsers?.();
+    } catch (err: any) {
+      toast({
+        title: "Échec de l'initialisation",
+        description: err.message || "Impossible d'initialiser les utilisateurs.",
+        variant: "destructive",
+      });
+    } finally {
+      setInitializingUsers(false);
     }
   };
 
@@ -224,6 +262,23 @@ export const AuthPage = () => {
               {sendingReset ? 'Envoi en cours...' : 'Mot de passe oublié ?'}
             </Button>
           </div>
+
+          {userOptions.length === 0 && (
+            <div className="mt-2 text-center">
+              <p className="text-sm text-muted-foreground mb-2">
+                Aucun utilisateur disponible.
+              </p>
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                onClick={handleInitDefaultUsers}
+                disabled={initializingUsers}
+              >
+                {initializingUsers ? 'Initialisation...' : 'Initialiser des utilisateurs par défaut'}
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
