@@ -12,6 +12,7 @@ import { SalesTable } from "@/components/SalesTable";
 import { CommissionManager } from "@/components/CommissionManager";
 import { UserManager } from "@/components/UserManager";
 import { ExportPanel } from "@/components/ExportPanel";
+import { ObjectiveManager } from "@/components/objectives/ObjectiveManager";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Download, FileText, Loader2 } from "lucide-react";
 
@@ -126,6 +127,9 @@ const ResponsiveApp = () => {
 
       case "export":
         return <ExportPanel sales={allSales} />;
+        
+      case "objectives":
+        return <ObjectiveManager />;
 
       default:
         return isMobile ? <MobileDashboard stats={stats} /> : <DesktopDashboard stats={stats} />;

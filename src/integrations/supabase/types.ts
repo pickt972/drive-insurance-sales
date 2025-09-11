@@ -44,6 +44,48 @@ export type Database = {
         }
         Relationships: []
       }
+      employee_objectives: {
+        Row: {
+          created_at: string
+          description: string | null
+          employee_name: string
+          id: string
+          is_active: boolean
+          objective_type: string
+          period_end: string
+          period_start: string
+          target_amount: number
+          target_sales_count: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          employee_name: string
+          id?: string
+          is_active?: boolean
+          objective_type?: string
+          period_end: string
+          period_start: string
+          target_amount?: number
+          target_sales_count?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          employee_name?: string
+          id?: string
+          is_active?: boolean
+          objective_type?: string
+          period_end?: string
+          period_start?: string
+          target_amount?: number
+          target_sales_count?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       insurance_types: {
         Row: {
           commission: number

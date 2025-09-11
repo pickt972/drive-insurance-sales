@@ -1,4 +1,4 @@
-import { BarChart3, Plus, FileText, Settings, Users, Download, MoreHorizontal } from "lucide-react";
+import { BarChart3, Plus, FileText, Settings, Users, Download, MoreHorizontal, Target } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -16,6 +16,7 @@ export const MobileBottomNav = ({ currentTab, onTabChange, isAdmin }: MobileBott
   const mainTabs = [
     { id: 'dashboard', icon: BarChart3, label: 'Tableau' },
     { id: 'add', icon: Plus, label: 'Nouvelle' },
+    { id: 'objectives', icon: Target, label: 'Objectifs' },
     { id: 'sales', icon: FileText, label: 'Historique' }
   ];
 

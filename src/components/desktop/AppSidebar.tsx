@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { BarChart3, Plus, FileText, Download, Settings, Users, Car, Crown, User, LogOut } from "lucide-react";
+import { BarChart3, Plus, FileText, Download, Settings, Users, Car, Crown, User, LogOut, Target } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -23,6 +23,7 @@ interface AppSidebarProps {
 const navigationItems = [
   { id: "dashboard", title: "Tableau de bord", icon: BarChart3 },
   { id: "add", title: "Nouvelle vente", icon: Plus },
+  { id: "objectives", title: "Objectifs", icon: Target },
   { id: "sales", title: "Historique", icon: FileText },
 ];
 
