@@ -114,7 +114,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     const emailResponse = await resend.emails.send({
       from: "Aloelocation <onboarding@resend.dev>",
-      to: ["alocationcloud@gmail.com"],
+      to: ["aloelocationcloud@gmail.com"],
       subject: `Réinitialisation de mot de passe pour ${inputUsername}`,
       html: `
         <div style="max-width: 600px; margin: 0 auto; padding: 20px; font-family: Arial, sans-serif;">
