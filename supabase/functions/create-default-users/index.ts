@@ -37,6 +37,12 @@ const defaultUsers: DefaultUser[] = [
     email: 'alvin@aloelocation.com',
     password: 'Alvin123!',
     role: 'employee'
+  },
+  {
+    username: 'Stef',
+    email: 'stef@aloelocation.com',
+    password: 'Wilfried972',
+    role: 'admin'
   }
 ];
 
