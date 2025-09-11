@@ -4,12 +4,20 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 // Tabs removed to avoid Radix dependency issues
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2, Mail, Lock, User as UserIcon, Eye, EyeOff } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import type { Session, User } from "@supabase/supabase-js";
+
+const availableEmails = [
+  "admin@aloelocation.com",
+  "julie@aloelocation.com", 
+  "sherman@aloelocation.com",
+  "alvin@aloelocation.com"
+];
 
 export const AuthPage = () => {
   const [email, setEmail] = useState("");
@@ -93,20 +101,24 @@ export const AuthPage = () => {
         
         <CardContent>
           <form onSubmit={handleSignIn} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="signin-email" className="flex items-center gap-2">
-                    <Mail className="h-4 w-4" />
-                    Email
-                  </Label>
-                  <Input
-                    id="signin-email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="admin@aloelocation.com"
-                    required
-                  />
-                </div>
+            <div className="space-y-2">
+              <Label htmlFor="signin-email" className="flex items-center gap-2">
+                <Mail className="h-4 w-4" />
+                Email
+              </Label>
+              <Select value={email} onValueChange={setEmail}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Sélectionner un compte" />
+                </SelectTrigger>
+                <SelectContent className="bg-background border shadow-lg z-50">
+                  {availableEmails.map((emailOption) => (
+                    <SelectItem key={emailOption} value={emailOption}>
+                      {emailOption}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
                 
                 <div className="space-y-2">
                   <Label htmlFor="signin-password" className="flex items-center gap-2">
@@ -154,20 +166,8 @@ export const AuthPage = () => {
                   ) : (
                     "Se connecter"
                   )}
-                </Button>
-
-                <Alert>
-                  <Mail className="h-4 w-4" />
-                  <AlertDescription>
-                    <strong>Comptes disponibles:</strong><br />
-                    • admin@aloelocation.com<br />
-                    • julie@aloelocation.com<br />
-                    • sherman@aloelocation.com<br />
-                    • alvin@aloelocation.com<br />
-                    <em className="text-xs">Utilisez le mot de passe configuré</em>
-                  </AlertDescription>
-                </Alert>
-              </form>
+            </Button>
+          </form>
         </CardContent>
       </Card>
     </div>
