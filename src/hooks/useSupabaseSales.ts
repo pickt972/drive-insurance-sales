@@ -26,7 +26,8 @@ export const useSupabaseSales = () => {
       const weekAgoIso = weekAgo.toISOString();
 
       // Récupérer toutes les ventes avec les détails
-      const { data: sales, error } = await supabase
+      const { data: sales, error } = await (supabase as any)
+        .schema('api')
         .from('sales')
         .select(`
           *,
@@ -134,7 +135,8 @@ export const useSupabaseSales = () => {
   // Fonction pour supprimer une vente
   const deleteSale = async (saleId: string) => {
     try {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
+        .schema('api')
         .from('sales')
         .update({ status: 'deleted' })
         .eq('id', saleId);
