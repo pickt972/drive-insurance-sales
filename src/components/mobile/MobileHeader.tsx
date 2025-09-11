@@ -1,13 +1,10 @@
 import { Car, LogOut, User, Crown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
-import { useAuth } from "@/hooks/useAuth";
 
 export const MobileHeader = () => {
-  const { signOut, profile } = useSupabaseAuth();
-  const { currentUser, isAdmin: localIsAdmin } = useAuth();
-  const effectiveIsAdmin = (profile?.role === 'admin') || localIsAdmin || (currentUser?.role === 'admin');
-  const displayUsername = profile?.username || currentUser?.username || 'Invité';
+  const { signOut, profile, isAdmin } = useSupabaseAuth();
+  const displayUsername = profile?.username || 'Invité';
 
   return (
     <header className="mobile-header">
@@ -24,7 +21,7 @@ export const MobileHeader = () => {
         
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-2 px-3 py-1.5 bg-accent rounded-full">
-            {effectiveIsAdmin ? (
+            {isAdmin ? (
               <Crown className="h-3 w-3 text-primary" />
             ) : (
               <User className="h-3 w-3 text-primary" />

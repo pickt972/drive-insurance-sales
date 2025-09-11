@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useAuth } from "@/hooks/useAuth";
+import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
 import { useSupabaseSales } from "@/hooks/useSupabaseSales";
 import { useNavigate } from "react-router-dom";
 import { MobileLayout } from "@/components/mobile/MobileLayout";
@@ -29,7 +29,7 @@ const useResponsive = () => {
 
 const ResponsiveApp = () => {
   const [currentTab, setCurrentTab] = useState("dashboard");
-  const { currentUser, isAuthenticated, isAdmin } = useAuth();
+  const { user, isAuthenticated, isAdmin } = useSupabaseAuth();
   const navigate = useNavigate();
   const { stats, loading, refreshStats } = useSupabaseSales();
   const isMobile = useResponsive();

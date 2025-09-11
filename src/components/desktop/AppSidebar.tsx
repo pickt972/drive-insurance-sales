@@ -13,7 +13,6 @@ import {
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
-import { useAuth } from "@/hooks/useAuth";
 
 interface AppSidebarProps {
   currentTab: string;
@@ -35,12 +34,11 @@ const adminItems = [
 
 export function AppSidebar({ currentTab, onTabChange, isAdmin }: AppSidebarProps) {
   const { state } = useSidebar();
-  const { signOut, profile } = useSupabaseAuth();
-  const { currentUser } = useAuth();
+  const { signOut, profile, isAdmin: supabaseIsAdmin } = useSupabaseAuth();
   const collapsed = state === "collapsed";
 
-  const effectiveIsAdmin = (profile?.role === 'admin') || isAdmin || (currentUser?.role === 'admin');
-  const displayUsername = profile?.username || currentUser?.username || 'Invité';
+  const effectiveIsAdmin = supabaseIsAdmin || isAdmin;
+  const displayUsername = profile?.username || 'Invité';
 
   const isActive = (itemId: string) => currentTab === itemId;
 
@@ -87,7 +85,7 @@ export function AppSidebar({ currentTab, onTabChange, isAdmin }: AppSidebarProps
         </SidebarGroup>
 
         {/* Navigation admin */}
-        {isAdmin && (
+        {effectiveIsAdmin && (
           <SidebarGroup>
             <SidebarGroupLabel>Administration</SidebarGroupLabel>
             <SidebarGroupContent>

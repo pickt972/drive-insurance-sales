@@ -159,7 +159,7 @@ export const AuthPage = () => {
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="votre@email.com"
+                    placeholder="admin@aloelocation.com"
                     required
                   />
                 </div>
@@ -195,6 +195,18 @@ export const AuthPage = () => {
                     "Se connecter"
                   )}
                 </Button>
+
+                <Alert>
+                  <Mail className="h-4 w-4" />
+                  <AlertDescription>
+                    <strong>Comptes disponibles:</strong><br />
+                    • admin@aloelocation.com<br />
+                    • julie@aloelocation.com<br />
+                    • sherman@aloelocation.com<br />
+                    • alvin@aloelocation.com<br />
+                    <em className="text-xs">Utilisez le mot de passe configuré</em>
+                  </AlertDescription>
+                </Alert>
               </form>
             ) : (
               <form onSubmit={handleSignUp} className="space-y-4">
