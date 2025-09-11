@@ -9,18 +9,18 @@ All colors MUST be HSL.
 @layer base {
   :root {
     /* Palette Aloelocation - Corporate moderne */
-    --background: 250 252 254;
+    --background: 0 0% 100%;
     --foreground: 215 25% 15%;
 
-    --card: 255 255 255;
+    --card: 0 0% 100%;
     --card-foreground: 215 25% 15%;
 
-    --popover: 255 255 255;
+    --popover: 0 0% 100%;
     --popover-foreground: 215 25% 15%;
 
     /* Bleu corporate Aloelocation */
     --primary: 212 90% 45%;
-    --primary-foreground: 255 255 255;
+    --primary-foreground: 0 0% 100%;
     --primary-hover: 212 90% 38%;
     --primary-light: 212 90% 95%;
 
@@ -53,7 +53,7 @@ All colors MUST be HSL.
     /* Gradients modernes */
     --gradient-primary: linear-gradient(135deg, hsl(212 90% 45%), hsl(212 90% 38%));
     --gradient-success: linear-gradient(135deg, hsl(142 76% 36%), hsl(142 76% 30%));
-    --gradient-card: linear-gradient(135deg, hsl(255 255 255), hsl(250 252 254));
+    --gradient-card: linear-gradient(135deg, hsl(0 0% 100%), hsl(0 0% 98%));
     --gradient-hero: linear-gradient(135deg, hsl(212 90% 45%) 0%, hsl(212 90% 55%) 100%);
     
     /* Ombres modernes */
@@ -95,7 +95,7 @@ All colors MUST be HSL.
     --popover-foreground: 213 31% 91%;
 
     --primary: 212 90% 55%;
-    --primary-foreground: 255 255 255;
+    --primary-foreground: 0 0% 100%;
     --primary-hover: 212 90% 48%;
     --primary-light: 212 90% 15%;
 
@@ -190,11 +190,13 @@ All colors MUST be HSL.
 
 /* Classes utilitaires pour l'app mobile */
 .mobile-container {
-  @apply max-w-md mx-auto min-h-screen bg-background;
+  @apply max-w-md mx-auto min-h-screen;
+  background-color: hsl(0 0% 100%);
 }
 
 .mobile-header {
-  @apply sticky top-0 z-50 bg-card border-b shadow-card;
+  @apply sticky top-0 z-50 border-b shadow-card;
+  background-color: hsl(0 0% 100%);
 }
 
 .mobile-content {
@@ -202,7 +204,8 @@ All colors MUST be HSL.
 }
 
 .mobile-bottom-nav {
-  @apply fixed bottom-0 left-0 right-0 bg-card border-t shadow-elevated z-40;
+  @apply fixed bottom-0 left-0 right-0 border-t shadow-elevated z-40;
+  background-color: hsl(0 0% 100%);
 }
 
 .success-toast {
