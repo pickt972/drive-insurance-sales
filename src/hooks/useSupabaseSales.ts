@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/hooks/useAuth';
+import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 import { DashboardStats, SaleWithDetails } from '@/types/database';
 
 export const useSupabaseSales = () => {
@@ -13,7 +13,7 @@ export const useSupabaseSales = () => {
     weeklyEvolution: [],
   });
   const [loading, setLoading] = useState(true);
-  const { currentUser } = useAuth();
+  const { profile } = useSupabaseAuth();
 
   const fetchStats = async () => {
     try {
@@ -46,9 +46,9 @@ export const useSupabaseSales = () => {
       } as SaleWithDetails)) || [];
 
       // Filtrer selon le rôle (pour l'instant on affiche toutes les ventes)
-      const filteredSales = currentUser?.role === 'admin' 
+      const filteredSales = profile?.role === 'admin' 
         ? salesWithDetails 
-        : salesWithDetails.filter(sale => sale.employee_name === currentUser?.username);
+        : salesWithDetails.filter(sale => sale.employee_name === profile?.username);
 
       // Calculer les statistiques
       const totalSales = filteredSales.length;
@@ -58,9 +58,9 @@ export const useSupabaseSales = () => {
         sale => new Date(sale.created_at) >= weekAgo
       ).length;
 
-      // Top vendeurs (seulement pour admin)
-      const topSellers = currentUser?.role === 'admin' ? (() => {
-        const sellerStats = salesWithDetails.reduce((acc, sale) => {
+      // Top vendeurs - calculé pour tous les utilisateurs
+      const topSellers = (() => {
+        const sellerStats = filteredSales.reduce((acc, sale) => {
           const employeeName = sale.employee_name;
           if (!acc[employeeName]) {
             acc[employeeName] = {
@@ -77,7 +77,7 @@ export const useSupabaseSales = () => {
         return Object.values(sellerStats)
           .sort((a: any, b: any) => b.total_commission - a.total_commission)
           .slice(0, 5);
-      })() : [];
+      })();
 
       // Évolution hebdomadaire
       const weeklyEvolution = (() => {
@@ -117,10 +117,10 @@ export const useSupabaseSales = () => {
   };
 
   useEffect(() => {
-    if (currentUser) {
+    if (profile) {
       fetchStats();
     }
-  }, [currentUser]);
+  }, [profile]);
 
   return {
     stats,
