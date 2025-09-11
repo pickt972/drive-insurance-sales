@@ -168,6 +168,24 @@ export const AuthPage = () => {
                   )}
             </Button>
           </form>
+
+          <div className="mt-4 text-center">
+            <Button
+              type="button"
+              variant="link"
+              size="sm"
+              onClick={() => {
+                // Logique pour mot de passe oublié - peut être ajoutée plus tard
+                toast({
+                  title: "Fonction disponible bientôt",
+                  description: "Contactez l'administrateur pour réinitialiser votre mot de passe.",
+                });
+              }}
+              className="text-muted-foreground hover:text-primary"
+            >
+              Mot de passe oublié ?
+            </Button>
+          </div>
         </CardContent>
       </Card>
     </div>
