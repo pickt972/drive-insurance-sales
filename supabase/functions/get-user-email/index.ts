@@ -30,7 +30,7 @@ const handler = async (req: Request): Promise<Response> => {
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      { db: { schema: 'api' } }
+      { db: { schema: 'public' } }
     );
 
     // Client admin pour lire l'email dans auth.users
