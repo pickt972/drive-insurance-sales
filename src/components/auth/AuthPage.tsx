@@ -5,61 +5,42 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-// Tabs removed to avoid Radix dependency issues
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2, Mail, Lock, User as UserIcon, Eye, EyeOff } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
 import { useToast } from "@/hooks/use-toast";
-import type { Session, User } from "@supabase/supabase-js";
-
-const availableEmails = [
-  "admin@aloelocation.com",
-  "julie@aloelocation.com", 
-  "sherman@aloelocation.com",
-  "alvin@aloelocation.com",
-  "stef@aloelocation.com"
-];
+import { supabase } from "@/integrations/supabase/client";
 
 export const AuthPage = () => {
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [sendingReset, setSendingReset] = useState(false);
   
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { 
+    user, 
+    session, 
+    loading: authLoading, 
+    signInWithUsername, 
+    users,
+    fetchUsers 
+  } = useSupabaseAuth();
 
   useEffect(() => {
-    // Set up auth state listener FIRST
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        
-        // Redirect authenticated users to main page
-        if (session?.user) {
-          navigate("/");
-        }
-      }
-    );
+    // Charger les utilisateurs disponibles
+    fetchUsers();
+  }, []);
 
-    // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      
-      // Redirect if already authenticated
-      if (session?.user) {
-        navigate("/");
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, [navigate]);
+  useEffect(() => {
+    // Rediriger si déjà authentifié
+    if (!authLoading && user) {
+      navigate("/");
+    }
+  }, [user, authLoading, navigate]);
 
 
   const handleSignIn = async (e: React.FormEvent) => {
@@ -68,20 +49,14 @@ export const AuthPage = () => {
     setError("");
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+      const result = await signInWithUsername(username, password);
 
-      if (error) {
-        setError(error.message);
+      if (!result.success) {
+        setError(result.error || "Erreur de connexion");
         return;
       }
 
-      toast({
-        title: "Connexion réussie",
-        description: "Vous êtes maintenant connecté!",
-      });
+      // Redirection gérée par useEffect
     } catch (error: any) {
       setError(error.message);
     } finally {
@@ -90,18 +65,16 @@ export const AuthPage = () => {
   };
 
   const handleForgotPassword = async () => {
-    if (!email) {
+    if (!username) {
       toast({
-        title: "Email requis",
-        description: "Veuillez sélectionner un email avant de demander la réinitialisation.",
+        title: "Nom d'utilisateur requis",
+        description: "Veuillez sélectionner un nom d'utilisateur avant de demander la réinitialisation.",
         variant: "destructive",
       });
       return;
     }
 
-    // Extraire le nom d'utilisateur de l'email
-    const username = email.split('@')[0];
-    
+    // Utiliser directement le nom d'utilisateur
     try {
       setSendingReset(true);
       const { error } = await supabase.functions.invoke('password-reset-request', {
@@ -128,6 +101,18 @@ export const AuthPage = () => {
     }
   };
 
+  // Afficher un loader pendant l'initialisation de l'auth
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 to-secondary/10">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p>Chargement...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 to-secondary/10 p-4">
       <Card className="w-full max-w-md shadow-lg">
@@ -143,18 +128,18 @@ export const AuthPage = () => {
         <CardContent>
           <form onSubmit={handleSignIn} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="signin-email" className="flex items-center gap-2">
-                <Mail className="h-4 w-4" />
-                Email
+              <Label htmlFor="signin-username" className="flex items-center gap-2">
+                <UserIcon className="h-4 w-4" />
+                Nom d'utilisateur
               </Label>
-              <Select value={email} onValueChange={setEmail}>
+              <Select value={username} onValueChange={setUsername}>
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Sélectionner un compte" />
                 </SelectTrigger>
                 <SelectContent className="bg-background border shadow-lg z-50">
-                  {availableEmails.map((emailOption) => (
-                    <SelectItem key={emailOption} value={emailOption}>
-                      {emailOption}
+                  {users.map((user) => (
+                    <SelectItem key={user.username} value={user.username}>
+                      {user.username} ({user.role === 'admin' ? 'Admin' : 'Employé'})
                     </SelectItem>
                   ))}
                 </SelectContent>
