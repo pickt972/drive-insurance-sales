@@ -108,7 +108,7 @@ export type Database = {
           is_active: boolean
           role: string
           updated_at: string
-          user_id: string
+          user_id: string | null
           username: string
         }
         Insert: {
@@ -117,7 +117,7 @@ export type Database = {
           is_active?: boolean
           role?: string
           updated_at?: string
-          user_id: string
+          user_id?: string | null
           username: string
         }
         Update: {
@@ -126,7 +126,7 @@ export type Database = {
           is_active?: boolean
           role?: string
           updated_at?: string
-          user_id?: string
+          user_id?: string | null
           username?: string
         }
         Relationships: []
@@ -248,6 +248,10 @@ export type Database = {
           user_id: string
           username: string
         }[]
+      }
+      link_profile_to_user: {
+        Args: { p_user_id: string; p_username: string }
+        Returns: undefined
       }
       mark_reset_token_used: {
         Args: { p_token: string }
