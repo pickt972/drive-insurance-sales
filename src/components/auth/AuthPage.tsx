@@ -18,6 +18,7 @@ export const AuthPage = () => {
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [sendingReset, setSendingReset] = useState(false);
+  const [initializingUsers, setInitializingUsers] = useState(false);
   
   // Liste locale d'utilisateurs pour le sélecteur
   const [userOptions, setUserOptions] = useState<{ username: string; role: string; is_active: boolean }[]>([]);
@@ -111,6 +112,37 @@ export const AuthPage = () => {
       });
     } finally {
       setSendingReset(false);
+    }
+  };
+
+  const handleInitializeUsers = async () => {
+    try {
+      setInitializingUsers(true);
+      const { error } = await supabase.functions.invoke('create-default-users', {
+        body: {}
+      });
+      if (error) throw error;
+
+      const { data, error: loadErr } = await (supabase as any)
+        .from('profiles')
+        .select('username, role, is_active')
+        .eq('is_active', true)
+        .order('username', { ascending: true });
+      if (loadErr) throw loadErr;
+      setUserOptions((data || []) as any);
+
+      toast({
+        title: "Utilisateurs créés",
+        description: "Les utilisateurs par défaut ont été initialisés.",
+      });
+    } catch (err: any) {
+      toast({
+        title: "Échec de l'initialisation",
+        description: err.message || "Impossible de créer les utilisateurs par défaut.",
+        variant: "destructive",
+      });
+    } finally {
+      setInitializingUsers(false);
     }
   };
 
@@ -224,6 +256,23 @@ export const AuthPage = () => {
               {sendingReset ? 'Envoi en cours...' : 'Mot de passe oublié ?'}
             </Button>
           </div>
+
+          {userOptions.length === 0 && (
+            <div className="mt-2 text-center">
+              <p className="text-sm text-muted-foreground mb-1">Aucun utilisateur actif trouvé.</p>
+              <Button
+                type="button"
+                variant="link"
+                size="sm"
+                onClick={handleInitializeUsers}
+                disabled={initializingUsers}
+                className="text-muted-foreground hover:text-primary"
+              >
+                {initializingUsers ? 'Initialisation...' : 'Initialiser des utilisateurs par défaut'}
+              </Button>
+            </div>
+          )}
+
         </CardContent>
       </Card>
     </div>
