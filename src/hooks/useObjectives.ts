@@ -32,8 +32,7 @@ export const useObjectives = () => {
 
       for (const objective of objectivesData || []) {
         // Récupérer les ventes de l'employé pour la période
-        const { data: salesData, error: salesError } = await (supabase as any)
-          .schema('api')
+        const { data: salesData, error: salesError } = await supabase
           .from('sales')
           .select('commission_amount, created_at')
           .eq('employee_name', objective.employee_name)

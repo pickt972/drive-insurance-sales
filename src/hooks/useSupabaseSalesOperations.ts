@@ -23,8 +23,7 @@ export const useSupabaseSalesOperations = () => {
     try {
       setLoading(true);
       
-      const { data, error } = await (supabase as any)
-        .schema('api')
+      const { data, error } = await supabase
         .from('sales')
         .insert({
           ...saleData,
@@ -60,8 +59,7 @@ export const useSupabaseSalesOperations = () => {
     try {
       setLoading(true);
       
-      const { error } = await (supabase as any)
-        .schema('api')
+      const { error } = await supabase
         .from('sales')
         .update({ status: 'deleted' })
         .eq('id', saleId);

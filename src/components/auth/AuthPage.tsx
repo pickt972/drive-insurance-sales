@@ -34,8 +34,7 @@ export const AuthPage = () => {
   useEffect(() => {
     const loadUsers = async () => {
       try {
-        const { data, error } = await (supabase as any)
-          .schema('api')
+        const { data, error } = await supabase
           .from('profiles')
           .select('username, role, is_active')
           .eq('is_active', true)
