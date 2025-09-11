@@ -12,7 +12,6 @@ export const useSupabaseCommissions = () => {
     try {
       setLoading(true);
       const { data, error } = await (supabase as any)
-        .schema('api')
         .from('insurance_types')
         .select('*')
         .eq('is_active', true)
@@ -44,7 +43,6 @@ export const useSupabaseCommissions = () => {
   const updateCommission = async (insuranceId: string, newCommission: number) => {
     try {
       const { error } = await (supabase as any)
-        .schema('api')
         .from('insurance_types')
         .update({ commission: newCommission })
         .eq('id', insuranceId);
@@ -72,7 +70,6 @@ export const useSupabaseCommissions = () => {
   const addInsuranceType = async (name: string, commission: number) => {
     try {
       const { error } = await (supabase as any)
-        .schema('api')
         .from('insurance_types')
         .insert({
           name,
@@ -103,7 +100,6 @@ export const useSupabaseCommissions = () => {
   const toggleInsuranceType = async (insuranceId: string, isActive: boolean) => {
     try {
       const { error } = await (supabase as any)
-        .schema('api')
         .from('insurance_types')
         .update({ is_active: isActive })
         .eq('id', insuranceId);

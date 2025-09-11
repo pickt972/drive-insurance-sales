@@ -59,7 +59,6 @@ export const DesktopSalesForm = ({ onSaleAdded }: DesktopSalesFormProps) => {
       console.log('🔍 Récupération des types d\'assurance...');
       
       const { data, error } = await (supabase as any)
-        .schema('api')
         .from('insurance_types')
         .select('*')
         .eq('is_active', true)
@@ -170,7 +169,6 @@ export const DesktopSalesForm = ({ onSaleAdded }: DesktopSalesFormProps) => {
       });
       
       const { data: sale, error } = await (supabase as any)
-        .schema('api')
         .from('sales')
         .insert({
           employee_name: profile.username,

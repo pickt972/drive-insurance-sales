@@ -27,7 +27,6 @@ export const useSupabaseSales = () => {
 
       // Récupérer toutes les ventes avec les détails
       const { data: sales, error } = await (supabase as any)
-        .schema('api')
         .from('sales')
         .select(`
           *,
@@ -136,7 +135,6 @@ export const useSupabaseSales = () => {
   const deleteSale = async (saleId: string) => {
     try {
       const { error } = await (supabase as any)
-        .schema('api')
         .from('sales')
         .update({ status: 'deleted' })
         .eq('id', saleId);
