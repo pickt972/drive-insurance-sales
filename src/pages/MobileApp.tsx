@@ -29,17 +29,41 @@ const useResponsive = () => {
 
 const ResponsiveApp = () => {
   const [currentTab, setCurrentTab] = useState("dashboard");
-  const { user, isAuthenticated, isAdmin } = useSupabaseAuth();
+  const { user, isAuthenticated, isAdmin, profile, loading: authLoading } = useSupabaseAuth();
   const navigate = useNavigate();
   const { stats, loading, refreshStats } = useSupabaseSales();
   const isMobile = useResponsive();
 
+  // Debug logs
+  useEffect(() => {
+    console.log('ResponsiveApp Debug:', {
+      user: user ? { id: user.id, email: user.email } : null,
+      isAuthenticated,
+      profile,
+      authLoading,
+      isAdmin
+    });
+  }, [user, isAuthenticated, profile, authLoading, isAdmin]);
+
   // Not authenticated - redirect to auth page
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (!authLoading && !isAuthenticated) {
       navigate('/auth');
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, authLoading, navigate]);
+  
+  // Show loading during auth initialization
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p>Chargement...</p>
+        </div>
+      </div>
+    );
+  }
+  
   if (!isAuthenticated) return null;
 
   const handleSaleAdded = () => {
