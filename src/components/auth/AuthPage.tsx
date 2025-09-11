@@ -19,20 +19,33 @@ export const AuthPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [sendingReset, setSendingReset] = useState(false);
   
+  // Liste locale d'utilisateurs pour le sélecteur
+  const [userOptions, setUserOptions] = useState<{ username: string; role: string; is_active: boolean }[]>([]);
+  
   const navigate = useNavigate();
   const { toast } = useToast();
   const { 
     user, 
     session, 
     loading: authLoading, 
-    signInWithUsername, 
-    users,
-    fetchUsers 
+    signInWithUsername
   } = useSupabaseAuth();
 
   useEffect(() => {
-    // Charger les utilisateurs disponibles
-    fetchUsers();
+    const loadUsers = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('username, role, is_active')
+          .eq('is_active', true)
+          .order('username', { ascending: true });
+        if (error) throw error;
+        setUserOptions(data || []);
+      } catch (e) {
+        console.error('Erreur chargement utilisateurs:', e);
+      }
+    };
+    loadUsers();
   }, []);
 
   useEffect(() => {
@@ -137,11 +150,15 @@ export const AuthPage = () => {
                   <SelectValue placeholder="Sélectionner un compte" />
                 </SelectTrigger>
                 <SelectContent className="bg-background border shadow-lg z-50">
-                  {users.map((user) => (
-                    <SelectItem key={user.username} value={user.username}>
-                      {user.username} ({user.role === 'admin' ? 'Admin' : 'Employé'})
-                    </SelectItem>
-                  ))}
+                  {userOptions.length > 0 ? (
+                    userOptions.map((u) => (
+                      <SelectItem key={u.username} value={u.username}>
+                        {u.username} ({u.role === 'admin' ? 'Admin' : 'Employé'})
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <SelectItem disabled value="__empty">Aucun utilisateur</SelectItem>
+                  )}
                 </SelectContent>
               </Select>
             </div>
