@@ -1,5 +1,7 @@
-import { BarChart3, Plus, FileText, Settings, Users, Download } from "lucide-react";
+import { BarChart3, Plus, FileText, Settings, Users, Download, MoreHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useState } from "react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 interface MobileBottomNavProps {
   currentTab: string;
@@ -8,21 +10,28 @@ interface MobileBottomNavProps {
 }
 
 export const MobileBottomNav = ({ currentTab, onTabChange, isAdmin }: MobileBottomNavProps) => {
-  const tabs = [
+  const [isAdminMenuOpen, setIsAdminMenuOpen] = useState(false);
+  
+  // Onglets principaux toujours visibles
+  const mainTabs = [
     { id: 'dashboard', icon: BarChart3, label: 'Tableau' },
     { id: 'add', icon: Plus, label: 'Nouvelle' },
-    { id: 'sales', icon: FileText, label: 'Historique' },
-    ...(isAdmin ? [
-      { id: 'export', icon: Download, label: 'Export' },
-      { id: 'admin', icon: Settings, label: 'Admin' },
-      { id: 'users', icon: Users, label: 'Équipe' }
-    ] : [])
+    { id: 'sales', icon: FileText, label: 'Historique' }
   ];
+
+  // Onglets admin dans le menu extensible
+  const adminTabs = [
+    { id: 'export', icon: Download, label: 'Export' },
+    { id: 'admin', icon: Settings, label: 'Admin' },
+    { id: 'users', icon: Users, label: 'Équipe' }
+  ];
+
+  const isAdminTabActive = adminTabs.some(tab => tab.id === currentTab);
 
   return (
     <nav className="mobile-bottom-nav">
       <div className="flex items-center justify-around p-2">
-        {tabs.map(({ id, icon: Icon, label }) => (
+        {mainTabs.map(({ id, icon: Icon, label }) => (
           <Button
             key={id}
             variant={currentTab === id ? "default" : "ghost"}
@@ -38,6 +47,44 @@ export const MobileBottomNav = ({ currentTab, onTabChange, isAdmin }: MobileBott
             <span className="text-xs font-medium">{label}</span>
           </Button>
         ))}
+        
+        {isAdmin && (
+          <Popover open={isAdminMenuOpen} onOpenChange={setIsAdminMenuOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                variant={isAdminTabActive ? "default" : "ghost"}
+                size="sm"
+                className={`flex flex-col gap-1 h-auto py-2 px-3 ${
+                  isAdminTabActive 
+                    ? 'bg-primary text-primary-foreground shadow-primary' 
+                    : 'text-muted-foreground'
+                }`}
+              >
+                <MoreHorizontal className="h-4 w-4" />
+                <span className="text-xs font-medium">Plus</span>
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-48 p-2" align="center" side="top">
+              <div className="flex flex-col gap-1">
+                {adminTabs.map(({ id, icon: Icon, label }) => (
+                  <Button
+                    key={id}
+                    variant={currentTab === id ? "default" : "ghost"}
+                    size="sm"
+                    onClick={() => {
+                      onTabChange(id);
+                      setIsAdminMenuOpen(false);
+                    }}
+                    className="justify-start gap-2 h-auto py-2"
+                  >
+                    <Icon className="h-4 w-4" />
+                    <span className="text-sm">{label}</span>
+                  </Button>
+                ))}
+              </div>
+            </PopoverContent>
+          </Popover>
+        )}
       </div>
     </nav>
   );
