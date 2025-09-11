@@ -210,7 +210,7 @@ export const AuthPage = () => {
             </Button>
           </form>
 
-          <div className="mt-4 text-center space-y-2">
+          <div className="mt-4 text-center">
             <Button
               type="button"
               variant="link"
@@ -221,34 +221,6 @@ export const AuthPage = () => {
             >
               {sendingReset ? 'Envoi en cours...' : 'Mot de passe oublié ?'}
             </Button>
-            
-            <div>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={async () => {
-                  try {
-                    const { data, error } = await supabase.functions.invoke('create-default-users');
-                    if (error) throw error;
-                    toast({
-                      title: "Utilisateurs créés",
-                      description: "Les utilisateurs manquants ont été créés avec succès",
-                    });
-                    console.log('Création utilisateurs:', data);
-                  } catch (err: any) {
-                    toast({
-                      title: "Erreur",
-                      description: err.message,
-                      variant: "destructive",
-                    });
-                  }
-                }}
-                className="text-xs"
-              >
-                Créer utilisateurs manquants
-              </Button>
-            </div>
           </div>
         </CardContent>
       </Card>
