@@ -4,7 +4,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { Profile } from '@/types/database';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/hooks/useAuth';
 
 export const useSupabaseAuth = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -13,7 +12,6 @@ export const useSupabaseAuth = () => {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { logout: localLogout } = useAuth();
 
   useEffect(() => {
     // Écouter les changements d'état d'authentification
@@ -232,8 +230,7 @@ export const useSupabaseAuth = () => {
           description: "À bientôt !",
         });
         
-        // Nettoyer l'ancien système d'auth local et rediriger
-        localLogout();
+        // Nettoyer et rediriger
         navigate('/auth', { replace: true });
       }
     } catch (error) {
@@ -285,6 +282,153 @@ export const useSupabaseAuth = () => {
     }
   };
 
+  // Nouvelles fonctions pour la gestion des utilisateurs
+  const addUser = async (username: string, email: string, password: string, role: 'admin' | 'employee' = 'employee') => {
+    try {
+      const { data, error } = await supabase.functions.invoke('user-management', {
+        body: {
+          action: 'create',
+          username,
+          email,
+          password,
+          role
+        }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Utilisateur créé",
+        description: `${username} a été créé avec succès`,
+      });
+
+      return { success: true, data };
+    } catch (error: any) {
+      toast({
+        title: "Erreur",
+        description: error.message,
+        variant: "destructive",
+      });
+      return { success: false, error: error.message };
+    }
+  };
+
+  const updatePassword = async (username: string, newPassword: string, userEmail?: string) => {
+    try {
+      const { data, error } = await supabase.functions.invoke('user-management', {
+        body: {
+          action: 'update',
+          username,
+          newPassword,
+          userEmail
+        }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Mot de passe modifié",
+        description: `Le mot de passe de ${username} a été mis à jour`,
+      });
+
+      return { success: true };
+    } catch (error: any) {
+      toast({
+        title: "Erreur",
+        description: error.message,
+        variant: "destructive",
+      });
+      return { success: false, error: error.message };
+    }
+  };
+
+  const updateRole = async (username: string, newRole: 'admin' | 'employee') => {
+    try {
+      const { data, error } = await supabase.functions.invoke('user-management', {
+        body: {
+          action: 'update',
+          username,
+          newRole
+        }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Rôle modifié",
+        description: `Le rôle de ${username} a été mis à jour`,
+      });
+
+      return { success: true };
+    } catch (error: any) {
+      toast({
+        title: "Erreur",
+        description: error.message,
+        variant: "destructive",
+      });
+      return { success: false, error: error.message };
+    }
+  };
+
+  const removeUser = async (username: string) => {
+    try {
+      const { data, error } = await supabase.functions.invoke('user-management', {
+        body: {
+          action: 'delete',
+          username
+        }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Utilisateur supprimé",
+        description: `${username} a été supprimé`,
+      });
+
+      return { success: true };
+    } catch (error: any) {
+      toast({
+        title: "Erreur",
+        description: error.message,
+        variant: "destructive",
+      });
+      return { success: false, error: error.message };
+    }
+  };
+
+  const [users, setUsers] = useState<Profile[]>([]);
+  const [usersLoading, setUsersLoading] = useState(false);
+
+  const fetchUsers = async () => {
+    try {
+      setUsersLoading(true);
+      const { data, error } = await supabase.functions.invoke('user-management', {
+        body: { action: 'list' }
+      });
+
+      if (error) throw error;
+
+      setUsers(data.users || []);
+    } catch (error: any) {
+      console.error('Erreur récupération utilisateurs:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de récupérer la liste des utilisateurs",
+        variant: "destructive",
+      });
+    } finally {
+      setUsersLoading(false);
+    }
+  };
+
+  // Charger les utilisateurs au démarrage
+  useEffect(() => {
+    if (user && profile?.role === 'admin') {
+      fetchUsers();
+    }
+  }, [user, profile?.role]);
+
   return {
     user,
     session,
@@ -296,5 +440,13 @@ export const useSupabaseAuth = () => {
     signOut,
     createUserProfile,
     fetchUserProfile,
+    // Gestion des utilisateurs
+    users,
+    usersLoading,
+    addUser,
+    updatePassword,
+    updateRole,
+    removeUser,
+    fetchUsers,
   };
 };

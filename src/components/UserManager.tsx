@@ -5,16 +5,17 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/hooks/useAuth";
+import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
 import { User, Plus, Trash2, Key, Settings, Shield, Eye, EyeOff } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useNavigate } from "react-router-dom";
 
 export const UserManager = () => {
-  const { users, addUser, removeUser, updatePassword, updateRole } = useAuth();
+  const { users, addUser, removeUser, updatePassword, updateRole, usersLoading, fetchUsers } = useSupabaseAuth();
   const navigate = useNavigate();
   const [newUsername, setNewUsername] = useState("");
+  const [newEmail, setNewEmail] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [newRole, setNewRole] = useState<"admin" | "employee">("employee");
   const [passwordChangeUser, setPasswordChangeUser] = useState("");
@@ -25,11 +26,11 @@ export const UserManager = () => {
   const [newRoleChange, setNewRoleChange] = useState<"admin" | "employee">("employee");
   const { toast } = useToast();
 
-  const handleAddUser = () => {
-    if (!newUsername || !newPassword) {
+  const handleAddUser = async () => {
+    if (!newUsername || !newEmail || !newPassword) {
       toast({
         title: "Erreur",
-        description: "Nom d'utilisateur et mot de passe requis",
+        description: "Nom d'utilisateur, email et mot de passe requis",
         variant: "destructive",
       });
       return;
@@ -53,43 +54,28 @@ export const UserManager = () => {
       return;
     }
 
-    const result = addUser(newUsername, newPassword, newRole);
+    const result = await addUser(newUsername, newEmail, newPassword, newRole);
     
     if (result.success) {
       setNewUsername("");
+      setNewEmail("");
       setNewPassword("");
       setNewRole("employee");
-      toast({
-        title: "Utilisateur ajouté",
-        description: `${newUsername} a été ajouté avec succès`,
-      });
-    } else {
-      toast({
-        title: "Erreur",
-        description: result.error,
-        variant: "destructive",
-      });
+      // Recharger la liste des utilisateurs
+      await fetchUsers();
     }
   };
 
-  const handleRemoveUser = (username: string) => {
-    const result = removeUser(username);
+  const handleRemoveUser = async (username: string) => {
+    const result = await removeUser(username);
     
     if (result.success) {
-      toast({
-        title: "Utilisateur supprimé",
-        description: `${username} a été supprimé`,
-      });
-    } else {
-      toast({
-        title: "Erreur",
-        description: result.error,
-        variant: "destructive",
-      });
+      // Recharger la liste des utilisateurs
+      await fetchUsers();
     }
   };
 
-  const handlePasswordChange = () => {
+  const handlePasswordChange = async () => {
     if (!passwordChangeUser || !newPasswordChange) {
       toast({
         title: "Erreur",
@@ -108,25 +94,15 @@ export const UserManager = () => {
       return;
     }
 
-    const result = updatePassword(passwordChangeUser, newPasswordChange);
+    const result = await updatePassword(passwordChangeUser, newPasswordChange);
     
     if (result.success) {
       setPasswordChangeUser("");
       setNewPasswordChange("");
-      toast({
-        title: "Mot de passe modifié",
-        description: `Le mot de passe de ${passwordChangeUser} a été mis à jour`,
-      });
-    } else {
-      toast({
-        title: "Erreur",
-        description: result.error,
-        variant: "destructive",
-      });
     }
   };
 
-  const handleRoleChange = () => {
+  const handleRoleChange = async () => {
     if (!roleChangeUser) {
       toast({
         title: "Erreur",
@@ -136,21 +112,13 @@ export const UserManager = () => {
       return;
     }
 
-    const result = updateRole(roleChangeUser, newRoleChange);
+    const result = await updateRole(roleChangeUser, newRoleChange);
     
     if (result.success) {
       setRoleChangeUser("");
       setNewRoleChange("employee");
-      toast({
-        title: "Rôle modifié",
-        description: `Le rôle de ${roleChangeUser} a été mis à jour`,
-      });
-    } else {
-      toast({
-        title: "Erreur",
-        description: result.error,
-        variant: "destructive",
-      });
+      // Recharger la liste des utilisateurs
+      await fetchUsers();
     }
   };
 
@@ -187,41 +155,44 @@ export const UserManager = () => {
           </Button>
         </div>
 
-        {/* Current users list */}
-        <div className="space-y-4">
-          <h3 className="font-medium">Utilisateurs actuels</h3>
-          <div className="space-y-3">
-            {users.map((user) => (
-              <div key={user.username} className="flex items-center justify-between p-3 border rounded-lg bg-card">
-                <div className="flex items-center gap-3">
-                  <User className="h-4 w-4 text-muted-foreground" />
-                  <div>
-                    <div className="font-medium">{user.username}</div>
-                    <div className="text-sm text-muted-foreground">
-                      {user.role === "admin" ? "Administrateur" : "Employé"}
+          <div className="space-y-4">
+            <h3 className="font-medium">Utilisateurs actuels</h3>
+            {usersLoading ? (
+              <div className="text-center py-4">Chargement...</div>
+            ) : (
+              <div className="space-y-3">
+                {users.map((user) => (
+                  <div key={user.username} className="flex items-center justify-between p-3 border rounded-lg bg-card">
+                    <div className="flex items-center gap-3">
+                      <User className="h-4 w-4 text-muted-foreground" />
+                      <div>
+                        <div className="font-medium">{user.username}</div>
+                        <div className="text-sm text-muted-foreground">
+                          {user.role === "admin" ? "Administrateur" : "Employé"}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {user.role === "admin" ? (
+                        <span className="px-2 py-1 bg-primary/10 text-primary rounded-full text-xs">
+                          Admin
+                        </span>
+                      ) : (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleRemoveUser(user.username)}
+                          className="text-destructive hover:text-destructive"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
                     </div>
                   </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  {user.role === "admin" ? (
-                    <span className="px-2 py-1 bg-primary/10 text-primary rounded-full text-xs">
-                      Admin
-                    </span>
-                  ) : (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleRemoveUser(user.username)}
-                      className="text-destructive hover:text-destructive"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  )}
-                </div>
+                ))}
               </div>
-            ))}
+            )}
           </div>
-        </div>
 
         <Separator />
 
@@ -236,6 +207,16 @@ export const UserManager = () => {
                 value={newUsername}
                 onChange={(e) => setNewUsername(e.target.value)}
                 placeholder="Nom de l'employé"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="new-email">Email</Label>
+              <Input
+                id="new-email"
+                type="email"
+                value={newEmail}
+                onChange={(e) => setNewEmail(e.target.value)}
+                placeholder="email@example.com"
               />
             </div>
             <div className="space-y-2">
