@@ -61,7 +61,8 @@ export const MobileSalesForm = ({ onSaleAdded }: MobileSalesFormProps) => {
     try {
       console.log('🔍 Récupération des types d\'assurance...');
       
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
+        .schema('api')
         .from('insurance_types')
         .select('*')
         .eq('is_active', true)
@@ -171,7 +172,8 @@ export const MobileSalesForm = ({ onSaleAdded }: MobileSalesFormProps) => {
         notes: notes.trim() || null,
       });
       
-      const { data: sale, error } = await supabase
+      const { data: sale, error } = await (supabase as any)
+        .schema('api')
         .from('sales')
         .insert({
           employee_name: profile.username,
