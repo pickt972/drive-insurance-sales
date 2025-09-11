@@ -12,7 +12,6 @@ export const AdminResetPassword = () => {
   const { toast } = useToast();
   const [username, setUsername] = useState("");
   const [newPassword, setNewPassword] = useState("");
-  const [userEmail, setUserEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [resetSuccess, setResetSuccess] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -36,7 +35,8 @@ export const AdminResetPassword = () => {
         body: {
           username,
           newPassword,
-          userEmail: userEmail || undefined,
+          // L'email sera automatiquement généré côté serveur : username@aloelocation.com  
+          userEmail: `${username.toLowerCase()}@aloelocation.com`
         },
       });
 
@@ -51,7 +51,6 @@ export const AdminResetPassword = () => {
       // Reset form
       setUsername("");
       setNewPassword("");
-      setUserEmail("");
       
       setTimeout(() => {
         setResetSuccess(false);
@@ -90,7 +89,7 @@ export const AdminResetPassword = () => {
             <Alert>
               <Shield className="h-4 w-4" />
               <AlertDescription>
-                Le mot de passe a été réinitialisé avec succès. L'utilisateur a été notifié par email.
+                Le mot de passe a été réinitialisé avec succès. L'utilisateur a été notifié par email à l'adresse {username.toLowerCase()}@aloelocation.com.
               </AlertDescription>
             </Alert>
           )}
@@ -111,23 +110,6 @@ export const AdminResetPassword = () => {
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="userEmail" className="flex items-center gap-2">
-                <Mail className="h-4 w-4" />
-                Email utilisateur (optionnel)
-              </Label>
-              <Input
-                id="userEmail"
-                type="email"
-                value={userEmail}
-                onChange={(e) => setUserEmail(e.target.value)}
-                placeholder="email@example.com"
-              />
-              <p className="text-xs text-muted-foreground">
-                Si fourni, l'utilisateur recevra le nouveau mot de passe par email
-              </p>
-            </div>
-            
             <div className="space-y-2">
               <Label htmlFor="newPassword" className="flex items-center gap-2">
                 <Lock className="h-4 w-4" />

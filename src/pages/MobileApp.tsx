@@ -37,7 +37,7 @@ const ResponsiveApp = () => {
   // Debug logs
   useEffect(() => {
     console.log('ResponsiveApp Debug:', {
-      user: user ? { id: user.id, email: user.email } : null,
+      user: user ? { id: user.id, username: user.user_metadata?.username } : null,
       isAuthenticated,
       profile,
       authLoading,

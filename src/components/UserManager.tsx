@@ -15,7 +15,6 @@ export const UserManager = () => {
   const { users, addUser, removeUser, updatePassword, updateRole, usersLoading, fetchUsers } = useSupabaseAuth();
   const navigate = useNavigate();
   const [newUsername, setNewUsername] = useState("");
-  const [newEmail, setNewEmail] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [newRole, setNewRole] = useState<"admin" | "employee">("employee");
   const [passwordChangeUser, setPasswordChangeUser] = useState("");
@@ -27,10 +26,10 @@ export const UserManager = () => {
   const { toast } = useToast();
 
   const handleAddUser = async () => {
-    if (!newUsername || !newEmail || !newPassword) {
+    if (!newUsername || !newPassword) {
       toast({
         title: "Erreur",
-        description: "Nom d'utilisateur, email et mot de passe requis",
+        description: "Nom d'utilisateur et mot de passe requis",
         variant: "destructive",
       });
       return;
@@ -54,11 +53,12 @@ export const UserManager = () => {
       return;
     }
 
-    const result = await addUser(newUsername, newEmail, newPassword, newRole);
+    // Générer un email automatiquement basé sur le nom d'utilisateur
+    const email = `${newUsername.toLowerCase()}@aloelocation.com`;
+    const result = await addUser(newUsername, email, newPassword, newRole);
     
     if (result.success) {
       setNewUsername("");
-      setNewEmail("");
       setNewPassword("");
       setNewRole("employee");
       // Recharger la liste des utilisateurs
@@ -207,16 +207,6 @@ export const UserManager = () => {
                 value={newUsername}
                 onChange={(e) => setNewUsername(e.target.value)}
                 placeholder="Nom de l'employé"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="new-email">Email</Label>
-              <Input
-                id="new-email"
-                type="email"
-                value={newEmail}
-                onChange={(e) => setNewEmail(e.target.value)}
-                placeholder="email@example.com"
               />
             </div>
             <div className="space-y-2">

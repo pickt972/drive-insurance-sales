@@ -1,28 +1,33 @@
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { useToast } from "@/hooks/use-toast";
-import { LogIn, User, Lock, Eye, EyeOff, Mail } from "lucide-react";
+import { Loader2, User, Lock, Eye, EyeOff, LogIn } from "lucide-react";
 import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
+import { useToast } from "@/hooks/use-toast";
 
 export const SupabaseLoginForm = () => {
-  const [email, setEmail] = useState("");
+  const { signInWithUsername, users, fetchUsers } = useSupabaseAuth();
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const { signInWithUsername } = useSupabaseAuth();
   const { toast } = useToast();
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!email || !password) {
+    if (!username || !password) {
       toast({
         title: "Erreur",
-        description: "Veuillez saisir un email et un mot de passe",
+        description: "Veuillez saisir un nom d'utilisateur et un mot de passe",
         variant: "destructive",
       });
       return;
@@ -31,7 +36,7 @@ export const SupabaseLoginForm = () => {
     setIsLoading(true);
     
     try {
-      const result = await signInWithUsername(email, password);
+      const result = await signInWithUsername(username, password);
       
       if (!result.success) {
         toast({
@@ -66,18 +71,22 @@ export const SupabaseLoginForm = () => {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email" className="flex items-center gap-2">
+              <Label htmlFor="username" className="flex items-center gap-2">
                 <User className="h-4 w-4" />
-                Email
+                Nom d'utilisateur
               </Label>
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="votre@email.com"
-                autoComplete="email"
-              />
+              <Select value={username} onValueChange={setUsername}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Sélectionner un compte" />
+                </SelectTrigger>
+                <SelectContent>
+                  {users.map((user) => (
+                    <SelectItem key={user.username} value={user.username}>
+                      {user.username} ({user.role === 'admin' ? 'Admin' : 'Employé'})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="space-y-2">
@@ -116,20 +125,28 @@ export const SupabaseLoginForm = () => {
               className="w-full bg-gradient-primary hover:bg-primary-hover"
               disabled={isLoading}
             >
-              {isLoading ? "Connexion..." : "Se connecter"}
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Connexion...
+                </>
+              ) : (
+                "Se connecter"
+              )}
             </Button>
           </form>
 
           <div className="mt-6 space-y-2">
             <Alert>
-              <Mail className="h-4 w-4" />
+              <User className="h-4 w-4" />
               <AlertDescription>
                 <strong>Comptes disponibles:</strong><br />
-                • admin@aloelocation.com<br />
-                • julie@aloelocation.com<br />
-                • sherman@aloelocation.com<br />
-                • alvin@aloelocation.com<br />
-                • stef@aloelocation.com<br />
+                {users.map((user, index) => (
+                  <span key={user.username}>
+                    • {user.username} ({user.role === 'admin' ? 'Admin' : 'Employé'}){index < users.length - 1 && <br />}
+                  </span>
+                ))}
+                <br />
                 <em className="text-xs">Mot de passe: celui configuré</em>
               </AlertDescription>
             </Alert>

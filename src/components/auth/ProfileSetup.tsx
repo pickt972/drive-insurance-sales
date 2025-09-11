@@ -63,7 +63,7 @@ export const ProfileSetup = () => {
             </div>
             <CardTitle className="text-xl">Finaliser votre profil</CardTitle>
             <p className="text-sm text-muted-foreground">
-              Bonjour {user?.user_metadata?.full_name || user?.email} ! Complétez votre profil pour commencer.
+              Bonjour {user?.user_metadata?.username || user?.user_metadata?.full_name || "Utilisateur"} ! Complétez votre profil pour commencer.
             </p>
           </CardHeader>
           
