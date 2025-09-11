@@ -72,7 +72,7 @@ const handler = async (req: Request): Promise<Response> => {
     if (!profile.user_id) {
       console.log('Profile not linked to auth user for username:', inputUsername);
       return new Response(
-        JSON.stringify({ error: 'Compte non activé. Veuillez vous connecter d\'abord pour activer votre compte.' }), 
+        JSON.stringify({ error: 'Compte non activé. Utilisez le bouton "Créer les utilisateurs" dans l\'administration pour activer ce compte.' }), 
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
