@@ -85,6 +85,7 @@ export const LoginPage = () => {
                 Accédez à votre espace de vente
               </p>
             </div>
+
             {showForgotPassword && (
               <Alert>
                 <Mail className="h-4 w-4" />
