@@ -31,7 +31,7 @@ const ResponsiveApp = () => {
   const [currentTab, setCurrentTab] = useState("dashboard");
   const { user, isAuthenticated, isAdmin, profile, loading: authLoading } = useSupabaseAuth();
   const navigate = useNavigate();
-  const { stats, loading, refreshStats, deleteSale } = useSupabaseSales();
+  const { stats, allSales, loading, refreshStats, deleteSale } = useSupabaseSales();
   const isMobile = useResponsive();
 
   // Debug logs
@@ -96,16 +96,7 @@ const ResponsiveApp = () => {
           </Card>
         ) : (
           <SalesTable 
-            sales={stats.recentSales.map(sale => ({
-              id: sale.id || '',
-              employeeName: sale.employee_name || '',
-              clientName: sale.client_name || '',
-              reservationNumber: sale.reservation_number || '',
-              insuranceTypes: sale.insurance_name ? [sale.insurance_name] : [],
-              date: sale.created_at || new Date().toISOString(),
-              timestamp: new Date(sale.created_at || Date.now()).getTime(),
-              commissions: sale.commission_amount || 0
-            }))}
+            sales={allSales}
             onDeleteSale={async (saleId) => {
               const result = await deleteSale(saleId);
               if (result?.success) {
@@ -134,7 +125,7 @@ const ResponsiveApp = () => {
         );
 
       case "export":
-        return <ExportPanel sales={stats.recentSales} />;
+        return <ExportPanel sales={allSales} />;
 
       default:
         return isMobile ? <MobileDashboard stats={stats} /> : <DesktopDashboard stats={stats} />;

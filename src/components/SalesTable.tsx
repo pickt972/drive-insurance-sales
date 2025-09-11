@@ -1,9 +1,11 @@
+import { useState } from "react";
 import { Sale } from "@/types/sales";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Trash2, FileText, Calendar } from "lucide-react";
+import { Trash2, FileText, Calendar, Eye } from "lucide-react";
+import { SaleDetailModal } from "./SaleDetailModal";
 
 interface SalesTableProps {
   sales: Sale[];
@@ -11,12 +13,25 @@ interface SalesTableProps {
 }
 
 export const SalesTable = ({ sales, onDeleteSale }: SalesTableProps) => {
+  const [selectedSale, setSelectedSale] = useState<Sale | null>(null);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('fr-FR', {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric'
     });
+  };
+
+  const handleViewDetail = (sale: Sale) => {
+    setSelectedSale(sale);
+    setIsDetailModalOpen(true);
+  };
+
+  const handleCloseDetail = () => {
+    setIsDetailModalOpen(false);
+    setSelectedSale(null);
   };
 
   return (
@@ -72,14 +87,24 @@ export const SalesTable = ({ sales, onDeleteSale }: SalesTableProps) => {
                       </div>
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => onDeleteSale(sale.id)}
-                        className="h-8 w-8 p-0"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      <div className="flex gap-2 justify-end">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleViewDetail(sale)}
+                          className="h-8 w-8 p-0"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => onDeleteSale(sale.id)}
+                          className="h-8 w-8 p-0"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -88,6 +113,12 @@ export const SalesTable = ({ sales, onDeleteSale }: SalesTableProps) => {
           </div>
         )}
       </CardContent>
+      
+      <SaleDetailModal 
+        sale={selectedSale}
+        isOpen={isDetailModalOpen}
+        onClose={handleCloseDetail}
+      />
     </Card>
   );
 };

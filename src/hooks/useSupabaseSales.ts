@@ -12,6 +12,7 @@ export const useSupabaseSales = () => {
     recentSales: [],
     weeklyEvolution: [],
   });
+  const [allSales, setAllSales] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const { profile } = useSupabaseAuth();
 
@@ -50,6 +51,20 @@ export const useSupabaseSales = () => {
       const filteredSales = profile?.role === 'admin' 
         ? salesWithDetails 
         : salesWithDetails.filter(sale => sale.employee_name === profile?.username);
+
+      // Convertir les ventes au format attendu par SalesTable
+      const salesForTable = filteredSales.map(sale => ({
+        id: sale.id,
+        employeeName: sale.employee_name,
+        clientName: sale.client_name,
+        reservationNumber: sale.reservation_number,
+        insuranceTypes: [sale.insurance_name], // Pour compatibilité avec l'ancien format
+        date: sale.created_at,
+        timestamp: new Date(sale.created_at).getTime(),
+        commissions: Number(sale.commission_amount),
+      }));
+
+      setAllSales(salesForTable);
 
       // Calculer les statistiques
       const totalSales = filteredSales.length;
@@ -146,6 +161,7 @@ export const useSupabaseSales = () => {
 
   return {
     stats,
+    allSales,
     loading,
     refreshStats: fetchStats,
     deleteSale,
