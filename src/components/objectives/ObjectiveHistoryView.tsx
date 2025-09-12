@@ -84,12 +84,12 @@ const ObjectiveHistoryView = () => {
 
           <div className="space-y-2">
             <Label>Employé</Label>
-            <Select value={filterEmployee} onValueChange={setFilterEmployee}>
+            <Select value={filterEmployee} onValueChange={(v) => setFilterEmployee(v === 'all' ? '' : v)}>
               <SelectTrigger>
                 <SelectValue placeholder="Tous les employés" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Tous les employés</SelectItem>
+                <SelectItem value="all">Tous les employés</SelectItem>
                 {uniqueEmployees.map(employee => (
                   <SelectItem key={employee} value={employee}>
                     {employee}
@@ -101,12 +101,12 @@ const ObjectiveHistoryView = () => {
 
           <div className="space-y-2">
             <Label>Type d'objectif</Label>
-            <Select value={filterType} onValueChange={setFilterType}>
+            <Select value={filterType} onValueChange={(v) => setFilterType(v === 'all' ? '' : v)}>
               <SelectTrigger>
                 <SelectValue placeholder="Tous les types" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Tous les types</SelectItem>
+                <SelectItem value="all">Tous les types</SelectItem>
                 <SelectItem value="monthly">Mensuel</SelectItem>
                 <SelectItem value="weekly">Hebdomadaire</SelectItem>
                 <SelectItem value="yearly">Annuel</SelectItem>
@@ -116,12 +116,12 @@ const ObjectiveHistoryView = () => {
 
           <div className="space-y-2">
             <Label>Résultat</Label>
-            <Select value={filterAchieved} onValueChange={setFilterAchieved}>
+            <Select value={filterAchieved} onValueChange={(v) => setFilterAchieved(v === 'all' ? '' : v)}>
               <SelectTrigger>
                 <SelectValue placeholder="Tous les résultats" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Tous les résultats</SelectItem>
+                <SelectItem value="all">Tous les résultats</SelectItem>
                 <SelectItem value="achieved">Objectifs atteints</SelectItem>
                 <SelectItem value="not-achieved">Objectifs non atteints</SelectItem>
               </SelectContent>
