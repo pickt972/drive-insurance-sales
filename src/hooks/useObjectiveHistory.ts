@@ -2,14 +2,23 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { ObjectiveHistory } from '@/types/objectiveHistory';
 import { toast } from '@/components/ui/use-toast';
+import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 
 export const useObjectiveHistory = () => {
   const [history, setHistory] = useState<ObjectiveHistory[]>([]);
   const [loading, setLoading] = useState(true);
+  const { profile } = useSupabaseAuth();
 
   const fetchObjectiveHistory = async () => {
     try {
       setLoading(true);
+      
+      // Si pas de profil, on ne peut pas charger les données
+      if (!profile) {
+        setHistory([]);
+        return;
+      }
+
       const { data, error } = await supabase
         .from('objective_history')
         .select('*')
@@ -85,8 +94,10 @@ export const useObjectiveHistory = () => {
   };
 
   useEffect(() => {
-    fetchObjectiveHistory();
-  }, []);
+    if (profile) {
+      fetchObjectiveHistory();
+    }
+  }, [profile]);
 
   return {
     history,
