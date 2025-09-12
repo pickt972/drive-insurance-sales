@@ -113,6 +113,63 @@ export type Database = {
         }
         Relationships: []
       }
+      objective_history: {
+        Row: {
+          achieved_amount: number
+          achieved_sales_count: number
+          archived_at: string
+          created_at: string
+          description: string | null
+          employee_name: string
+          id: string
+          is_completed: boolean
+          objective_achieved: boolean
+          objective_type: string
+          period_end: string
+          period_start: string
+          progress_percentage_amount: number
+          progress_percentage_sales: number
+          target_amount: number
+          target_sales_count: number
+        }
+        Insert: {
+          achieved_amount?: number
+          achieved_sales_count?: number
+          archived_at?: string
+          created_at?: string
+          description?: string | null
+          employee_name: string
+          id?: string
+          is_completed?: boolean
+          objective_achieved?: boolean
+          objective_type: string
+          period_end: string
+          period_start: string
+          progress_percentage_amount?: number
+          progress_percentage_sales?: number
+          target_amount?: number
+          target_sales_count?: number
+        }
+        Update: {
+          achieved_amount?: number
+          achieved_sales_count?: number
+          archived_at?: string
+          created_at?: string
+          description?: string | null
+          employee_name?: string
+          id?: string
+          is_completed?: boolean
+          objective_achieved?: boolean
+          objective_type?: string
+          period_end?: string
+          period_start?: string
+          progress_percentage_amount?: number
+          progress_percentage_sales?: number
+          target_amount?: number
+          target_sales_count?: number
+        }
+        Relationships: []
+      }
       password_reset_tokens: {
         Row: {
           created_at: string
@@ -270,6 +327,17 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      archive_completed_objective: {
+        Args: {
+          p_achieved_amount: number
+          p_achieved_sales_count: number
+          p_objective_achieved: boolean
+          p_objective_id: string
+          p_progress_percentage_amount: number
+          p_progress_percentage_sales: number
+        }
+        Returns: undefined
+      }
       cleanup_expired_reset_tokens: {
         Args: Record<PropertyKey, never>
         Returns: undefined

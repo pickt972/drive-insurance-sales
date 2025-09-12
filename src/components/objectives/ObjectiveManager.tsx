@@ -6,9 +6,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Target, Edit, Trash2 } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Plus, Target, Edit, Trash2, Archive } from "lucide-react";
 import { useObjectives } from "@/hooks/useObjectives";
+import { useObjectiveHistory } from "@/hooks/useObjectiveHistory";
 import { ObjectiveProgressCard } from "./ObjectiveProgressCard";
+import ObjectiveHistoryView from "./ObjectiveHistoryView";
 import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
 import { EmployeeObjective } from "@/types/objectives";
 import { useToast } from "@/hooks/use-toast";
@@ -16,6 +19,7 @@ import { supabase } from "@/integrations/supabase/client";
 export const ObjectiveManager = () => {
   const { objectivesProgress, loading, createObjective, updateObjective, deleteObjective } = useObjectives();
   const { profile } = useSupabaseAuth();
+  const { archiveObjective } = useObjectiveHistory();
   const { toast } = useToast();
   
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -233,6 +237,26 @@ export const ObjectiveManager = () => {
     }
   };
 
+  const handleArchive = async (id: string) => {
+    const objectiveProgress = objectivesProgress.find(op => op.objective.id === id);
+    if (!objectiveProgress) return;
+
+    if (window.confirm('Êtes-vous sûr de vouloir archiver cet objectif ? Il sera déplacé vers l\'historique.')) {
+      const success = await archiveObjective(
+        id,
+        objectiveProgress.current_amount,
+        objectiveProgress.current_sales_count,
+        objectiveProgress.progress_percentage_amount,
+        objectiveProgress.progress_percentage_sales,
+        objectiveProgress.progress_percentage_amount >= 100 || objectiveProgress.progress_percentage_sales >= 100
+      );
+
+      if (success) {
+        // Les objectifs seront rechargés automatiquement
+      }
+    }
+  };
+
   const filteredProgress = isAdmin 
     ? objectivesProgress 
     : objectivesProgress.filter(progress => progress.objective.employee_name === profile?.username);
@@ -243,21 +267,28 @@ export const ObjectiveManager = () => {
 
   return (
     <div className="space-y-6">
-      <Card className="shadow-card">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <Target className="h-5 w-5 text-primary" />
-              Gestion des Objectifs
-            </CardTitle>
-            {isAdmin && (
-              <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button onClick={resetForm} className="flex items-center gap-2">
-                    <Plus className="h-4 w-4" />
-                    Nouvel objectif
-                  </Button>
-                </DialogTrigger>
+      <Tabs defaultValue="objectives" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="objectives">Objectifs actifs</TabsTrigger>
+          <TabsTrigger value="history">Historique</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="objectives" className="space-y-6">
+          <Card className="shadow-card">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2">
+                  <Target className="h-5 w-5 text-primary" />
+                  Gestion des Objectifs
+                </CardTitle>
+                {isAdmin && (
+                  <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button onClick={resetForm} className="flex items-center gap-2">
+                        <Plus className="h-4 w-4" />
+                        Nouvel objectif
+                      </Button>
+                    </DialogTrigger>
                 <DialogContent className="max-w-md">
                   <DialogHeader>
                     <DialogTitle>
@@ -453,6 +484,15 @@ export const ObjectiveManager = () => {
                   <Button
                     variant="outline"
                     size="sm"
+                    onClick={() => handleArchive(progress.objective.id)}
+                    className="h-8 w-8 p-0 text-orange-600 hover:text-orange-700"
+                    title="Archiver l'objectif"
+                  >
+                    <Archive className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
                     onClick={() => handleEdit(progress.objective)}
                     className="h-8 w-8 p-0"
                   >
@@ -472,6 +512,12 @@ export const ObjectiveManager = () => {
           ))}
         </div>
       )}
+        </TabsContent>
+        
+        <TabsContent value="history">
+          <ObjectiveHistoryView />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
