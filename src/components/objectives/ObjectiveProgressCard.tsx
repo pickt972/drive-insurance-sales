@@ -90,9 +90,9 @@ export const ObjectiveProgressCard = ({ progress, showEmployeeName = false }: Ob
             Objectif {getTypeLabel(objective.objective_type)}
           </CardTitle>
           {showEmployeeName && (
-            <Badge variant="outline" className="flex items-center gap-1">
-              <User className="h-3 w-3" />
-              {objective.employee_name}
+            <Badge variant="outline" className="flex items-center gap-1 text-base px-3 py-1">
+              <User className="h-4 w-4" />
+              <span className="font-semibold">{objective.employee_name}</span>
             </Badge>
           )}
         </div>
