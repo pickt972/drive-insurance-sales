@@ -476,37 +476,40 @@ export const ObjectiveManager = () => {
       ) : (
         <div className="grid gap-6">
           {filteredProgress.map((progress) => (
-            <div key={progress.objective.id} className="relative">
+            <div key={progress.objective.id} className="space-y-3">
               <ObjectiveProgressCard 
                 progress={progress} 
                 showEmployeeName={isAdmin}
               />
               {isAdmin && (
-                <div className="absolute top-4 right-4 flex gap-2">
+                <div className="flex justify-end gap-2 px-2">
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => handleArchive(progress.objective.id)}
-                    className="h-8 w-8 p-0 text-orange-600 hover:text-orange-700"
+                    className="h-8 w-8 p-0 text-orange-600 hover:text-orange-700 sm:w-auto sm:px-3"
                     title="Archiver l'objectif"
                   >
                     <Archive className="h-4 w-4" />
+                    <span className="hidden sm:ml-2 sm:inline">Archiver</span>
                   </Button>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => handleEdit(progress.objective)}
-                    className="h-8 w-8 p-0"
+                    className="h-8 w-8 p-0 sm:w-auto sm:px-3"
                   >
                     <Edit className="h-4 w-4" />
+                    <span className="hidden sm:ml-2 sm:inline">Éditer</span>
                   </Button>
                   <Button
                     variant="destructive"
                     size="sm"
                     onClick={() => handleDelete(progress.objective.id)}
-                    className="h-8 w-8 p-0"
+                    className="h-8 w-8 p-0 sm:w-auto sm:px-3"
                   >
                     <Trash2 className="h-4 w-4" />
+                    <span className="hidden sm:ml-2 sm:inline">Supprimer</span>
                   </Button>
                 </div>
               )}
