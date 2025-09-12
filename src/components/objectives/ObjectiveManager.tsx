@@ -23,6 +23,7 @@ export const ObjectiveManager = () => {
   const [formData, setFormData] = useState({
     employee_name: '',
     objective_type: 'monthly' as 'monthly' | 'weekly' | 'yearly',
+    target_type: 'both' as 'commission' | 'sales' | 'both', // Nouveau: type d'objectif
     target_amount: '',
     target_sales_count: '',
     period_start: '',
@@ -57,6 +58,7 @@ export const ObjectiveManager = () => {
     setFormData({
       employee_name: '',
       objective_type: 'monthly' as 'monthly' | 'weekly' | 'yearly',
+      target_type: 'both' as 'commission' | 'sales' | 'both',
       target_amount: '',
       target_sales_count: '',
       period_start: '',
@@ -68,11 +70,43 @@ export const ObjectiveManager = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Validation selon le type d'objectif choisi
+    if (formData.target_type === 'commission' && !formData.target_amount) {
+      toast({
+        title: "Erreur",
+        description: "Veuillez définir un objectif de commissions",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (formData.target_type === 'sales' && !formData.target_sales_count) {
+      toast({
+        title: "Erreur", 
+        description: "Veuillez définir un objectif de ventes",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (formData.target_type === 'both' && (!formData.target_amount || !formData.target_sales_count)) {
+      toast({
+        title: "Erreur",
+        description: "Veuillez définir les objectifs de commissions et de ventes",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     const objectiveData = {
       employee_name: formData.employee_name,
       objective_type: formData.objective_type,
-      target_amount: parseFloat(formData.target_amount) || 0,
-      target_sales_count: parseInt(formData.target_sales_count) || 0,
+      target_amount: (formData.target_type === 'commission' || formData.target_type === 'both') 
+        ? parseFloat(formData.target_amount) || 0 
+        : 0,
+      target_sales_count: (formData.target_type === 'sales' || formData.target_type === 'both') 
+        ? parseInt(formData.target_sales_count) || 0 
+        : 0,
       period_start: formData.period_start,
       period_end: formData.period_end,
       description: formData.description,
@@ -105,11 +139,21 @@ export const ObjectiveManager = () => {
 
   const handleEdit = (objective: EmployeeObjective) => {
     setEditingObjective(objective);
+    
+    // Déterminer le type d'objectif selon les valeurs
+    let targetType: 'commission' | 'sales' | 'both' = 'both';
+    if (objective.target_amount > 0 && objective.target_sales_count === 0) {
+      targetType = 'commission';
+    } else if (objective.target_amount === 0 && objective.target_sales_count > 0) {
+      targetType = 'sales';
+    }
+    
     setFormData({
       employee_name: objective.employee_name,
       objective_type: objective.objective_type,
-      target_amount: objective.target_amount.toString(),
-      target_sales_count: objective.target_sales_count.toString(),
+      target_type: targetType,
+      target_amount: objective.target_amount > 0 ? objective.target_amount.toString() : '',
+      target_sales_count: objective.target_sales_count > 0 ? objective.target_sales_count.toString() : '',
       period_start: objective.period_start,
       period_end: objective.period_end,
       description: objective.description || '',
@@ -193,7 +237,21 @@ export const ObjectiveManager = () => {
                       </Select>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="target_type">Type d'objectif</Label>
+                      <Select value={formData.target_type} onValueChange={(value: 'commission' | 'sales' | 'both') => setFormData({...formData, target_type: value})}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="commission">Objectif de commissions uniquement</SelectItem>
+                          <SelectItem value="sales">Objectif de ventes uniquement</SelectItem>
+                          <SelectItem value="both">Objectif de commissions et ventes</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {(formData.target_type === 'commission' || formData.target_type === 'both') && (
                       <div className="space-y-2">
                         <Label htmlFor="target_amount">Objectif commissions (€)</Label>
                         <Input
@@ -202,8 +260,12 @@ export const ObjectiveManager = () => {
                           value={formData.target_amount}
                           onChange={(e) => setFormData({...formData, target_amount: e.target.value})}
                           placeholder="0.00"
+                          required={formData.target_type === 'commission' || formData.target_type === 'both'}
                         />
                       </div>
+                    )}
+
+                    {(formData.target_type === 'sales' || formData.target_type === 'both') && (
                       <div className="space-y-2">
                         <Label htmlFor="target_sales_count">Objectif ventes</Label>
                         <Input
@@ -211,9 +273,10 @@ export const ObjectiveManager = () => {
                           value={formData.target_sales_count}
                           onChange={(e) => setFormData({...formData, target_sales_count: e.target.value})}
                           placeholder="0"
+                          required={formData.target_type === 'sales' || formData.target_type === 'both'}
                         />
                       </div>
-                    </div>
+                    )}
 
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
