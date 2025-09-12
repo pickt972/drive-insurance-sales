@@ -24,12 +24,34 @@ const ColoredProgress = ({ value, className = "" }: ColoredProgressProps) => {
     };
   };
 
+  const progressWidth = Math.min(100, Math.max(0, value));
+
   return (
-    <div className={`relative w-full bg-muted rounded-full h-2 overflow-hidden ${className}`}>
+    <div className={`relative w-full bg-muted rounded-full h-6 overflow-visible ${className}`}>
       <div 
-        className="h-full transition-all duration-500 ease-out"
+        className="h-full transition-all duration-500 ease-out rounded-full"
         style={getProgressStyle(value)}
       />
+      {/* Pourcentage positionné là où la barre s'arrête */}
+      <div 
+        className="absolute top-0 h-full flex items-center text-xs font-medium text-white px-2"
+        style={{ 
+          left: progressWidth > 15 ? `${progressWidth - 15}%` : `${progressWidth}%`,
+          minWidth: '30px',
+          justifyContent: progressWidth > 15 ? 'center' : 'flex-start'
+        }}
+      >
+        {progressWidth > 10 && `${value.toFixed(1)}%`}
+      </div>
+      {/* Pourcentage à l'extérieur si la barre est trop petite */}
+      {progressWidth <= 10 && (
+        <div 
+          className="absolute top-0 h-full flex items-center text-xs font-medium text-foreground px-2"
+          style={{ left: `${progressWidth + 2}%` }}
+        >
+          {value.toFixed(1)}%
+        </div>
+      )}
     </div>
   );
 };
@@ -87,11 +109,8 @@ export const ObjectiveProgressCard = ({ progress, showEmployeeName = false }: Ob
               <TrendingUp className="h-3 w-3" />
               Commissions
             </span>
-            <span className={`font-medium ${getProgressColor(progress.progress_percentage_amount)}`}>
-              {progress.progress_percentage_amount.toFixed(1)}%
-            </span>
           </div>
-          <ColoredProgress value={progress.progress_percentage_amount} className="h-2" />
+          <ColoredProgress value={progress.progress_percentage_amount} className="h-6" />
           <div className="flex justify-between text-xs text-muted-foreground">
             <span>{formatCurrency(progress.current_amount)}</span>
             <span>/ {formatCurrency(objective.target_amount)}</span>
@@ -105,11 +124,8 @@ export const ObjectiveProgressCard = ({ progress, showEmployeeName = false }: Ob
               <Target className="h-3 w-3" />
               Nombre de ventes
             </span>
-            <span className={`font-medium ${getProgressColor(progress.progress_percentage_sales)}`}>
-              {progress.progress_percentage_sales.toFixed(1)}%
-            </span>
           </div>
-          <ColoredProgress value={progress.progress_percentage_sales} className="h-2" />
+          <ColoredProgress value={progress.progress_percentage_sales} className="h-6" />
           <div className="flex justify-between text-xs text-muted-foreground">
             <span>{progress.current_sales_count}</span>
             <span>/ {objective.target_sales_count}</span>
