@@ -71,28 +71,30 @@ export const ObjectiveManager = () => {
     e.preventDefault();
     
     // Validation selon le type d'objectif choisi
-    if (formData.target_type === 'commission' && !formData.target_amount) {
+    if (formData.target_type === 'commission' && (!formData.target_amount || parseFloat(formData.target_amount) <= 0)) {
       toast({
         title: "Erreur",
-        description: "Veuillez définir un objectif de commissions",
+        description: "Veuillez définir un objectif de commissions valide",
         variant: "destructive",
       });
       return;
     }
     
-    if (formData.target_type === 'sales' && !formData.target_sales_count) {
+    if (formData.target_type === 'sales' && (!formData.target_sales_count || parseInt(formData.target_sales_count) <= 0)) {
       toast({
         title: "Erreur", 
-        description: "Veuillez définir un objectif de ventes",
+        description: "Veuillez définir un objectif de ventes valide",
         variant: "destructive",
       });
       return;
     }
     
-    if (formData.target_type === 'both' && (!formData.target_amount || !formData.target_sales_count)) {
+    if (formData.target_type === 'both' && 
+        ((!formData.target_amount || parseFloat(formData.target_amount) <= 0) || 
+         (!formData.target_sales_count || parseInt(formData.target_sales_count) <= 0))) {
       toast({
         title: "Erreur",
-        description: "Veuillez définir les objectifs de commissions et de ventes",
+        description: "Veuillez définir des objectifs valides pour les commissions et les ventes",
         variant: "destructive",
       });
       return;
@@ -260,7 +262,6 @@ export const ObjectiveManager = () => {
                           value={formData.target_amount}
                           onChange={(e) => setFormData({...formData, target_amount: e.target.value})}
                           placeholder="0.00"
-                          required={formData.target_type === 'commission' || formData.target_type === 'both'}
                         />
                       </div>
                     )}
@@ -273,7 +274,6 @@ export const ObjectiveManager = () => {
                           value={formData.target_sales_count}
                           onChange={(e) => setFormData({...formData, target_sales_count: e.target.value})}
                           placeholder="0"
-                          required={formData.target_type === 'sales' || formData.target_type === 'both'}
                         />
                       </div>
                     )}
