@@ -52,20 +52,15 @@ export const useSupabaseSales = () => {
         const multipleInsurances = sale.sale_insurances || [];
         const multipleInsuranceNames = multipleInsurances.map(si => si.insurance_types?.name).filter(Boolean);
         
-        // Fusionner toutes les assurances
-        const allInsuranceNames = [];
-        if (directInsurance) allInsuranceNames.push(directInsurance);
-        allInsuranceNames.push(...multipleInsuranceNames);
-        
-        // Calculer la commission totale
-        const directCommission = Number(sale.commission_amount || 0);
-        const multipleCommissions = multipleInsurances.reduce((sum, si) => sum + Number(si.commission_amount || 0), 0);
-        const totalCommission = directCommission + multipleCommissions;
+        // Fusionner toutes les assurances et dédupliquer
+        const uniqueInsuranceNames = Array.from(
+          new Set([...(directInsurance ? [directInsurance] : []), ...multipleInsuranceNames])
+        );
         
         return {
           ...sale,
-          insurance_name: allInsuranceNames.join(', ') || 'Inconnu',
-          commission_amount: totalCommission,
+          insurance_name: uniqueInsuranceNames.join(', ') || 'Inconnu',
+          commission_amount: Number(sale.commission_amount || 0),
           employee_id: sale.employee_name,
         } as SaleWithDetails;
       }) || [];
@@ -83,16 +78,16 @@ export const useSupabaseSales = () => {
         const multipleInsurances = originalSale?.sale_insurances || [];
         const multipleInsuranceNames = multipleInsurances.map(si => si.insurance_types?.name).filter(Boolean);
         
-        const allInsuranceNames = [];
-        if (directInsurance) allInsuranceNames.push(directInsurance);
-        allInsuranceNames.push(...multipleInsuranceNames);
+        const uniqueInsuranceNames = Array.from(
+          new Set([...(directInsurance ? [directInsurance] : []), ...multipleInsuranceNames])
+        );
         
         return {
           id: sale.id,
           employeeName: sale.employee_name,
           clientName: sale.client_name,
           reservationNumber: sale.reservation_number,
-          insuranceTypes: allInsuranceNames.length > 0 ? allInsuranceNames : ['Inconnu'],
+          insuranceTypes: uniqueInsuranceNames.length > 0 ? uniqueInsuranceNames : ['Inconnu'],
           date: sale.created_at,
           timestamp: new Date(sale.created_at).getTime(),
           commissions: Number(sale.commission_amount),

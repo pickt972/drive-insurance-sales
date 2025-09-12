@@ -196,6 +196,28 @@ export const MobileSalesForm = ({ onSaleAdded }: MobileSalesFormProps) => {
       
       console.log('✅ Vente enregistrée avec succès:', sale);
       
+      // Insérer toutes les assurances sélectionnées dans sale_insurances
+      try {
+        const items = selectedInsurances.map((ins) => ({
+          sale_id: sale.id,
+          insurance_type_id: ins.id,
+          commission_amount: ins.commission,
+        }));
+        const { error: siError } = await (supabase as any)
+          .from('sale_insurances')
+          .insert(items);
+        if (siError) {
+          console.error('⚠️ Erreur lors de l\'enregistrement des assurances multiples:', siError);
+          toast({
+            title: 'Assurances partielles enregistrées',
+            description: "La vente est enregistrée, mais les assurances multiples n'ont pas toutes été sauvegardées.",
+            variant: 'destructive',
+          });
+        }
+      } catch (e) {
+        console.error('⚠️ Exception insertion assurances multiples:', e);
+      }
+      
       // Message de succès avec animation
       const encouragement = ENCOURAGEMENTS[Math.floor(Math.random() * ENCOURAGEMENTS.length)];
       // Utiliser totalCommission déjà calculé
