@@ -79,10 +79,10 @@ export const ObjectiveManager = () => {
         break;
         
       case 'monthly':
-        // Début du mois
+        // Début du mois courant
         startDate = new Date(today.getFullYear(), today.getMonth(), 1);
-        // Fin du mois
-        endDate = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+        // Fin du mois suivant (dernier jour du mois suivant)
+        endDate = new Date(today.getFullYear(), today.getMonth() + 2, 0);
         break;
         
       case 'yearly':
