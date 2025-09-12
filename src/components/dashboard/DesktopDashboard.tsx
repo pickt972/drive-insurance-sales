@@ -157,35 +157,37 @@ export const DesktopDashboard = ({ stats, insuranceStats = [] }: DesktopDashboar
               </div>
             ) : (
               <div className="space-y-4">
-                <ChartContainer
-                  config={{}}
-                  className="h-[240px]"
-                >
-                  <ResponsiveContainer width="100%" height="100%">
-                    <RechartsPieChart>
-                      <Pie
-                        data={insuranceStats}
-                        cx="50%"
-                        cy="50%"
-                        outerRadius={90}
-                        innerRadius={0}
-                        minAngle={2}
-                        fill="#8884d8"
-                        dataKey="value"
-                        label={renderCustomizedLabel}
-                        labelLine={false}
-                      >
-                        {insuranceStats.map((entry, index) => (
-                          <Cell 
-                            key={`cell-${index}`} 
-                            fill={COLORS[index % COLORS.length]} 
-                          />
-                        ))}
-                      </Pie>
-                      <ChartTooltip content={<ChartTooltipContent />} />
-                    </RechartsPieChart>
-                  </ResponsiveContainer>
-                </ChartContainer>
+                <div className="flex justify-center">
+                  <ChartContainer
+                    config={{}}
+                    className="h-[240px] w-[240px]"
+                  >
+                    <ResponsiveContainer width="100%" height="100%">
+                      <RechartsPieChart>
+                        <Pie
+                          data={insuranceStats}
+                          cx="50%"
+                          cy="50%"
+                          outerRadius={90}
+                          innerRadius={0}
+                          minAngle={2}
+                          fill="#8884d8"
+                          dataKey="value"
+                          label={renderCustomizedLabel}
+                          labelLine={false}
+                        >
+                          {insuranceStats.map((entry, index) => (
+                            <Cell 
+                              key={`cell-${index}`} 
+                              fill={COLORS[index % COLORS.length]} 
+                            />
+                          ))}
+                        </Pie>
+                        <ChartTooltip content={<ChartTooltipContent />} />
+                      </RechartsPieChart>
+                    </ResponsiveContainer>
+                  </ChartContainer>
+                </div>
                 
                 {/* Légende */}
                 <div className="space-y-2">
