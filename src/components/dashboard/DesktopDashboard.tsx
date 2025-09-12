@@ -157,7 +157,7 @@ export const DesktopDashboard = ({ stats, insuranceStats = [] }: DesktopDashboar
                         innerRadius={20}
                         fill="#8884d8"
                         dataKey="value"
-                        label={false}
+                        label={({ percent }) => `${(percent * 100).toFixed(0)}%`}
                         labelLine={false}
                       >
                         {insuranceStats.map((entry, index) => (
