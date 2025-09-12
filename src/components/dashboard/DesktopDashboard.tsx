@@ -13,7 +13,21 @@ interface DesktopDashboardProps {
 export const DesktopDashboard = ({ stats, insuranceStats = [] }: DesktopDashboardProps) => {
   const formatCurrency = (amount: number) => `${amount.toFixed(2)} €`;
 
-  const COLORS = ['hsl(var(--primary))', 'hsl(var(--success))', 'hsl(var(--warning))', 'hsl(var(--destructive))', 'hsl(var(--accent))', 'hsl(var(--muted))'];
+   const COLORS = ['hsl(var(--primary))', 'hsl(var(--success))', 'hsl(var(--warning))', 'hsl(var(--destructive))', 'hsl(var(--accent))', 'hsl(var(--muted))'];
+ 
+   // Labels personnalisés à l'intérieur des parts du camembert
+   const RADIAN = Math.PI / 180;
+   const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }: any) => {
+     const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+     const x = cx + radius * Math.cos(-midAngle * RADIAN);
+     const y = cy + radius * Math.sin(-midAngle * RADIAN);
+     return (
+       // Utilise la couleur de fond du thème comme "blanc" en light mode
+       <text x={x} y={y} fill="hsl(var(--background))" textAnchor="middle" dominantBaseline="central" style={{ fontSize: 12, fontWeight: 700 }}>
+         {`${(percent * 100).toFixed(0)}%`}
+       </text>
+     );
+   };
 
   return (
     <div className="space-y-6 animate-fadeInUp">
@@ -145,7 +159,7 @@ export const DesktopDashboard = ({ stats, insuranceStats = [] }: DesktopDashboar
               <div className="space-y-4">
                 <ChartContainer
                   config={{}}
-                  className="h-[220px]"
+                  className="h-[240px]"
                 >
                   <ResponsiveContainer width="100%" height="100%">
                     <RechartsPieChart>
@@ -153,13 +167,13 @@ export const DesktopDashboard = ({ stats, insuranceStats = [] }: DesktopDashboar
                         data={insuranceStats}
                         cx="50%"
                         cy="50%"
-                        outerRadius={75}
-                        innerRadius={0}
+                        outerRadius={90}
+                        innerRadius={40}
+                        minAngle={2}
                         fill="#8884d8"
                         dataKey="value"
-                        label={({ percent }) => `${(percent * 100).toFixed(0)}%`}
+                        label={renderCustomizedLabel}
                         labelLine={false}
-                        style={{ fontSize: '14px', fontWeight: 'bold', fill: 'white' }}
                       >
                         {insuranceStats.map((entry, index) => (
                           <Cell 
