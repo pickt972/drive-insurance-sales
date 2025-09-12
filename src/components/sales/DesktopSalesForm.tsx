@@ -14,16 +14,16 @@ import { SuccessPopup } from "@/components/ui/success-popup";
 import { InsuranceType } from "@/types/database";
 
 const ENCOURAGEMENTS = [
-  "🎉 Fantastique ! Ta vente a été enregistrée !",
-  "💪 Excellent travail ! Tu es sur la bonne voie !",
-  "🚀 Bravo ! Encore une vente de plus !",
-  "💰 Superbe ! Ta commission est ajoutée !",
-  "⭐ Génial ! Continue comme ça !",
-  "🏆 Champion ! Tes efforts paient !",
-  "🎯 Parfait ! Tu vises dans le mille !",
-  "💎 Top ! Qualité premium comme toujours !",
-  "🔥 En feu ! Tu déchires tout !",
-  "🌟 Magnifique ! Tu es une star !"
+  "Vente d'assurance enregistrée avec succès !",
+  "Nouvelle commission ajoutée à votre total !",
+  "Client assuré, mission accomplie !",
+  "Protection supplémentaire vendue avec brio !",
+  "Votre expertise en assurance porte ses fruits !",
+  "Commission bien méritée pour cette vente !",
+  "Encore une protection de plus pour votre client !",
+  "Vente confirmée, commission créditée !",
+  "Sécurité renforcée pour votre client !",
+  "Parfait, votre portefeuille d'assurances grandit !"
 ];
 
 interface DesktopSalesFormProps {
