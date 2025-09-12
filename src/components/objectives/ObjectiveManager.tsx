@@ -23,12 +23,13 @@ export const ObjectiveManager = () => {
   const [formData, setFormData] = useState({
     employee_name: '',
     objective_type: 'monthly' as 'monthly' | 'weekly' | 'yearly',
-    target_type: 'both' as 'commission' | 'sales' | 'both', // Nouveau: type d'objectif
+    target_type: 'both' as 'commission' | 'sales' | 'both',
     target_amount: '',
     target_sales_count: '',
     period_start: '',
     period_end: '',
     description: '',
+    use_custom_dates: false, // Nouveau: pour activer/désactiver les dates personnalisées
   });
 
   const [employees, setEmployees] = useState<string[]>([]);
@@ -54,21 +55,73 @@ export const ObjectiveManager = () => {
   }, []);
   const isAdmin = profile?.role === 'admin';
 
+  // Fonction pour calculer les dates automatiquement
+  const calculatePeriodDates = (objectiveType: 'monthly' | 'weekly' | 'yearly') => {
+    const today = new Date();
+    let startDate: Date;
+    let endDate: Date;
+
+    switch (objectiveType) {
+      case 'weekly':
+        // Début de la semaine (lundi)
+        const dayOfWeek = today.getDay();
+        const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+        startDate = new Date(today);
+        startDate.setDate(today.getDate() + mondayOffset);
+        
+        // Fin de la semaine (dimanche)
+        endDate = new Date(startDate);
+        endDate.setDate(startDate.getDate() + 6);
+        break;
+        
+      case 'monthly':
+        // Début du mois
+        startDate = new Date(today.getFullYear(), today.getMonth(), 1);
+        // Fin du mois
+        endDate = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+        break;
+        
+      case 'yearly':
+        // Début de l'année
+        startDate = new Date(today.getFullYear(), 0, 1);
+        // Fin de l'année
+        endDate = new Date(today.getFullYear(), 11, 31);
+        break;
+    }
+
+    return {
+      start: startDate.toISOString().split('T')[0],
+      end: endDate.toISOString().split('T')[0]
+    };
+  };
+
   const resetForm = () => {
+    const dates = calculatePeriodDates('monthly');
     setFormData({
       employee_name: '',
       objective_type: 'monthly' as 'monthly' | 'weekly' | 'yearly',
       target_type: 'both' as 'commission' | 'sales' | 'both',
       target_amount: '',
       target_sales_count: '',
-      period_start: '',
-      period_end: '',
+      period_start: dates.start,
+      period_end: dates.end,
       description: '',
+      use_custom_dates: false,
     });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Calculer les dates si pas en mode personnalisé
+    let finalStartDate = formData.period_start;
+    let finalEndDate = formData.period_end;
+    
+    if (!formData.use_custom_dates) {
+      const dates = calculatePeriodDates(formData.objective_type);
+      finalStartDate = dates.start;
+      finalEndDate = dates.end;
+    }
     
     // Validation selon le type d'objectif choisi
     if (formData.target_type === 'commission' && (!formData.target_amount || parseFloat(formData.target_amount) <= 0)) {
@@ -109,8 +162,8 @@ export const ObjectiveManager = () => {
       target_sales_count: (formData.target_type === 'sales' || formData.target_type === 'both') 
         ? parseInt(formData.target_sales_count) || 0 
         : 0,
-      period_start: formData.period_start,
-      period_end: formData.period_end,
+      period_start: finalStartDate,
+      period_end: finalEndDate,
       description: formData.description,
       is_active: true,
     };
@@ -159,6 +212,7 @@ export const ObjectiveManager = () => {
       period_start: objective.period_start,
       period_end: objective.period_end,
       description: objective.description || '',
+      use_custom_dates: true, // En mode édition, on considère que les dates sont personnalisées
     });
     setIsCreateDialogOpen(true);
   };
@@ -226,8 +280,19 @@ export const ObjectiveManager = () => {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="objective_type">Type d'objectif</Label>
-                      <Select value={formData.objective_type} onValueChange={(value: 'monthly' | 'weekly' | 'yearly') => setFormData({...formData, objective_type: value})}>
+                      <Label htmlFor="objective_type">Période</Label>
+                      <Select 
+                        value={formData.objective_type} 
+                        onValueChange={(value: 'monthly' | 'weekly' | 'yearly') => {
+                          const dates = calculatePeriodDates(value);
+                          setFormData({
+                            ...formData, 
+                            objective_type: value,
+                            period_start: formData.use_custom_dates ? formData.period_start : dates.start,
+                            period_end: formData.use_custom_dates ? formData.period_end : dates.end
+                          });
+                        }}
+                      >
                         <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>
@@ -278,23 +343,65 @@ export const ObjectiveManager = () => {
                       </div>
                     )}
 
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="period_start">Date de début</Label>
-                        <Input
-                          type="date"
-                          value={formData.period_start}
-                          onChange={(e) => setFormData({...formData, period_start: e.target.value})}
+                    <div className="space-y-4">
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          id="use_custom_dates"
+                          checked={formData.use_custom_dates}
+                          onChange={(e) => {
+                            const useCustom = e.target.checked;
+                            if (!useCustom) {
+                              // Recalculer les dates automatiques
+                              const dates = calculatePeriodDates(formData.objective_type);
+                              setFormData({
+                                ...formData, 
+                                use_custom_dates: useCustom,
+                                period_start: dates.start,
+                                period_end: dates.end
+                              });
+                            } else {
+                              setFormData({...formData, use_custom_dates: useCustom});
+                            }
+                          }}
+                          className="rounded border-gray-300"
                         />
+                        <Label htmlFor="use_custom_dates" className="text-sm">
+                          Utiliser des dates personnalisées
+                        </Label>
                       </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="period_end">Date de fin</Label>
-                        <Input
-                          type="date"
-                          value={formData.period_end}
-                          onChange={(e) => setFormData({...formData, period_end: e.target.value})}
-                        />
-                      </div>
+
+                      {formData.use_custom_dates && (
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="period_start">Date de début</Label>
+                            <Input
+                              type="date"
+                              value={formData.period_start}
+                              onChange={(e) => setFormData({...formData, period_start: e.target.value})}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="period_end">Date de fin</Label>
+                            <Input
+                              type="date"
+                              value={formData.period_end}
+                              onChange={(e) => setFormData({...formData, period_end: e.target.value})}
+                            />
+                          </div>
+                        </div>
+                      )}
+
+                      {!formData.use_custom_dates && (
+                        <div className="text-sm text-muted-foreground bg-blue-50 p-3 rounded-md">
+                          📅 <strong>Période automatique :</strong> 
+                          {formData.objective_type === 'weekly' && ' Semaine en cours (lundi au dimanche)'}
+                          {formData.objective_type === 'monthly' && ' Mois en cours (1er au dernier jour)'}
+                          {formData.objective_type === 'yearly' && ' Année en cours (1er janvier au 31 décembre)'}
+                          <br />
+                          Du {new Date(formData.period_start).toLocaleDateString('fr-FR')} au {new Date(formData.period_end).toLocaleDateString('fr-FR')}
+                        </div>
+                      )}
                     </div>
 
                     <div className="space-y-2">
