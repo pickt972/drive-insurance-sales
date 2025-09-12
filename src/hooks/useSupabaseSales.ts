@@ -188,11 +188,27 @@ export const useSupabaseSales = () => {
     }
   }, [profile]);
 
+  // Calculer les statistiques d'assurances pour le camembert
+  const getInsuranceStats = () => {
+    const insuranceCount: Record<string, number> = {};
+    
+    allSales.forEach(sale => {
+      sale.insuranceTypes.forEach((insurance: string) => {
+        insuranceCount[insurance] = (insuranceCount[insurance] || 0) + 1;
+      });
+    });
+
+    return Object.entries(insuranceCount)
+      .map(([name, value]) => ({ name, value, color: '' }))
+      .sort((a, b) => b.value - a.value);
+  };
+
   return {
     stats,
     allSales,
     loading,
     refreshStats: fetchStats,
     deleteSale,
+    insuranceStats: getInsuranceStats(),
   };
 };

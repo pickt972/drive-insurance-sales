@@ -1,14 +1,19 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { TrendingUp, Users, DollarSign, Trophy, Calendar, TrendingDown } from "lucide-react";
+import { TrendingUp, Users, DollarSign, Trophy, Calendar, TrendingDown, PieChart } from "lucide-react";
 import { DashboardStats } from "@/types/database";
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+import { PieChart as RechartsPieChart, Cell, Pie, ResponsiveContainer } from "recharts";
 
 interface DesktopDashboardProps {
   stats: DashboardStats;
+  insuranceStats?: { name: string; value: number; color: string }[];
 }
 
-export const DesktopDashboard = ({ stats }: DesktopDashboardProps) => {
+export const DesktopDashboard = ({ stats, insuranceStats = [] }: DesktopDashboardProps) => {
   const formatCurrency = (amount: number) => `${amount.toFixed(2)} €`;
+
+  const COLORS = ['hsl(var(--primary))', 'hsl(var(--success))', 'hsl(var(--warning))', 'hsl(var(--destructive))', 'hsl(var(--accent))', 'hsl(var(--muted))'];
 
   return (
     <div className="space-y-6 animate-fadeInUp">
@@ -73,7 +78,7 @@ export const DesktopDashboard = ({ stats }: DesktopDashboardProps) => {
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Classement des vendeurs */}
         <Card className="shadow-card">
           <CardHeader>
@@ -117,6 +122,70 @@ export const DesktopDashboard = ({ stats }: DesktopDashboardProps) => {
                     </Badge>
                   </div>
                 ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Répartition des assurances */}
+        <Card className="shadow-card">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <PieChart className="h-5 w-5 text-primary" />
+              Répartition des Assurances
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {insuranceStats.length === 0 ? (
+              <div className="text-center text-muted-foreground py-8">
+                <PieChart className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <p>Aucune donnée disponible</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <ChartContainer
+                  config={{}}
+                  className="h-[200px]"
+                >
+                  <ResponsiveContainer width="100%" height="100%">
+                    <RechartsPieChart>
+                      <Pie
+                        data={insuranceStats}
+                        cx="50%"
+                        cy="50%"
+                        outerRadius={80}
+                        fill="#8884d8"
+                        dataKey="value"
+                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                        labelLine={false}
+                      >
+                        {insuranceStats.map((entry, index) => (
+                          <Cell 
+                            key={`cell-${index}`} 
+                            fill={COLORS[index % COLORS.length]} 
+                          />
+                        ))}
+                      </Pie>
+                      <ChartTooltip content={<ChartTooltipContent />} />
+                    </RechartsPieChart>
+                  </ResponsiveContainer>
+                </ChartContainer>
+                
+                {/* Légende */}
+                <div className="space-y-2">
+                  {insuranceStats.map((item, index) => (
+                    <div key={item.name} className="flex items-center justify-between text-sm">
+                      <div className="flex items-center gap-2">
+                        <div 
+                          className="w-3 h-3 rounded-full" 
+                          style={{ backgroundColor: COLORS[index % COLORS.length] }}
+                        />
+                        <span>{item.name}</span>
+                      </div>
+                      <span className="font-medium">{item.value} vente{item.value > 1 ? 's' : ''}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
           </CardContent>

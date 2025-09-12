@@ -32,7 +32,7 @@ const ResponsiveApp = () => {
   const [currentTab, setCurrentTab] = useState("dashboard");
   const { user, isAuthenticated, isAdmin, profile, loading: authLoading } = useSupabaseAuth();
   const navigate = useNavigate();
-  const { stats, allSales, loading, refreshStats, deleteSale } = useSupabaseSales();
+  const { stats, allSales, loading, refreshStats, deleteSale, insuranceStats } = useSupabaseSales();
   const isMobile = useResponsive();
 
   // Debug logs
@@ -78,7 +78,7 @@ const ResponsiveApp = () => {
         return isMobile ? (
           <MobileDashboard stats={stats} />
         ) : (
-          <DesktopDashboard stats={stats} />
+          <DesktopDashboard stats={stats} insuranceStats={insuranceStats} />
         );
 
       case "add":
