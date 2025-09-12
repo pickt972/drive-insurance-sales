@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
 import { useSupabaseSales } from "@/hooks/useSupabaseSales";
 import { useNavigate } from "react-router-dom";
-import { useResponsive } from "@/hooks/useResponsive";
 import { MobileLayout } from "@/components/mobile/MobileLayout";
 import { DesktopLayout } from "@/components/desktop/DesktopLayout";
 import { MobileDashboard } from "@/components/dashboard/MobileDashboard";
@@ -17,12 +16,24 @@ import { ObjectiveManager } from "@/components/objectives/ObjectiveManager";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Download, FileText, Loader2 } from "lucide-react";
 
+const useResponsive = () => {
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+  
+  return isMobile;
+};
+
 const ResponsiveApp = () => {
   const [currentTab, setCurrentTab] = useState("dashboard");
   const { user, isAuthenticated, isAdmin, profile, loading: authLoading } = useSupabaseAuth();
   const navigate = useNavigate();
   const { stats, allSales, loading, refreshStats, deleteSale } = useSupabaseSales();
-  const { isMobile, isTablet, isDesktop, isPortrait, isLandscape } = useResponsive();
+  const isMobile = useResponsive();
 
   // Debug logs
   useEffect(() => {
@@ -125,22 +136,16 @@ const ResponsiveApp = () => {
     }
   };
 
-  // Détermine le layout basé sur la taille d'écran et l'orientation
-  const shouldUseMobileLayout = isMobile || (isTablet && isPortrait);
-  const Layout = shouldUseMobileLayout ? MobileLayout : DesktopLayout;
+  const Layout = isMobile ? MobileLayout : DesktopLayout;
 
   return (
-    <div className={`min-h-screen ${isLandscape && isMobile ? 'overflow-x-auto' : ''}`}>
-      <Layout 
-        currentTab={currentTab} 
-        onTabChange={setCurrentTab}
-        isAdmin={isAdmin}
-      >
-        <div className={`${isLandscape && isMobile ? 'min-w-[640px]' : ''}`}>
-          {renderTabContent()}
-        </div>
-      </Layout>
-    </div>
+    <Layout 
+      currentTab={currentTab} 
+      onTabChange={setCurrentTab}
+      isAdmin={isAdmin}
+    >
+      {renderTabContent()}
+    </Layout>
   );
 };
 

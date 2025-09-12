@@ -190,8 +190,7 @@ All colors MUST be HSL.
 
 /* Classes utilitaires pour l'app mobile */
 .mobile-container {
-  @apply mx-auto min-h-screen w-full;
-  max-width: 28rem; /* default ~448px for portrait */
+  @apply max-w-md mx-auto min-h-screen;
   background-color: hsl(0 0% 100%);
 }
 
@@ -227,39 +226,4 @@ All colors MUST be HSL.
 
 .success-button {
   @apply bg-gradient-success text-success-foreground hover:shadow-success transition-all duration-200;
-}
-
-/* Responsive orientation utilities */
-.responsive-grid {
-  @apply grid gap-4;
-}
-
-@media (orientation: portrait) {
-  .responsive-grid {
-    @apply grid-cols-1;
-  }
-  
-  .mobile-landscape-scroll {
-    @apply overflow-x-visible;
-  }
-}
-
-@media (orientation: landscape) {
-  .responsive-grid {
-    @apply grid-cols-2;
-  }
-  
-  .mobile-landscape-scroll {
-    @apply overflow-x-auto;
-  }
-}
-
-@media (orientation: landscape) and (max-width: 767px) {
-  .responsive-grid {
-    @apply grid-cols-1;
-  }
-  /* élargit légèrement la vue en paysage mobile pour éviter les chevauchements */
-  .mobile-container {
-    max-width: 42rem; /* ~672px */
-  }
 }
