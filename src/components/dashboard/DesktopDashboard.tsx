@@ -136,7 +136,7 @@ export const DesktopDashboard = ({ stats, insuranceStats = [] }: DesktopDashboar
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {insuranceStats.length === 0 ? (
+            {!insuranceStats || insuranceStats.length === 0 ? (
               <div className="text-center text-muted-foreground py-8">
                 <PieChart className="h-12 w-12 mx-auto mb-4 opacity-50" />
                 <p>Aucune donnée disponible</p>
