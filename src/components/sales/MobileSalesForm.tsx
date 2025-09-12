@@ -237,7 +237,8 @@ export const MobileSalesForm = ({ onSaleAdded }: MobileSalesFormProps) => {
       });
 
       resetForm();
-      onSaleAdded?.();
+      // Ne pas changer d'onglet ici, attendre la fermeture de la popup
+      // onSaleAdded?.();
     } catch (error) {
       console.error('Erreur lors de l\'ajout de la vente:', error);
       toast({
@@ -254,7 +255,7 @@ export const MobileSalesForm = ({ onSaleAdded }: MobileSalesFormProps) => {
     <>
       <SuccessPopup 
         isOpen={showSuccessPopup}
-        onClose={() => setShowSuccessPopup(false)}
+        onClose={() => { setShowSuccessPopup(false); onSaleAdded?.(); }}
         message={successMessage}
       />
       <div className="space-y-4 animate-fadeInUp">
