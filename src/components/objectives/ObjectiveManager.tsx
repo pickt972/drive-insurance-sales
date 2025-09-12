@@ -52,7 +52,9 @@ export const ObjectiveManager = () => {
         return;
       }
 
-      setEmployees((data || []).map((p: any) => p.username));
+      setEmployees((data || [])
+        .map((p: any) => p.username)
+        .filter((username: string) => username && username.trim() !== ''));
     };
 
     loadEmployees();
