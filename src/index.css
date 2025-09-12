@@ -190,7 +190,8 @@ All colors MUST be HSL.
 
 /* Classes utilitaires pour l'app mobile */
 .mobile-container {
-  @apply max-w-md mx-auto min-h-screen;
+  @apply mx-auto min-h-screen w-full;
+  max-width: 28rem; /* default ~448px for portrait */
   background-color: hsl(0 0% 100%);
 }
 
@@ -257,8 +258,8 @@ All colors MUST be HSL.
   .responsive-grid {
     @apply grid-cols-1;
   }
-  
-  .mobile-landscape-content {
-    @apply min-w-[640px];
+  /* élargit légèrement la vue en paysage mobile pour éviter les chevauchements */
+  .mobile-container {
+    max-width: 42rem; /* ~672px */
   }
 }
