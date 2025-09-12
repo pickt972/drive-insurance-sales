@@ -25,12 +25,16 @@ export const useSupabaseSales = () => {
       weekAgo.setDate(weekAgo.getDate() - 7);
       const weekAgoIso = weekAgo.toISOString();
 
-      // Récupérer toutes les ventes avec leurs assurances
+      // Récupérer toutes les ventes avec leurs assurances (directes et multiples)
       const { data: sales, error } = await (supabase as any)
         .from('sales')
         .select(`
           *,
-          insurance_types(name)
+          insurance_types(name),
+          sale_insurances(
+            commission_amount,
+            insurance_types(name)
+          )
         `)
         .eq('status', 'active')
         .order('created_at', { ascending: false });
@@ -41,9 +45,27 @@ export const useSupabaseSales = () => {
       }
 
       const salesWithDetails: SaleWithDetails[] = sales?.map(sale => {
+        // Récupérer l'assurance directe de la vente
+        const directInsurance = sale.insurance_types?.name;
+        
+        // Récupérer les assurances multiples de sale_insurances
+        const multipleInsurances = sale.sale_insurances || [];
+        const multipleInsuranceNames = multipleInsurances.map(si => si.insurance_types?.name).filter(Boolean);
+        
+        // Fusionner toutes les assurances
+        const allInsuranceNames = [];
+        if (directInsurance) allInsuranceNames.push(directInsurance);
+        allInsuranceNames.push(...multipleInsuranceNames);
+        
+        // Calculer la commission totale
+        const directCommission = Number(sale.commission_amount || 0);
+        const multipleCommissions = multipleInsurances.reduce((sum, si) => sum + Number(si.commission_amount || 0), 0);
+        const totalCommission = directCommission + multipleCommissions;
+        
         return {
           ...sale,
-          insurance_name: sale.insurance_types?.name || 'Inconnu',
+          insurance_name: allInsuranceNames.join(', ') || 'Inconnu',
+          commission_amount: totalCommission,
           employee_id: sale.employee_name,
         } as SaleWithDetails;
       }) || [];
@@ -55,12 +77,22 @@ export const useSupabaseSales = () => {
 
       // Convertir les ventes au format attendu par SalesTable
       const salesForTable = filteredSales.map(sale => {
+        // Récupérer à nouveau toutes les assurances pour cet affichage
+        const originalSale = sales?.find(s => s.id === sale.id);
+        const directInsurance = originalSale?.insurance_types?.name;
+        const multipleInsurances = originalSale?.sale_insurances || [];
+        const multipleInsuranceNames = multipleInsurances.map(si => si.insurance_types?.name).filter(Boolean);
+        
+        const allInsuranceNames = [];
+        if (directInsurance) allInsuranceNames.push(directInsurance);
+        allInsuranceNames.push(...multipleInsuranceNames);
+        
         return {
           id: sale.id,
           employeeName: sale.employee_name,
           clientName: sale.client_name,
           reservationNumber: sale.reservation_number,
-          insuranceTypes: [sale.insurance_name],
+          insuranceTypes: allInsuranceNames.length > 0 ? allInsuranceNames : ['Inconnu'],
           date: sale.created_at,
           timestamp: new Date(sale.created_at).getTime(),
           commissions: Number(sale.commission_amount),
