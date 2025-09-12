@@ -188,6 +188,45 @@ export const useSupabaseSales = () => {
     }
   }, [profile]);
 
+  // Écouter les mises à jour en temps réel des ventes
+  useEffect(() => {
+    if (!profile) return;
+
+    const channel = supabase
+      .channel('sales-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: '*', // Écouter tous les événements (INSERT, UPDATE, DELETE)
+          schema: 'public',
+          table: 'sales'
+        },
+        (payload) => {
+          console.log('Nouvelle modification de vente détectée:', payload);
+          // Rafraîchir les statistiques quand une vente est modifiée
+          fetchStats();
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'sale_insurances'
+        },
+        (payload) => {
+          console.log('Modification des assurances de vente détectée:', payload);
+          // Rafraîchir les statistiques quand les assurances d'une vente sont modifiées
+          fetchStats();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [profile]);
+
   // Calculer les statistiques d'assurances pour le camembert
   const getInsuranceStats = () => {
     const insuranceCount: Record<string, number> = {};
