@@ -25,12 +25,15 @@ export const useSupabaseSales = () => {
       weekAgo.setDate(weekAgo.getDate() - 7);
       const weekAgoIso = weekAgo.toISOString();
 
-      // Récupérer toutes les ventes avec les détails
+      // Récupérer toutes les ventes avec leurs assurances
       const { data: sales, error } = await (supabase as any)
         .from('sales')
         .select(`
           *,
-          insurance_types!inner(name, commission)
+          sale_insurances(
+            commission_amount,
+            insurance_types(name)
+          )
         `)
         .eq('status', 'active')
         .order('created_at', { ascending: false });
@@ -40,11 +43,19 @@ export const useSupabaseSales = () => {
         return;
       }
 
-      const salesWithDetails: SaleWithDetails[] = sales?.map(sale => ({
-        ...sale,
-        insurance_name: sale.insurance_types?.name || 'Inconnu',
-        employee_id: sale.employee_name, // Utiliser employee_name comme employee_id pour la compatibilité
-      } as SaleWithDetails)) || [];
+      const salesWithDetails: SaleWithDetails[] = sales?.map(sale => {
+        // Récupérer toutes les assurances pour cette vente
+        const insurances = sale.sale_insurances || [];
+        const insuranceNames = insurances.map(si => si.insurance_types?.name).filter(Boolean);
+        const totalCommission = insurances.reduce((sum, si) => sum + Number(si.commission_amount || 0), 0);
+        
+        return {
+          ...sale,
+          insurance_name: insuranceNames.join(', ') || 'Inconnu',
+          commission_amount: totalCommission || sale.commission_amount || 0,
+          employee_id: sale.employee_name,
+        } as SaleWithDetails;
+      }) || [];
 
       // Filtrer selon le rôle
       const filteredSales = profile?.role === 'admin' 
@@ -52,16 +63,23 @@ export const useSupabaseSales = () => {
         : salesWithDetails.filter(sale => sale.employee_name === profile?.username);
 
       // Convertir les ventes au format attendu par SalesTable
-      const salesForTable = filteredSales.map(sale => ({
-        id: sale.id,
-        employeeName: sale.employee_name,
-        clientName: sale.client_name,
-        reservationNumber: sale.reservation_number,
-        insuranceTypes: [sale.insurance_name], // Pour compatibilité avec l'ancien format
-        date: sale.created_at,
-        timestamp: new Date(sale.created_at).getTime(),
-        commissions: Number(sale.commission_amount),
-      }));
+      const salesForTable = filteredSales.map(sale => {
+        // Récupérer toutes les assurances pour cette vente depuis la requête
+        const originalSale = sales?.find(s => s.id === sale.id);
+        const insurances = originalSale?.sale_insurances || [];
+        const insuranceNames = insurances.map(si => si.insurance_types?.name).filter(Boolean);
+        
+        return {
+          id: sale.id,
+          employeeName: sale.employee_name,
+          clientName: sale.client_name,
+          reservationNumber: sale.reservation_number,
+          insuranceTypes: insuranceNames.length > 0 ? insuranceNames : [sale.insurance_name],
+          date: sale.created_at,
+          timestamp: new Date(sale.created_at).getTime(),
+          commissions: Number(sale.commission_amount),
+        };
+      });
 
       setAllSales(salesForTable);
 
