@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { BarChart3, Plus, FileText, Download, Settings, Users, Car, Crown, User, LogOut, Target } from "lucide-react";
+import logoImage from "@/assets/aloelocation-logo.png";
 import {
   Sidebar,
   SidebarContent,
@@ -49,8 +50,12 @@ export function AppSidebar({ currentTab, onTabChange, isAdmin }: AppSidebarProps
         {/* Header */}
         <div className="p-4 border-b">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-primary rounded-xl flex items-center justify-center shadow-primary">
-              <Car className="h-5 w-5 text-white" />
+            <div className="w-10 h-10 rounded-xl overflow-hidden shadow-lg ring-2 ring-primary/20">
+              <img 
+                src={logoImage} 
+                alt="Aloelocation Logo" 
+                className="w-full h-full object-cover"
+              />
             </div>
             {!collapsed && (
               <div>

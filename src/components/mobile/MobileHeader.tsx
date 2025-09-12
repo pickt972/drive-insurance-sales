@@ -1,5 +1,6 @@
 import { Car, LogOut, User, Crown } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import logoImage from "@/assets/aloelocation-logo.png";
 import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
 
 export const MobileHeader = () => {
@@ -10,8 +11,12 @@ export const MobileHeader = () => {
     <header className="mobile-header">
       <div className="flex items-center justify-between p-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-gradient-primary rounded-xl flex items-center justify-center shadow-primary">
-            <Car className="h-5 w-5 text-white" />
+          <div className="w-10 h-10 rounded-xl overflow-hidden shadow-lg ring-2 ring-primary/20">
+            <img 
+              src={logoImage} 
+              alt="Aloelocation Logo" 
+              className="w-full h-full object-cover"
+            />
           </div>
           <div>
             <h1 className="font-bold text-lg text-primary">Aloelocation</h1>
