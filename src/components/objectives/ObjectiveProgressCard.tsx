@@ -4,6 +4,36 @@ import { Badge } from "@/components/ui/badge";
 import { Target, TrendingUp, Calendar, User } from "lucide-react";
 import { ObjectiveProgress } from "@/types/objectives";
 
+// Composant de barre de progression avec dégradé de couleur
+interface ColoredProgressProps {
+  value: number;
+  className?: string;
+}
+
+const ColoredProgress = ({ value, className = "" }: ColoredProgressProps) => {
+  // Calculer la couleur basée sur le pourcentage
+  const getProgressStyle = (percentage: number) => {
+    // Rouge (0%) vers Vert (100%)
+    const red = Math.max(0, Math.min(255, 255 - (percentage * 2.55)));
+    const green = Math.max(0, Math.min(255, percentage * 2.55));
+    const blue = 0;
+    
+    return {
+      backgroundColor: `rgb(${Math.round(red)}, ${Math.round(green)}, ${blue})`,
+      width: `${Math.min(100, Math.max(0, percentage))}%`,
+    };
+  };
+
+  return (
+    <div className={`relative w-full bg-muted rounded-full h-2 overflow-hidden ${className}`}>
+      <div 
+        className="h-full transition-all duration-500 ease-out"
+        style={getProgressStyle(value)}
+      />
+    </div>
+  );
+};
+
 interface ObjectiveProgressCardProps {
   progress: ObjectiveProgress;
   showEmployeeName?: boolean;
@@ -61,7 +91,7 @@ export const ObjectiveProgressCard = ({ progress, showEmployeeName = false }: Ob
               {progress.progress_percentage_amount.toFixed(1)}%
             </span>
           </div>
-          <Progress value={progress.progress_percentage_amount} className="h-2" />
+          <ColoredProgress value={progress.progress_percentage_amount} className="h-2" />
           <div className="flex justify-between text-xs text-muted-foreground">
             <span>{formatCurrency(progress.current_amount)}</span>
             <span>/ {formatCurrency(objective.target_amount)}</span>
@@ -79,7 +109,7 @@ export const ObjectiveProgressCard = ({ progress, showEmployeeName = false }: Ob
               {progress.progress_percentage_sales.toFixed(1)}%
             </span>
           </div>
-          <Progress value={progress.progress_percentage_sales} className="h-2" />
+          <ColoredProgress value={progress.progress_percentage_sales} className="h-2" />
           <div className="flex justify-between text-xs text-muted-foreground">
             <span>{progress.current_sales_count}</span>
             <span>/ {objective.target_sales_count}</span>
