@@ -137,6 +137,21 @@ export const MobileDashboard = ({ stats }: MobileDashboardProps) => {
                 <Tooltip formatter={(value, name) => [`${value} vente${Number(value) > 1 ? 's' : ''}`, name]} />
               </PieChart>
             </ResponsiveContainer>
+            
+            {/* Légende */}
+            <div className="flex flex-wrap gap-2 justify-center mt-2">
+              {pieData.map((entry, index) => (
+                <div key={entry.name} className="flex items-center gap-1">
+                  <div 
+                    className="w-3 h-3 rounded" 
+                    style={{ backgroundColor: COLORS[index % COLORS.length] }}
+                  />
+                  <span className="text-xs text-muted-foreground">
+                    {entry.name} ({entry.value})
+                  </span>
+                </div>
+              ))}
+            </div>
           </CardContent>
         </Card>
       )}
