@@ -13,8 +13,10 @@ import { CommissionManager } from "@/components/CommissionManager";
 import { UserManager } from "@/components/UserManager";
 import { ExportPanel } from "@/components/ExportPanel";
 import { ObjectiveManager } from "@/components/objectives/ObjectiveManager";
+import { SaleEditModal } from "@/components/SaleEditModal";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Download, FileText, Loader2 } from "lucide-react";
+import { Sale } from "@/types/sales";
 
 const useResponsive = () => {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
@@ -30,6 +32,8 @@ const useResponsive = () => {
 
 const ResponsiveApp = () => {
   const [currentTab, setCurrentTab] = useState("dashboard");
+  const [editingSale, setEditingSale] = useState<Sale | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const { user, isAuthenticated, isAdmin, profile, loading: authLoading } = useSupabaseAuth();
   const navigate = useNavigate();
   const { stats, allSales, loading, refreshStats, deleteSale, insuranceStats } = useSupabaseSales();
@@ -72,6 +76,17 @@ const ResponsiveApp = () => {
     setCurrentTab("dashboard");
   };
 
+  const handleEditSale = (sale: Sale) => {
+    setEditingSale(sale);
+    setIsEditModalOpen(true);
+  };
+
+  const handleEditSuccess = () => {
+    refreshStats();
+    setIsEditModalOpen(false);
+    setEditingSale(null);
+  };
+
   const renderTabContent = () => {
     switch (currentTab) {
       case "dashboard":
@@ -104,6 +119,7 @@ const ResponsiveApp = () => {
                 refreshStats();
               }
             }}
+            onEditSale={handleEditSale}
           />
         );
 
@@ -139,13 +155,22 @@ const ResponsiveApp = () => {
   const Layout = isMobile ? MobileLayout : DesktopLayout;
 
   return (
-    <Layout 
-      currentTab={currentTab} 
-      onTabChange={setCurrentTab}
-      isAdmin={isAdmin}
-    >
-      {renderTabContent()}
-    </Layout>
+    <>
+      <Layout 
+        currentTab={currentTab} 
+        onTabChange={setCurrentTab}
+        isAdmin={isAdmin}
+      >
+        {renderTabContent()}
+      </Layout>
+      
+      <SaleEditModal
+        sale={editingSale}
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        onSaveSuccess={handleEditSuccess}
+      />
+    </>
   );
 };
 

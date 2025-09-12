@@ -4,15 +4,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Trash2, FileText, Calendar, Eye } from "lucide-react";
+import { Trash2, FileText, Calendar, Eye, Edit } from "lucide-react";
 import { SaleDetailModal } from "./SaleDetailModal";
 
 interface SalesTableProps {
   sales: Sale[];
   onDeleteSale: (id: string) => void;
+  onEditSale?: (sale: Sale) => void;
 }
 
-export const SalesTable = ({ sales, onDeleteSale }: SalesTableProps) => {
+export const SalesTable = ({ sales, onDeleteSale, onEditSale }: SalesTableProps) => {
   const [selectedSale, setSelectedSale] = useState<Sale | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
@@ -96,6 +97,16 @@ export const SalesTable = ({ sales, onDeleteSale }: SalesTableProps) => {
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
+                        {onEditSale && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => onEditSale(sale)}
+                            className="h-8 w-8 p-0"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                        )}
                         <Button
                           variant="destructive"
                           size="sm"
