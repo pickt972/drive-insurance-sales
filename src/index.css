@@ -149,10 +149,33 @@ All colors MUST be HSL.
     @apply border-border;
   }
 
+  html {
+    /* Bloquer la rotation - forcer le mode portrait uniquement */
+    -ms-content-zooming: none;
+    -ms-touch-action: pan-x pan-y;
+    touch-action: pan-x pan-y;
+  }
+
   body {
     @apply bg-background text-foreground font-sans antialiased;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    /* Empêcher la rotation sur mobile */
+    transform-origin: left top;
+    width: 100vw;
+    overflow-x: hidden;
+  }
+
+  /* Forcer l'orientation portrait sur mobile */
+  @media screen and (orientation: landscape) and (max-height: 500px) {
+    body {
+      transform: rotate(90deg);
+      transform-origin: left top;
+      width: 100vh;
+      height: 100vw;
+      overflow: hidden;
+      position: fixed;
+    }
   }
 }
 
