@@ -15,7 +15,7 @@ const handler = async (req: Request): Promise<Response> => {
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
-      { db: { schema: 'public' } }
+      { db: { schema: 'api' } }
     );
 
     // Vérifier l'intégrité des données

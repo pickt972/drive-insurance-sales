@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -12,7 +12,7 @@ import { ObjectiveProgressCard } from "./ObjectiveProgressCard";
 import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
 import { EmployeeObjective } from "@/types/objectives";
 import { useToast } from "@/hooks/use-toast";
-
+import { supabase } from "@/integrations/supabase/client";
 export const ObjectiveManager = () => {
   const { objectivesProgress, loading, createObjective, updateObjective, deleteObjective } = useObjectives();
   const { profile } = useSupabaseAuth();
@@ -30,7 +30,27 @@ export const ObjectiveManager = () => {
     description: '',
   });
 
-  const employees = ['Julie', 'Sherman', 'Alvin', 'Germain']; // À terme, récupérer depuis la base
+  const [employees, setEmployees] = useState<string[]>([]);
+
+  useEffect(() => {
+    const loadEmployees = async () => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('username, role, is_active')
+        .eq('is_active', true)
+        .eq('role', 'employee')
+        .order('username', { ascending: true });
+
+      if (error) {
+        console.error('Erreur chargement employés:', error);
+        return;
+      }
+
+      setEmployees((data || []).map((p: any) => p.username));
+    };
+
+    loadEmployees();
+  }, []);
   const isAdmin = profile?.role === 'admin';
 
   const resetForm = () => {
