@@ -15,8 +15,19 @@ import { supabase } from "@/integrations/supabase/client";
 import { SaleWithDetails } from "@/types/database";
 import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
 
+interface SaleForExport {
+  id: string;
+  employeeName: string;
+  clientName: string;
+  reservationNumber: string;
+  insuranceTypes: string[];
+  date: string;
+  timestamp: number;
+  commissions: number;
+}
+
 interface ExportPanelProps {
-  sales: SaleWithDetails[];
+  sales: SaleForExport[];
 }
 
 export const ExportPanel = ({ sales }: ExportPanelProps) => {
@@ -46,19 +57,16 @@ export const ExportPanel = ({ sales }: ExportPanelProps) => {
       return;
     }
 
-    const headers = ["Date", "Employé", "Client", "Email", "Téléphone", "N° Réservation", "Assurance", "Commission", "Notes"];
+    const headers = ["Date", "Employé", "Client", "N° Réservation", "Assurances", "Commission"];
     const csvContent = [
       headers.join(","),
       ...sales.map(sale => [
-        new Date(sale.created_at).toLocaleDateString('fr-FR'),
-        sale.employee_name,
-        sale.client_name,
-        sale.client_email || '',
-        sale.client_phone || '',
-        sale.reservation_number,
-        sale.insurance_name,
-        sale.commission_amount,
-        `"${(sale.notes || '').replace(/"/g, '""')}"`,
+        new Date(sale.date).toLocaleDateString('fr-FR'),
+        sale.employeeName,
+        sale.clientName,
+        sale.reservationNumber,
+        Array.isArray(sale.insuranceTypes) ? sale.insuranceTypes.join('; ') : sale.insuranceTypes,
+        sale.commissions.toFixed(2),
       ].join(","))
     ].join("\n");
 
@@ -99,18 +107,18 @@ export const ExportPanel = ({ sales }: ExportPanelProps) => {
     doc.text(`Généré le: ${new Date().toLocaleDateString('fr-FR')}`, 20, 30);
     
     // Statistiques
-    const totalCommission = sales.reduce((sum, sale) => sum + Number(sale.commission_amount), 0);
+    const totalCommission = sales.reduce((sum, sale) => sum + (sale.commissions || 0), 0);
     doc.text(`Nombre total de ventes: ${sales.length}`, 20, 40);
     doc.text(`Commission totale: ${totalCommission.toFixed(2)} €`, 20, 50);
 
     // Tableau
     const tableData = sales.map(sale => [
-      new Date(sale.created_at).toLocaleDateString('fr-FR'),
-      sale.employee_name,
-      sale.client_name,
-      sale.reservation_number,
-      sale.insurance_name,
-      `${sale.commission_amount} €`
+      new Date(sale.date).toLocaleDateString('fr-FR'),
+      sale.employeeName,
+      sale.clientName,
+      sale.reservationNumber,
+      Array.isArray(sale.insuranceTypes) ? sale.insuranceTypes.join(', ') : sale.insuranceTypes,
+      `${(sale.commissions || 0).toFixed(2)} €`
     ]);
 
     autoTable(doc, {
@@ -148,15 +156,12 @@ export const ExportPanel = ({ sales }: ExportPanelProps) => {
         <tbody>
           ${sales.map(sale => `
             <tr>
-              <td>${new Date(sale.created_at).toLocaleDateString('fr-FR')}</td>
-              <td>${sale.employee_name}</td>
-              <td>${sale.client_name}</td>
-              <td>${sale.client_email || ''}</td>
-              <td>${sale.client_phone || ''}</td>
-              <td>${sale.reservation_number}</td>
-              <td>${sale.insurance_name}</td>
-              <td>${sale.commission_amount} €</td>
-              <td>${sale.notes || ''}</td>
+              <td>${new Date(sale.date).toLocaleDateString('fr-FR')}</td>
+              <td>${sale.employeeName}</td>
+              <td>${sale.clientName}</td>
+              <td>${sale.reservationNumber}</td>
+              <td>${Array.isArray(sale.insuranceTypes) ? sale.insuranceTypes.join(', ') : sale.insuranceTypes}</td>
+              <td>${sale.commissions.toFixed(2)} €</td>
             </tr>
           `).join("")}
         </tbody>
@@ -204,15 +209,12 @@ export const ExportPanel = ({ sales }: ExportPanelProps) => {
       // Préparer les données à envoyer
       const exportData = {
         sales: sales.map(sale => ({
-          date: new Date(sale.created_at).toLocaleDateString('fr-FR'),
-          employee: sale.employee_name,
-          client: sale.client_name,
-          email: sale.client_email || '',
-          phone: sale.client_phone || '',
-          reservation: sale.reservation_number,
-          insurance: sale.insurance_name,
-          commission: sale.commission_amount,
-          notes: sale.notes || ''
+          date: new Date(sale.date).toLocaleDateString('fr-FR'),
+          employee: sale.employeeName,
+          client: sale.clientName,
+          reservation: sale.reservationNumber,
+          insurance: Array.isArray(sale.insuranceTypes) ? sale.insuranceTypes.join(', ') : sale.insuranceTypes,
+          commission: sale.commissions.toFixed(2)
         })),
         credentials: JSON.parse(googleCredentials),
         filename: `ventes-assurances-${new Date().toISOString().split('T')[0]}`
@@ -260,7 +262,7 @@ export const ExportPanel = ({ sales }: ExportPanelProps) => {
       const endDateTime = new Date(endDate).getTime() + 24*3600*1000 - 1;
       
       let filteredSales = sales.filter(sale => {
-        const saleDate = new Date(sale.created_at).getTime();
+        const saleDate = new Date(sale.date).getTime();
         return saleDate >= startDateTime && saleDate <= endDateTime;
       });
 
@@ -268,7 +270,7 @@ export const ExportPanel = ({ sales }: ExportPanelProps) => {
       // Si des utilisateurs spécifiques sont sélectionnés, filtrer par nom d'employé
       if (selectedUsers.length > 0) {
         filteredSales = filteredSales.filter(sale => 
-          selectedUsers.includes(sale.employee_name)
+          selectedUsers.includes(sale.employeeName)
         );
       }
 
@@ -281,17 +283,17 @@ export const ExportPanel = ({ sales }: ExportPanelProps) => {
       doc.setFontSize(12);
       doc.text(`Généré le: ${new Date().toLocaleDateString('fr-FR')}`, 20, 30);
       
-      const totalCommission = filteredSales.reduce((sum, sale) => sum + Number(sale.commission_amount), 0);
+      const totalCommission = filteredSales.reduce((sum, sale) => sum + (sale.commissions || 0), 0);
       doc.text(`Nombre total de ventes: ${filteredSales.length}`, 20, 40);
       doc.text(`Commission totale: ${totalCommission.toFixed(2)} €`, 20, 50);
 
       const tableData = filteredSales.map(sale => [
-        new Date(sale.created_at).toLocaleDateString('fr-FR'),
-        sale.employee_name,
-        sale.client_name,
-        sale.reservation_number,
-        sale.insurance_name,
-        `${sale.commission_amount} €`
+        new Date(sale.date).toLocaleDateString('fr-FR'),
+        sale.employeeName,
+        sale.clientName,
+        sale.reservationNumber,
+        Array.isArray(sale.insuranceTypes) ? sale.insuranceTypes.join(', ') : sale.insuranceTypes,
+        `${(sale.commissions || 0).toFixed(2)} €`
       ]);
 
       autoTable(doc, {
