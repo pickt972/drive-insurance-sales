@@ -102,35 +102,39 @@ export const ObjectiveProgressCard = ({ progress, showEmployeeName = false }: Ob
       </CardHeader>
       
       <CardContent className="space-y-4">
-        {/* Progression des commissions */}
-        <div className="space-y-2">
-          <div className="flex items-center justify-between text-sm">
-            <span className="flex items-center gap-1">
-              <TrendingUp className="h-3 w-3" />
-              Commissions
-            </span>
+        {/* Progression des commissions - affiché si target_amount > 0 */}
+        {objective.target_amount > 0 && (
+          <div className="space-y-2">
+            <div className="flex items-center justify-between text-sm">
+              <span className="flex items-center gap-1">
+                <TrendingUp className="h-3 w-3" />
+                Commissions
+              </span>
+            </div>
+            <ColoredProgress value={progress.progress_percentage_amount} className="h-6" />
+            <div className="flex justify-between text-xs text-muted-foreground">
+              <span>{formatCurrency(progress.current_amount)}</span>
+              <span>/ {formatCurrency(objective.target_amount)}</span>
+            </div>
           </div>
-          <ColoredProgress value={progress.progress_percentage_amount} className="h-6" />
-          <div className="flex justify-between text-xs text-muted-foreground">
-            <span>{formatCurrency(progress.current_amount)}</span>
-            <span>/ {formatCurrency(objective.target_amount)}</span>
-          </div>
-        </div>
+        )}
 
-        {/* Progression du nombre de ventes */}
-        <div className="space-y-2">
-          <div className="flex items-center justify-between text-sm">
-            <span className="flex items-center gap-1">
-              <Target className="h-3 w-3" />
-              Nombre de ventes
-            </span>
+        {/* Progression du nombre de ventes - affiché si target_sales_count > 0 */}
+        {objective.target_sales_count > 0 && (
+          <div className="space-y-2">
+            <div className="flex items-center justify-between text-sm">
+              <span className="flex items-center gap-1">
+                <Target className="h-3 w-3" />
+                Nombre de ventes
+              </span>
+            </div>
+            <ColoredProgress value={progress.progress_percentage_sales} className="h-6" />
+            <div className="flex justify-between text-xs text-muted-foreground">
+              <span>{progress.current_sales_count}</span>
+              <span>/ {objective.target_sales_count}</span>
+            </div>
           </div>
-          <ColoredProgress value={progress.progress_percentage_sales} className="h-6" />
-          <div className="flex justify-between text-xs text-muted-foreground">
-            <span>{progress.current_sales_count}</span>
-            <span>/ {objective.target_sales_count}</span>
-          </div>
-        </div>
+        )}
 
         {/* Période et temps restant */}
         <div className="pt-2 border-t">
