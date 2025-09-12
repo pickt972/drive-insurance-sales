@@ -15,4 +15,15 @@ export interface ObjectiveHistory {
   objective_achieved: boolean;
   created_at: string;
   archived_at: string;
+  sales?: Array<{
+    id: string;
+    client_name: string;
+    reservation_number: string;
+    commission_amount: number;
+    created_at: string;
+    insurance_type?: {
+      name: string;
+      commission: number;
+    };
+  }>;
 }

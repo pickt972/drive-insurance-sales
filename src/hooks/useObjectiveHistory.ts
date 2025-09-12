@@ -19,13 +19,13 @@ export const useObjectiveHistory = () => {
         return;
       }
 
-      const { data, error } = await supabase
+      const { data: historyData, error: historyError } = await supabase
         .from('objective_history')
         .select('*')
         .order('archived_at', { ascending: false });
 
-      if (error) {
-        console.error('Error fetching objective history:', error);
+      if (historyError) {
+        console.error('Error fetching objective history:', historyError);
         toast({
           variant: "destructive",
           title: "Erreur",
@@ -34,7 +34,31 @@ export const useObjectiveHistory = () => {
         return;
       }
 
-      setHistory(data || []);
+      // Pour chaque objectif historique, récupérer les ventes de l'employé pendant la période
+      const historyWithSales = await Promise.all(
+        (historyData || []).map(async (objective) => {
+          const { data: salesData, error: salesError } = await supabase
+            .from('sales')
+            .select(`
+              *,
+              insurance_type:insurance_types(name, commission)
+            `)
+            .eq('employee_name', objective.employee_name)
+            .gte('created_at', objective.period_start)
+            .lte('created_at', objective.period_end)
+            .eq('status', 'active')
+            .order('created_at', { ascending: false });
+
+          if (salesError) {
+            console.error('Error fetching sales for objective:', salesError);
+            return { ...objective, sales: [] };
+          }
+
+          return { ...objective, sales: salesData || [] };
+        })
+      );
+
+      setHistory(historyWithSales);
     } catch (error) {
       console.error('Error in fetchObjectiveHistory:', error);
       toast({

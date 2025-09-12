@@ -107,6 +107,31 @@ const ObjectiveHistoryCard = ({ historyItem }: ObjectiveHistoryCardProps) => {
           </div>
         )}
 
+        {/* Sales History */}
+        {historyItem.sales && historyItem.sales.length > 0 && (
+          <div className="space-y-2 pt-2 border-t">
+            <h4 className="text-sm font-medium">Ventes pendant cette période ({historyItem.sales.length})</h4>
+            <div className="space-y-2 max-h-48 overflow-y-auto">
+              {historyItem.sales.map((sale) => (
+                <div key={sale.id} className="flex justify-between items-center p-2 bg-muted/50 rounded text-xs">
+                  <div>
+                    <div className="font-medium">{sale.client_name}</div>
+                    <div className="text-muted-foreground">
+                      {sale.reservation_number} • {sale.insurance_type?.name}
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="font-medium">{formatCurrency(sale.commission_amount)}</div>
+                    <div className="text-muted-foreground">
+                      {format(new Date(sale.created_at), 'dd/MM', { locale: fr })}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Achievement Status */}
         <div className="flex items-center justify-between pt-2 border-t">
           <div className="flex items-center gap-2 text-sm">
