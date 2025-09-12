@@ -1,7 +1,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { TrendingUp, Users, DollarSign, Trophy, Calendar } from "lucide-react";
+import { TrendingUp, Users, DollarSign, Trophy, Calendar, Shield } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { DashboardStats } from "@/types/database";
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 
 interface MobileDashboardProps {
   stats: DashboardStats;
@@ -9,6 +10,20 @@ interface MobileDashboardProps {
 
 export const MobileDashboard = ({ stats }: MobileDashboardProps) => {
   const formatCurrency = (amount: number) => `${amount.toFixed(2)} €`;
+
+  // Préparer les données pour le camembert des assurances
+  const insuranceData = stats.recentSales.reduce((acc, sale) => {
+    const insuranceName = sale.insurance_name || 'Autre';
+    acc[insuranceName] = (acc[insuranceName] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
+
+  const pieData = Object.entries(insuranceData).map(([name, value]) => ({
+    name,
+    value,
+  }));
+
+  const COLORS = ['hsl(214, 84%, 56%)', 'hsl(142, 71%, 45%)', 'hsl(38, 92%, 50%)', 'hsl(335, 78%, 42%)', 'hsl(280, 87%, 47%)'];
 
   return (
     <div className="space-y-4 animate-fadeInUp">
@@ -93,6 +108,39 @@ export const MobileDashboard = ({ stats }: MobileDashboardProps) => {
           )}
         </CardContent>
       </Card>
+
+      {/* Répartition par assurance */}
+      {pieData.length > 0 && (
+        <Card className="shadow-card">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <Shield className="h-5 w-5 text-primary" />
+              Répartition par Assurance
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={200}>
+              <PieChart>
+                <Pie
+                  data={pieData}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                  outerRadius={60}
+                  fill="#8884d8"
+                  dataKey="value"
+                >
+                  {pieData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Ventes récentes */}
       <Card className="shadow-card">
