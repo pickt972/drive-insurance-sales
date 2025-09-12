@@ -222,9 +222,19 @@ export const MobileSalesForm = ({ onSaleAdded }: MobileSalesFormProps) => {
       const encouragement = ENCOURAGEMENTS[Math.floor(Math.random() * ENCOURAGEMENTS.length)];
       // Utiliser totalCommission déjà calculé
       
+      console.log('🎉 SUCCESS MOBILE - Préparation de l\'animation:', {
+        encouragement,
+        showSuccessPopup: showSuccessPopup
+      });
+      
       // Afficher la popup de succès
       setSuccessMessage(encouragement);
       setShowSuccessPopup(true);
+      
+      console.log('🎉 SUCCESS MOBILE - Animation déclenchée:', {
+        successMessage: encouragement,
+        showSuccessPopup: true
+      });
 
       resetForm();
       onSaleAdded?.();

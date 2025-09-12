@@ -220,9 +220,21 @@ export const DesktopSalesForm = ({ onSaleAdded }: DesktopSalesFormProps) => {
       const insuranceNames = selectedInsurances.map(ins => ins.name).join(", ");
       const finalCommission = selectedInsurances.reduce((sum, ins) => sum + ins.commission, 0);
       
+      console.log('🎉 SUCCESS - Préparation de l\'animation:', {
+        encouragement,
+        insuranceNames,
+        finalCommission,
+        showSuccessPopup: showSuccessPopup
+      });
+      
       // Afficher la popup de succès
       setSuccessMessage(encouragement);
       setShowSuccessPopup(true);
+      
+      console.log('🎉 SUCCESS - Animation déclenchée:', {
+        successMessage: encouragement,
+        showSuccessPopup: true
+      });
 
       resetForm();
       onSaleAdded?.();
