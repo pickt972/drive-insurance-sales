@@ -126,8 +126,7 @@ export const MobileDashboard = ({ stats }: MobileDashboardProps) => {
                   cx="50%"
                   cy="50%"
                   labelLine={false}
-                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                  outerRadius={60}
+                  outerRadius={50}
                   fill="#8884d8"
                   dataKey="value"
                 >
@@ -135,7 +134,7 @@ export const MobileDashboard = ({ stats }: MobileDashboardProps) => {
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip />
+                <Tooltip formatter={(value, name) => [`${value} vente${Number(value) > 1 ? 's' : ''}`, name]} />
               </PieChart>
             </ResponsiveContainer>
           </CardContent>
