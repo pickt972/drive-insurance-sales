@@ -32,15 +32,30 @@ const ConfettiParticle = ({ delay, x, y, color, shape }: {
 
 export const SuccessPopup = ({ isOpen, onClose, message, title = "Félicitations !" }: SuccessPopupProps) => {
   const [showConfetti, setShowConfetti] = useState(false);
+  const [animationPhase, setAnimationPhase] = useState(0);
 
   useEffect(() => {
     if (isOpen) {
       setShowConfetti(true);
+      setAnimationPhase(0);
+      
+      // Séquence d'animation
+      const phase1 = setTimeout(() => setAnimationPhase(1), 100);
+      const phase2 = setTimeout(() => setAnimationPhase(2), 500);
+      const phase3 = setTimeout(() => setAnimationPhase(3), 1000);
+      
       // Garder les confettis plus longtemps
-      const timer = setTimeout(() => setShowConfetti(false), 5000);
-      return () => clearTimeout(timer);
+      const timer = setTimeout(() => setShowConfetti(false), 6000);
+      
+      return () => {
+        clearTimeout(phase1);
+        clearTimeout(phase2);
+        clearTimeout(phase3);
+        clearTimeout(timer);
+      };
     } else {
       setShowConfetti(false);
+      setAnimationPhase(0);
     }
   }, [isOpen]);
 
@@ -62,37 +77,51 @@ export const SuccessPopup = ({ isOpen, onClose, message, title = "Félicitations
   return (
     <>
       <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
-        <DialogContent className="max-w-md mx-auto text-center border-0 bg-gradient-to-br from-background via-background to-muted/20 shadow-2xl">
-          <div className="space-y-6 py-6">
-            {/* Icon avec animation */}
-            <div className="relative mx-auto w-20 h-20 flex items-center justify-center">
-              <div className="absolute inset-0 bg-primary/20 rounded-full animate-ping"></div>
-              <div className="relative bg-primary rounded-full p-4 animate-scale-in">
-                <CheckCircle className="w-8 h-8 text-primary-foreground" />
-              </div>
+        <DialogContent className="max-w-md mx-auto text-center border-0 bg-gradient-to-br from-background via-background to-muted/20 shadow-2xl backdrop-blur-sm">
+          <div className="space-y-6 py-6 relative overflow-hidden">
+            {/* Effets de background animés */}
+            <div className="absolute inset-0 opacity-10">
+              <div className={`absolute w-32 h-32 bg-primary rounded-full blur-3xl transition-all duration-1000 ${animationPhase >= 1 ? 'scale-100 opacity-30' : 'scale-0 opacity-0'}`} style={{left: '10%', top: '20%'}} />
+              <div className={`absolute w-24 h-24 bg-emerald-500 rounded-full blur-2xl transition-all duration-1000 delay-300 ${animationPhase >= 2 ? 'scale-100 opacity-20' : 'scale-0 opacity-0'}`} style={{right: '15%', bottom: '25%'}} />
+              <div className={`absolute w-20 h-20 bg-purple-500 rounded-full blur-xl transition-all duration-1000 delay-500 ${animationPhase >= 3 ? 'scale-100 opacity-25' : 'scale-0 opacity-0'}`} style={{left: '60%', top: '10%'}} />
             </div>
 
-            {/* Titre */}
-            <div className="space-y-2">
-              <h2 className="text-2xl font-bold text-foreground animate-fade-in">
+            {/* Icon avec animation plus spectaculaire */}
+            <div className="relative mx-auto w-24 h-24 flex items-center justify-center">
+              <div className="absolute inset-0 bg-primary/30 rounded-full animate-ping"></div>
+              <div className="absolute inset-2 bg-primary/20 rounded-full animate-pulse"></div>
+              <div className={`relative bg-gradient-to-br from-primary to-primary/80 rounded-full p-5 transition-all duration-700 ${animationPhase >= 1 ? 'animate-scale-in shadow-lg shadow-primary/50' : 'scale-0'}`}>
+                <CheckCircle className="w-10 h-10 text-primary-foreground animate-pulse" />
+              </div>
+              {/* Cercles d'animation supplémentaires */}
+              <div className={`absolute inset-0 border-2 border-primary/40 rounded-full transition-all duration-1000 ${animationPhase >= 2 ? 'scale-150 opacity-0' : 'scale-100 opacity-100'}`} />
+              <div className={`absolute inset-0 border border-primary/30 rounded-full transition-all duration-1200 delay-200 ${animationPhase >= 2 ? 'scale-200 opacity-0' : 'scale-100 opacity-100'}`} />
+            </div>
+
+            {/* Titre avec animation séquentielle */}
+            <div className="space-y-3">
+              <h2 className={`text-3xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent transition-all duration-500 ${animationPhase >= 1 ? 'animate-fade-in translate-y-0' : 'translate-y-4 opacity-0'}`}>
                 {title}
               </h2>
-              <div className="flex items-center justify-center gap-2 text-lg text-muted-foreground animate-fade-in">
-                <PartyPopper className="w-5 h-5" />
-                <span>{message}</span>
-                <PartyPopper className="w-5 h-5" />
+              <div className={`flex items-center justify-center gap-3 text-lg text-muted-foreground transition-all duration-700 delay-200 ${animationPhase >= 2 ? 'animate-fade-in translate-y-0' : 'translate-y-4 opacity-0'}`}>
+                <PartyPopper className="w-6 h-6 animate-bounce" style={{animationDelay: '0ms'}} />
+                <span className="font-medium">{message}</span>
+                <PartyPopper className="w-6 h-6 animate-bounce" style={{animationDelay: '150ms'}} />
               </div>
             </div>
 
-            {/* Bouton */}
-            <Button 
-              onClick={onClose}
-              size="lg"
-              className="relative overflow-hidden group bg-primary hover:bg-primary/90 transition-all duration-300 hover:scale-105"
-            >
-              <span className="relative z-10">Continuer</span>
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
-            </Button>
+            {/* Bouton avec animation retardée */}
+            <div className={`transition-all duration-500 delay-500 ${animationPhase >= 3 ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}>
+              <Button 
+                onClick={onClose}
+                size="lg"
+                className="relative overflow-hidden group bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 active:scale-95"
+              >
+                <span className="relative z-10 font-semibold">Continuer</span>
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
+                <div className="absolute inset-0 bg-gradient-to-r from-primary/50 to-primary/30 opacity-0 group-active:opacity-100 transition-opacity duration-150"></div>
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
