@@ -145,7 +145,7 @@ export const DesktopDashboard = ({ stats, insuranceStats = [] }: DesktopDashboar
               <div className="space-y-4">
                 <ChartContainer
                   config={{}}
-                  className="h-[180px]"
+                  className="h-[220px]"
                 >
                   <ResponsiveContainer width="100%" height="100%">
                     <RechartsPieChart>
@@ -153,12 +153,13 @@ export const DesktopDashboard = ({ stats, insuranceStats = [] }: DesktopDashboar
                         data={insuranceStats}
                         cx="50%"
                         cy="50%"
-                        outerRadius={60}
-                        innerRadius={20}
+                        outerRadius={75}
+                        innerRadius={0}
                         fill="#8884d8"
                         dataKey="value"
                         label={({ percent }) => `${(percent * 100).toFixed(0)}%`}
                         labelLine={false}
+                        style={{ fontSize: '14px', fontWeight: 'bold', fill: 'white' }}
                       >
                         {insuranceStats.map((entry, index) => (
                           <Cell 
