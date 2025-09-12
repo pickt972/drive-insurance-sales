@@ -65,7 +65,7 @@ const handler = async (req: Request): Promise<Response> => {
           persistSession: false,
         },
         db: {
-          schema: 'public'
+          schema: 'api'
         }
       }
     );
