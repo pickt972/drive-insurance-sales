@@ -168,7 +168,7 @@ export const DesktopDashboard = ({ stats, insuranceStats = [] }: DesktopDashboar
                         cx="50%"
                         cy="50%"
                         outerRadius={90}
-                        innerRadius={40}
+                        innerRadius={0}
                         minAngle={2}
                         fill="#8884d8"
                         dataKey="value"
