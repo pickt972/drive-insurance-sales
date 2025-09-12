@@ -104,9 +104,9 @@ export const useSupabaseSales = () => {
         sale => new Date(sale.created_at) >= weekAgo
       ).length;
 
-      // Top vendeurs
+      // Top vendeurs - toujours calculé sur toutes les ventes pour un classement global
       const topSellers = (() => {
-        const sellerStats = filteredSales.reduce((acc, sale) => {
+        const sellerStats = salesWithDetails.reduce((acc, sale) => {
           const employeeName = sale.employee_name;
           if (!acc[employeeName]) {
             acc[employeeName] = {
