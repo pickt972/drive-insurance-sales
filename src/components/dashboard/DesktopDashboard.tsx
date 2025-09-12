@@ -13,7 +13,7 @@ interface DesktopDashboardProps {
 export const DesktopDashboard = ({ stats, insuranceStats = [] }: DesktopDashboardProps) => {
   const formatCurrency = (amount: number) => `${amount.toFixed(2)} €`;
 
-   const COLORS = ['hsl(var(--primary))', 'hsl(var(--success))', 'hsl(var(--warning))', 'hsl(var(--destructive))', 'hsl(var(--accent))', 'hsl(var(--muted))'];
+   const COLORS = ['hsl(var(--primary))', 'hsl(var(--success))', 'hsl(217 91% 60%)', 'hsl(var(--destructive))', 'hsl(262 83% 58%)', 'hsl(215 20% 65%)'];
  
    // Labels personnalisés à l'intérieur des parts du camembert
    const RADIAN = Math.PI / 180;
