@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { User, CheckCircle } from "lucide-react";
 import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
 import { useToast } from "@/hooks/use-toast";
+import logoImage from "/lovable-uploads/eb56420e-3e12-4ccc-acb0-00c755b5ab58.png";
 
 export const ProfileSetup = () => {
   const [username, setUsername] = useState("");
@@ -46,7 +47,7 @@ export const ProfileSetup = () => {
     if (profile) {
       toast({
         title: "Profil créé !",
-        description: "Bienvenue dans Aloelocation",
+        description: "Bienvenue dans Aloe Location",
       });
     }
     
@@ -58,8 +59,12 @@ export const ProfileSetup = () => {
       <div className="min-h-screen flex items-center justify-center p-4">
         <Card className="w-full max-w-sm shadow-elevated">
           <CardHeader className="text-center">
-            <div className="mx-auto w-16 h-16 bg-success rounded-full flex items-center justify-center shadow-success mb-4">
-              <CheckCircle className="h-8 w-8 text-white" />
+            <div className="mx-auto w-16 h-16 rounded-lg overflow-hidden bg-white p-2 shadow-lg ring-1 ring-gray-200 mb-4">
+              <img 
+                src={logoImage} 
+                alt="Aloe Location Logo" 
+                className="w-full h-full object-contain"
+              />
             </div>
             <CardTitle className="text-xl">Finaliser votre profil</CardTitle>
             <p className="text-sm text-muted-foreground">
