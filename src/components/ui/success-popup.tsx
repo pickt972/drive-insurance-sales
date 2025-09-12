@@ -77,7 +77,8 @@ export const SuccessPopup = ({ isOpen, onClose, message, title = "Félicitations
   return (
     <>
       <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
-        <DialogContent className="max-w-md mx-auto text-center border-0 bg-gradient-to-br from-background via-background to-muted/20 shadow-2xl backdrop-blur-sm">
+        {(() => { if (isOpen) console.log('✅ SuccessPopup rendu ouvert'); return null; })()}
+        <DialogContent className="z-[9999] max-w-md mx-auto text-center border-0 bg-gradient-to-br from-background via-background to-muted/20 shadow-2xl backdrop-blur-sm">
           <div className="space-y-6 py-6 relative overflow-hidden">
             {/* Effets de background animés */}
             <div className="absolute inset-0 opacity-10">
