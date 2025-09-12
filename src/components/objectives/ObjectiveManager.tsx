@@ -474,7 +474,7 @@ export const ObjectiveManager = () => {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-6">
+        <div className="responsive-grid">
           {filteredProgress.map((progress) => (
             <div key={progress.objective.id} className="space-y-3">
               <ObjectiveProgressCard 

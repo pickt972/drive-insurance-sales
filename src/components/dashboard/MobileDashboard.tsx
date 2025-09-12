@@ -13,7 +13,7 @@ export const MobileDashboard = ({ stats }: MobileDashboardProps) => {
   return (
     <div className="space-y-4 animate-fadeInUp">
       {/* Statistiques principales */}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="responsive-grid">
         <Card className="metric-card">
           <CardContent className="p-4">
             <div className="flex items-center gap-2 mb-2">
