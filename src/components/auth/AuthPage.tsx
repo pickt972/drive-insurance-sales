@@ -179,9 +179,6 @@ export const AuthPage = () => {
           <CardTitle className="text-2xl font-bold text-primary">
             Aloe Location
           </CardTitle>
-          <p className="text-muted-foreground">
-            Application réservée à l'équipe Aloe Location
-          </p>
         </CardHeader>
         
         <CardContent>
