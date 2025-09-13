@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
-import { User, Users, Plus, Trash2, Key, Settings, Shield, Eye, EyeOff, Image, Upload } from "lucide-react";
+import { User, Users, Plus, Trash2, Key, Shield, Eye, EyeOff, Settings } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useNavigate } from "react-router-dom";
@@ -23,8 +23,6 @@ export const UserManager = () => {
   const [showNewPasswordChange, setShowNewPasswordChange] = useState(false);
   const [roleChangeUser, setRoleChangeUser] = useState("");
   const [newRoleChange, setNewRoleChange] = useState<"admin" | "employee">("employee");
-  const [logoUrl, setLogoUrl] = useState(localStorage.getItem('app-logo') || '/lovable-uploads/eb56420e-3e12-4ccc-acb0-00c755b5ab58.png');
-  const [appName, setAppName] = useState(localStorage.getItem('app-name') || 'Aloe Location');
   const { toast } = useToast();
 
   const handleAddUser = async () => {
@@ -124,25 +122,6 @@ export const UserManager = () => {
     }
   };
 
-  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newLogoUrl = e.target.value;
-    setLogoUrl(newLogoUrl);
-    localStorage.setItem('app-logo', newLogoUrl);
-    toast({
-      title: "Logo mis à jour",
-      description: "Le logo de l'application a été modifié avec succès.",
-    });
-  };
-
-  const handleAppNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newAppName = e.target.value;
-    setAppName(newAppName);
-    localStorage.setItem('app-name', newAppName);
-    toast({
-      title: "Nom mis à jour", 
-      description: "Le nom de l'application a été modifié avec succès.",
-    });
-  };
 
   const employeeUsers = users.filter(u => u.role === "employee");
   const totalUsers = users.length;
@@ -157,82 +136,6 @@ export const UserManager = () => {
       </CardHeader>
       <CardContent className="space-y-6">
         
-
-        {/* Section Paramètres de l'Application en première position */}
-        <div className="space-y-4 p-4 bg-accent/30 rounded-lg border">
-          <h3 className="font-medium flex items-center gap-2">
-            <Settings className="h-4 w-4" />
-            Paramètres de l'Application
-          </h3>
-          
-          {/* App Name */}
-          <div className="space-y-2">
-            <Label htmlFor="app-name">Nom de l'application</Label>
-            <Input
-              id="app-name"
-              value={appName}
-              onChange={handleAppNameChange}
-              placeholder="Nom affiché sur la page de connexion"
-            />
-            <p className="text-xs text-muted-foreground">
-              Ce nom sera affiché comme titre sur la page de connexion.
-            </p>
-          </div>
-
-          {/* Logo Management */}
-          <div className="space-y-2">
-            <Label className="text-sm font-medium">Logo de l'application</Label>
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-lg overflow-hidden bg-white p-1 shadow-lg ring-1 ring-gray-200">
-                <img 
-                  src={logoUrl} 
-                  alt="Logo actuel" 
-                  className="w-full h-full object-contain"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src = '/placeholder.svg';
-                  }}
-                />
-              </div>
-              <div className="flex-1">
-                <div className="flex gap-2">
-                  <Input
-                    value={logoUrl}
-                    onChange={handleLogoChange}
-                    placeholder="URL de l'image ou chemin vers le fichier"
-                    className="flex-1"
-                  />
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      const input = document.createElement('input');
-                      input.type = 'file';
-                      input.accept = 'image/*';
-                      input.onchange = (e) => {
-                        const file = (e.target as HTMLInputElement).files?.[0];
-                        if (file) {
-                          const reader = new FileReader();
-                          reader.onload = (event) => {
-                            const result = event.target?.result as string;
-                            setLogoUrl(result);
-                            localStorage.setItem('app-logo', result);
-                          };
-                          reader.readAsDataURL(file);
-                        }
-                      };
-                      input.click();
-                    }}
-                  >
-                    Choisir
-                  </Button>
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  URL d'une image ou sélectionnez un fichier local
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
 
         {/* Users summary */}
         <Alert>

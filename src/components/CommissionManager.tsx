@@ -15,6 +15,45 @@ export const CommissionManager = () => {
   const [newAmount, setNewAmount] = useState("");
   const { toast } = useToast();
 
+  // Gestion du nom et logo d'application
+  const [appName, setAppName] = useState(localStorage.getItem('app-name') || 'Aloe Location');
+  const [logoUrl, setLogoUrl] = useState(localStorage.getItem('app-logo') || '/lovable-uploads/eb56420e-3e12-4ccc-acb0-00c755b5ab58.png');
+
+  const handleLogoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const result = reader.result as string;
+        setLogoUrl(result);
+        localStorage.setItem('app-logo', result);
+        
+        // Déclencher un événement pour notifier les autres composants
+        window.dispatchEvent(new CustomEvent('app-settings-updated'));
+        
+        toast({
+          title: "Logo mis à jour",
+          description: "Le logo a été modifié avec succès"
+        });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleAppNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const newName = event.target.value;
+    setAppName(newName);
+    localStorage.setItem('app-name', newName);
+    
+    // Déclencher un événement pour notifier les autres composants
+    window.dispatchEvent(new CustomEvent('app-settings-updated'));
+    
+    toast({
+      title: "Nom mis à jour",
+      description: "Le nom de l'application a été modifié avec succès"
+    });
+  };
+
   useEffect(() => {
     fetchInsuranceTypes();
     // Retry si la première tentative échoue
@@ -234,10 +273,52 @@ export const CommissionManager = () => {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Settings className="h-5 w-5 text-primary" />
-          Gestion des Commissions
+          Administration
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
+        {/* Paramètres de l'application */}
+        <div className="space-y-4">
+          <h3 className="font-medium">Paramètres de l'application</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="app-name">Nom de l'application</Label>
+              <Input
+                id="app-name"
+                value={appName}
+                onChange={handleAppNameChange}
+                placeholder="Nom de l'application"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="app-logo">Logo de l'application</Label>
+              <Input
+                id="app-logo"
+                type="file"
+                accept="image/*"
+                onChange={handleLogoChange}
+              />
+              {logoUrl && (
+                <div className="mt-2">
+                  <img 
+                    src={logoUrl} 
+                    alt="Aperçu du logo" 
+                    className="h-12 w-12 object-contain border rounded"
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Separator */}
+        <div className="border-t"></div>
+
+        {/* Gestion des commissions */}
+        <div className="space-y-4">
+          <h3 className="font-medium">Gestion des commissions</h3>
+        </div>
+        
         {/* Existing commissions */}
         <div className="space-y-4">
           <h3 className="font-medium">Commissions actuelles</h3>
