@@ -166,8 +166,8 @@ All colors MUST be HSL.
     overflow-x: hidden;
   }
 
-  /* Empêcher complètement le mode paysage sur mobile */
-  @media screen and (max-width: 768px) and (orientation: landscape) {
+  /* Empêcher le mode paysage uniquement sur mobile (pas tablette/desktop) */
+  @media screen and (max-width: 480px) and (orientation: landscape) and (max-height: 480px) {
     body {
       visibility: hidden;
       position: fixed;
