@@ -14,6 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 export const AuthPage = () => {
   const [appName] = useState(localStorage.getItem('app-name') || 'Aloe Location');
+  const [logoUrl] = useState(localStorage.getItem('app-logo') || '/lovable-uploads/eb56420e-3e12-4ccc-acb0-00c755b5ab58.png');
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -170,6 +171,16 @@ export const AuthPage = () => {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 to-secondary/10 p-4">
       <Card className="w-full max-w-md shadow-lg">
         <CardHeader className="text-center">
+          <div className="mx-auto w-32 h-32 rounded-lg overflow-hidden bg-white p-2 shadow-lg ring-1 ring-gray-200 mb-4">
+            <img 
+              src={logoUrl} 
+              alt="Logo" 
+              className="w-full h-full object-contain"
+              onError={(e) => {
+                (e.target as HTMLImageElement).src = '/placeholder.svg';
+              }}
+            />
+          </div>
           <CardTitle className="text-2xl font-bold text-primary">
             {appName}
           </CardTitle>
