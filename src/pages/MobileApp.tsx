@@ -8,6 +8,7 @@ import { MobileDashboard } from "@/components/dashboard/MobileDashboard";
 import { DesktopDashboard } from "@/components/dashboard/DesktopDashboard";
 import { MobileSalesForm } from "@/components/sales/MobileSalesForm";
 import { DesktopSalesForm } from "@/components/sales/DesktopSalesForm";
+import { MobileSalesHistory } from "@/components/sales/MobileSalesHistory";
 import { SalesTable } from "@/components/SalesTable";
 import { CommissionManager } from "@/components/CommissionManager";
 import { UserManager } from "@/components/UserManager";
@@ -104,14 +105,8 @@ const ResponsiveApp = () => {
         );
 
       case "sales":
-        return loading ? (
-          <Card className="shadow-card">
-            <CardContent className="flex items-center justify-center py-8">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            </CardContent>
-          </Card>
-        ) : (
-          <SalesTable 
+        return isMobile ? (
+          <MobileSalesHistory
             sales={allSales}
             onDeleteSale={async (saleId) => {
               const result = await deleteSale(saleId);
@@ -121,6 +116,25 @@ const ResponsiveApp = () => {
             }}
             onEditSale={handleEditSale}
           />
+        ) : (
+          loading ? (
+            <Card className="shadow-card">
+              <CardContent className="flex items-center justify-center py-8">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </CardContent>
+            </Card>
+          ) : (
+            <SalesTable 
+              sales={allSales}
+              onDeleteSale={async (saleId) => {
+                const result = await deleteSale(saleId);
+                if (result?.success) {
+                  refreshStats();
+                }
+              }}
+              onEditSale={handleEditSale}
+            />
+          )
         );
 
       case "admin":
