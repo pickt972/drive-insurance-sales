@@ -157,14 +157,6 @@ export const UserManager = () => {
       </CardHeader>
       <CardContent className="space-y-6">
         
-        {/* Access restriction notice */}
-        <Alert className="border-primary/20 bg-primary/5">
-          <Shield className="h-4 w-4 text-primary" />
-          <AlertDescription>
-            <strong>Application privée</strong> - Accès restreint à l'équipe Aloe Location uniquement. 
-            L'inscription publique est désactivée pour la sécurité.
-          </AlertDescription>
-        </Alert>
 
         {/* Section Paramètres de l'Application en première position */}
         <div className="space-y-4 p-4 bg-accent/30 rounded-lg border">
