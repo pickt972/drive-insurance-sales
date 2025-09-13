@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { Car, LogOut, User, Crown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import logoImage from "/lovable-uploads/eb56420e-3e12-4ccc-acb0-00c755b5ab58.png";
@@ -6,6 +7,32 @@ import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
 export const MobileHeader = () => {
   const { signOut, profile, isAdmin } = useSupabaseAuth();
   const displayUsername = profile?.username || 'Invité';
+  const [appName, setAppName] = useState(localStorage.getItem('app-name') || 'Aloe Location');
+  const [logoUrl, setLogoUrl] = useState(localStorage.getItem('app-logo') || logoImage);
+
+  // Sync app name & logo with localStorage updates
+  useEffect(() => {
+    const refresh = () => {
+      setAppName(localStorage.getItem('app-name') || 'Aloe Location');
+      setLogoUrl(localStorage.getItem('app-logo') || logoImage);
+    };
+
+    const onStorage = (e: StorageEvent) => {
+      if (!e.key || e.key === 'app-name' || e.key === 'app-logo') {
+        refresh();
+      }
+    };
+
+    const onCustomUpdate = () => refresh();
+
+    window.addEventListener('storage', onStorage);
+    window.addEventListener('app-settings-updated', onCustomUpdate as EventListener);
+
+    return () => {
+      window.removeEventListener('storage', onStorage);
+      window.removeEventListener('app-settings-updated', onCustomUpdate as EventListener);
+    };
+  }, []);
 
   return (
     <header className="mobile-header">
@@ -13,13 +40,13 @@ export const MobileHeader = () => {
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-lg overflow-hidden bg-white p-1 shadow-lg ring-1 ring-gray-200">
             <img 
-              src={logoImage} 
-              alt="Aloe Location Logo" 
+              src={logoUrl} 
+              alt={`${appName} - logo`} 
               className="w-full h-full object-contain"
             />
           </div>
           <div>
-            <h1 className="font-bold text-lg text-primary">Aloe Location</h1>
+            <h1 className="font-bold text-lg text-primary">{appName}</h1>
             <p className="text-xs text-muted-foreground">Ventes assurances</p>
           </div>
         </div>

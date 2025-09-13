@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { BarChart3, Plus, FileText, Download, Settings, Users, Car, Crown, User, LogOut, Target } from "lucide-react";
 import logoImage from "/lovable-uploads/eb56420e-3e12-4ccc-acb0-00c755b5ab58.png";
 import {
@@ -38,6 +38,32 @@ export function AppSidebar({ currentTab, onTabChange, isAdmin }: AppSidebarProps
   const { state } = useSidebar();
   const { signOut, profile, isAdmin: supabaseIsAdmin } = useSupabaseAuth();
   const collapsed = state === "collapsed";
+  const [appName, setAppName] = useState(localStorage.getItem('app-name') || 'Aloe Location');
+  const [logoUrl, setLogoUrl] = useState(localStorage.getItem('app-logo') || logoImage);
+
+  // Sync app name & logo with localStorage updates
+  useEffect(() => {
+    const refresh = () => {
+      setAppName(localStorage.getItem('app-name') || 'Aloe Location');
+      setLogoUrl(localStorage.getItem('app-logo') || logoImage);
+    };
+
+    const onStorage = (e: StorageEvent) => {
+      if (!e.key || e.key === 'app-name' || e.key === 'app-logo') {
+        refresh();
+      }
+    };
+
+    const onCustomUpdate = () => refresh();
+
+    window.addEventListener('storage', onStorage);
+    window.addEventListener('app-settings-updated', onCustomUpdate as EventListener);
+
+    return () => {
+      window.removeEventListener('storage', onStorage);
+      window.removeEventListener('app-settings-updated', onCustomUpdate as EventListener);
+    };
+  }, []);
 
   const effectiveIsAdmin = supabaseIsAdmin || isAdmin;
   const displayUsername = profile?.username || 'Invité';
@@ -52,14 +78,14 @@ export function AppSidebar({ currentTab, onTabChange, isAdmin }: AppSidebarProps
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg overflow-hidden bg-white p-1 shadow-lg ring-1 ring-gray-200">
               <img 
-                src={logoImage} 
-                alt="Aloe Location Logo" 
+                src={logoUrl} 
+                alt={`${appName} - logo`} 
                 className="w-full h-full object-contain"
               />
             </div>
             {!collapsed && (
               <div>
-                <h1 className="font-bold text-lg text-primary">Aloe Location</h1>
+                <h1 className="font-bold text-lg text-primary">{appName}</h1>
                 <p className="text-xs text-muted-foreground">Ventes assurances</p>
               </div>
             )}

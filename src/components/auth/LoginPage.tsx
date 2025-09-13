@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,6 +20,32 @@ export const LoginPage = () => {
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [creatingUsers, setCreatingUsers] = useState(false);
+  const [appName, setAppName] = useState(localStorage.getItem('app-name') || 'Aloe Location');
+  const [logoUrl, setLogoUrl] = useState(localStorage.getItem('app-logo') || logoImage);
+
+  // Sync app name & logo with localStorage updates
+  useEffect(() => {
+    const refresh = () => {
+      setAppName(localStorage.getItem('app-name') || 'Aloe Location');
+      setLogoUrl(localStorage.getItem('app-logo') || logoImage);
+    };
+
+    const onStorage = (e: StorageEvent) => {
+      if (!e.key || e.key === 'app-name' || e.key === 'app-logo') {
+        refresh();
+      }
+    };
+
+    const onCustomUpdate = () => refresh();
+
+    window.addEventListener('storage', onStorage);
+    window.addEventListener('app-settings-updated', onCustomUpdate as EventListener);
+
+    return () => {
+      window.removeEventListener('storage', onStorage);
+      window.removeEventListener('app-settings-updated', onCustomUpdate as EventListener);
+    };
+  }, []);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -101,13 +127,13 @@ export const LoginPage = () => {
           <CardHeader className="text-center space-y-4">
             <div className="mx-auto w-16 h-16 rounded-lg overflow-hidden bg-white p-2 shadow-lg ring-1 ring-gray-200">
               <img 
-                src={logoImage} 
-                alt="Aloe Location Logo" 
+                src={logoUrl} 
+                alt={`${appName} - logo`} 
                 className="w-full h-full object-contain"
               />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-primary">Aloe Location</h1>
+              <h1 className="text-2xl font-bold text-primary">{appName}</h1>
               <p className="text-muted-foreground text-sm">
                 Suivi des ventes d'assurances
               </p>
