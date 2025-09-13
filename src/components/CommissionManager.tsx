@@ -18,10 +18,35 @@ export const CommissionManager = () => {
   // Gestion du nom et logo d'application
   const [appName, setAppName] = useState(localStorage.getItem('app-name') || 'Aloe Location');
   const [logoUrl, setLogoUrl] = useState(localStorage.getItem('app-logo') || '/lovable-uploads/eb56420e-3e12-4ccc-acb0-00c755b5ab58.png');
+  const [tempAppName, setTempAppName] = useState(localStorage.getItem('app-name') || 'Aloe Location');
+  const [tempLogoFile, setTempLogoFile] = useState<File | null>(null);
 
   const handleLogoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
+      setTempLogoFile(file);
+    }
+  };
+
+  const handleAppNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setTempAppName(event.target.value);
+  };
+
+  const handleValidateAppName = () => {
+    setAppName(tempAppName);
+    localStorage.setItem('app-name', tempAppName);
+    
+    // Déclencher un événement pour notifier les autres composants
+    window.dispatchEvent(new CustomEvent('app-settings-updated'));
+    
+    toast({
+      title: "Nom mis à jour",
+      description: "Le nom de l'application a été modifié avec succès"
+    });
+  };
+
+  const handleValidateLogo = () => {
+    if (tempLogoFile) {
       const reader = new FileReader();
       reader.onloadend = () => {
         const result = reader.result as string;
@@ -35,23 +60,12 @@ export const CommissionManager = () => {
           title: "Logo mis à jour",
           description: "Le logo a été modifié avec succès"
         });
+        
+        // Reset temp file
+        setTempLogoFile(null);
       };
-      reader.readAsDataURL(file);
+      reader.readAsDataURL(tempLogoFile);
     }
-  };
-
-  const handleAppNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const newName = event.target.value;
-    setAppName(newName);
-    localStorage.setItem('app-name', newName);
-    
-    // Déclencher un événement pour notifier les autres composants
-    window.dispatchEvent(new CustomEvent('app-settings-updated'));
-    
-    toast({
-      title: "Nom mis à jour",
-      description: "Le nom de l'application a été modifié avec succès"
-    });
   };
 
   useEffect(() => {
@@ -283,21 +297,41 @@ export const CommissionManager = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="app-name">Nom de l'application</Label>
-              <Input
-                id="app-name"
-                value={appName}
-                onChange={handleAppNameChange}
-                placeholder="Nom de l'application"
-              />
+              <div className="flex gap-2">
+                <Input
+                  id="app-name"
+                  value={tempAppName}
+                  onChange={handleAppNameChange}
+                  placeholder="Nom de l'application"
+                  className="flex-1"
+                />
+                <Button
+                  onClick={handleValidateAppName}
+                  size="sm"
+                  disabled={tempAppName === appName}
+                >
+                  <Save className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
             <div className="space-y-2">
               <Label htmlFor="app-logo">Logo de l'application</Label>
-              <Input
-                id="app-logo"
-                type="file"
-                accept="image/*"
-                onChange={handleLogoChange}
-              />
+              <div className="flex gap-2">
+                <Input
+                  id="app-logo"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleLogoChange}
+                  className="flex-1"
+                />
+                <Button
+                  onClick={handleValidateLogo}
+                  size="sm"
+                  disabled={!tempLogoFile}
+                >
+                  <Save className="h-4 w-4" />
+                </Button>
+              </div>
               {logoUrl && (
                 <div className="mt-2">
                   <img 
