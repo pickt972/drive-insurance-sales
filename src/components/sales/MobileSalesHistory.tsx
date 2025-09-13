@@ -1,9 +1,13 @@
 import { Sale } from "@/types/sales";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { FileText, Search } from "lucide-react";
+import { FileText, Search, Filter } from "lucide-react";
 import { SalesHistoryCard } from "./SalesHistoryCard";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 import { useState } from "react";
+import { EMPLOYEES, INSURANCE_TYPES } from "@/types/sales";
 
 interface MobileSalesHistoryProps {
   sales: Sale[];
@@ -13,16 +17,30 @@ interface MobileSalesHistoryProps {
 
 export const MobileSalesHistory = ({ sales, onDeleteSale, onEditSale }: MobileSalesHistoryProps) => {
   const [searchTerm, setSearchTerm] = useState("");
+  const [filterEmployee, setFilterEmployee] = useState<string>("");
+  const [filterInsurance, setFilterInsurance] = useState<string>("");
 
-  // Filtrer les ventes selon le terme de recherche
-  const filteredSales = sales.filter(sale => 
-    sale.clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    sale.employeeName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    sale.reservationNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    sale.insuranceTypes.some(insurance => 
-      insurance.toLowerCase().includes(searchTerm.toLowerCase())
-    )
-  );
+  // Filtrer les ventes selon les critères
+  const filteredSales = sales.filter(sale => {
+    const matchesSearch = !searchTerm || (
+      sale.clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      sale.employeeName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      sale.reservationNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      sale.insuranceTypes.some(insurance => 
+        insurance.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    );
+    const matchesEmployee = !filterEmployee || sale.employeeName === filterEmployee;
+    const matchesInsurance = !filterInsurance || sale.insuranceTypes.includes(filterInsurance);
+
+    return matchesSearch && matchesEmployee && matchesInsurance;
+  });
+
+  const clearFilters = () => {
+    setSearchTerm("");
+    setFilterEmployee("");
+    setFilterInsurance("");
+  };
 
   return (
     <div className="space-y-4 animate-fadeInUp">
@@ -34,7 +52,8 @@ export const MobileSalesHistory = ({ sales, onDeleteSale, onEditSale }: MobileSa
             Historique des ventes ({sales.length})
           </CardTitle>
         </CardHeader>
-        <CardContent className="pt-0">
+        <CardContent className="pt-0 space-y-4">
+          {/* Recherche */}
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
@@ -43,6 +62,59 @@ export const MobileSalesHistory = ({ sales, onDeleteSale, onEditSale }: MobileSa
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
             />
+          </div>
+
+          {/* Filtres */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <Label className="text-sm">Employé</Label>
+              <Select value={filterEmployee} onValueChange={(v) => setFilterEmployee(v === 'all' ? '' : v)}>
+                <SelectTrigger className="h-9 text-sm">
+                  <SelectValue placeholder="Tous" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tous les employés</SelectItem>
+                  {EMPLOYEES.map(employee => (
+                    <SelectItem key={employee} value={employee}>
+                      {employee}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-sm">Assurance</Label>
+              <Select value={filterInsurance} onValueChange={(v) => setFilterInsurance(v === 'all' ? '' : v)}>
+                <SelectTrigger className="h-9 text-sm">
+                  <SelectValue placeholder="Toutes" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Toutes les assurances</SelectItem>
+                  {INSURANCE_TYPES.map(insurance => (
+                    <SelectItem key={insurance} value={insurance}>
+                      {insurance}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {/* Bouton pour effacer les filtres et compteur */}
+          <div className="flex justify-between items-center">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={clearFilters}
+              className="flex items-center gap-2 h-8 text-xs"
+            >
+              <Filter className="h-3 w-3" />
+              Effacer
+            </Button>
+            <span className="text-xs text-muted-foreground">
+              {filteredSales.length} résultat{filteredSales.length > 1 ? 's' : ''}
+            </span>
           </div>
         </CardContent>
       </Card>
@@ -78,12 +150,6 @@ export const MobileSalesHistory = ({ sales, onDeleteSale, onEditSale }: MobileSa
         </div>
       )}
 
-      {/* Affichage du nombre de résultats filtrés */}
-      {searchTerm && filteredSales.length > 0 && (
-        <div className="text-center text-sm text-muted-foreground py-2">
-          {filteredSales.length} résultat{filteredSales.length > 1 ? 's' : ''} trouvé{filteredSales.length > 1 ? 's' : ''}
-        </div>
-      )}
     </div>
   );
 };
