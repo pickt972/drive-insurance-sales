@@ -13,8 +13,8 @@ import { supabase } from "@/integrations/supabase/client";
 
 
 export const AuthPage = () => {
-  const [appName] = useState(localStorage.getItem('app-name') || 'Aloe Location');
-  const [logoUrl] = useState(localStorage.getItem('app-logo') || '/lovable-uploads/eb56420e-3e12-4ccc-acb0-00c755b5ab58.png');
+  const [appName, setAppName] = useState(localStorage.getItem('app-name') || 'Aloe Location');
+  const [logoUrl, setLogoUrl] = useState(localStorage.getItem('app-logo') || '/lovable-uploads/eb56420e-3e12-4ccc-acb0-00c755b5ab58.png');
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -65,6 +65,41 @@ export const AuthPage = () => {
 
   useEffect(() => {
     loadUsers();
+  }, []);
+
+  // Sync app name & logo with localStorage updates and same-tab edits
+  useEffect(() => {
+    const refresh = () => {
+      setAppName(localStorage.getItem('app-name') || 'Aloe Location');
+      setLogoUrl(localStorage.getItem('app-logo') || '/lovable-uploads/eb56420e-3e12-4ccc-acb0-00c755b5ab58.png');
+    };
+
+    // Initial refresh (in case values changed before mount)
+    refresh();
+
+    const onStorage = (e: StorageEvent) => {
+      if (!e.key || e.key === 'app-name' || e.key === 'app-logo') {
+        refresh();
+      }
+    };
+
+    const onCustomUpdate = () => refresh();
+    const onFocus = () => refresh();
+    const onVisibility = () => {
+      if (!document.hidden) refresh();
+    };
+
+    window.addEventListener('storage', onStorage);
+    window.addEventListener('app-settings-updated', onCustomUpdate as EventListener);
+    window.addEventListener('focus', onFocus);
+    document.addEventListener('visibilitychange', onVisibility);
+
+    return () => {
+      window.removeEventListener('storage', onStorage);
+      window.removeEventListener('app-settings-updated', onCustomUpdate as EventListener);
+      window.removeEventListener('focus', onFocus);
+      document.removeEventListener('visibilitychange', onVisibility);
+    };
   }, []);
 
   useEffect(() => {
@@ -174,8 +209,10 @@ export const AuthPage = () => {
           <div className="mx-auto w-32 h-32 rounded-lg overflow-hidden bg-white p-2 shadow-lg ring-1 ring-gray-200 mb-4">
             <img 
               src={logoUrl} 
-              alt="Logo" 
+              alt={`${appName} - logo`} 
               className="w-full h-full object-contain"
+              loading="lazy"
+              decoding="async"
               onError={(e) => {
                 (e.target as HTMLImageElement).src = '/placeholder.svg';
               }}
