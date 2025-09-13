@@ -18,9 +18,12 @@ export const MobileDashboard = ({ stats }: MobileDashboardProps) => {
     return acc;
   }, {} as Record<string, number>);
 
+  const totalSalesForPie = Object.values(insuranceData).reduce((sum, count) => sum + count, 0);
+  
   const pieData = Object.entries(insuranceData).map(([name, value]) => ({
     name,
     value,
+    percentage: ((value / totalSalesForPie) * 100).toFixed(1),
   }));
 
   const COLORS = ['hsl(214, 84%, 56%)', 'hsl(142, 71%, 45%)', 'hsl(38, 92%, 50%)', 'hsl(335, 78%, 42%)', 'hsl(280, 87%, 47%)'];
@@ -119,14 +122,15 @@ export const MobileDashboard = ({ stats }: MobileDashboardProps) => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={200}>
+            <ResponsiveContainer width="100%" height={180}>
               <PieChart>
                 <Pie
                   data={pieData}
                   cx="50%"
                   cy="50%"
                   labelLine={false}
-                  outerRadius={50}
+                  label={({ percentage }) => `${percentage}%`}
+                  outerRadius={65}
                   fill="#8884d8"
                   dataKey="value"
                 >
@@ -137,6 +141,27 @@ export const MobileDashboard = ({ stats }: MobileDashboardProps) => {
                 <Tooltip formatter={(value, name) => [`${value} vente${Number(value) > 1 ? 's' : ''}`, name]} />
               </PieChart>
             </ResponsiveContainer>
+            
+            {/* Légende mobile */}
+            <div className="mt-4 space-y-2">
+              {pieData.map((entry, index) => (
+                <div key={entry.name} className="flex items-center justify-between text-sm">
+                  <div className="flex items-center gap-2">
+                    <div 
+                      className="w-3 h-3 rounded-full" 
+                      style={{ backgroundColor: COLORS[index % COLORS.length] }}
+                    />
+                    <span className="text-foreground">{entry.name}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-muted-foreground">{entry.value} vente{entry.value > 1 ? 's' : ''}</span>
+                    <Badge variant="outline" className="text-xs">
+                      {entry.percentage}%
+                    </Badge>
+                  </div>
+                </div>
+              ))}
+            </div>
           </CardContent>
         </Card>
       )}
