@@ -24,6 +24,7 @@ export const UserManager = () => {
   const [roleChangeUser, setRoleChangeUser] = useState("");
   const [newRoleChange, setNewRoleChange] = useState<"admin" | "employee">("employee");
   const [logoUrl, setLogoUrl] = useState(localStorage.getItem('app-logo') || '/lovable-uploads/eb56420e-3e12-4ccc-acb0-00c755b5ab58.png');
+  const [appName, setAppName] = useState(localStorage.getItem('app-name') || 'Aloe Location');
   const { toast } = useToast();
 
   const handleAddUser = async () => {
@@ -133,6 +134,16 @@ export const UserManager = () => {
     });
   };
 
+  const handleAppNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newAppName = e.target.value;
+    setAppName(newAppName);
+    localStorage.setItem('app-name', newAppName);
+    toast({
+      title: "Nom mis à jour", 
+      description: "Le nom de l'application a été modifié avec succès.",
+    });
+  };
+
   const employeeUsers = users.filter(u => u.role === "employee");
   const totalUsers = users.length;
 
@@ -215,13 +226,30 @@ export const UserManager = () => {
 
         <Separator />
 
-        {/* Logo Management */}
+        {/* App Settings */}
         <div className="space-y-4">
           <h3 className="font-medium flex items-center gap-2">
-            <Image className="h-4 w-4" />
-            Gestion du Logo
+            <Settings className="h-4 w-4" />
+            Paramètres de l'Application
           </h3>
-          <div className="space-y-4">
+          
+          {/* App Name */}
+          <div className="space-y-2">
+            <Label htmlFor="app-name">Nom de l'application</Label>
+            <Input
+              id="app-name"
+              value={appName}
+              onChange={handleAppNameChange}
+              placeholder="Nom affiché sur la page de connexion"
+            />
+            <p className="text-xs text-muted-foreground">
+              Ce nom sera affiché comme titre sur la page de connexion.
+            </p>
+          </div>
+
+          {/* Logo Management */}
+          <div className="space-y-2">
+            <Label className="text-sm font-medium">Logo de l'application</Label>
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 rounded-lg overflow-hidden bg-white p-1 shadow-lg ring-1 ring-gray-200">
                 <img 
@@ -234,10 +262,8 @@ export const UserManager = () => {
                 />
               </div>
               <div className="flex-1">
-                <Label htmlFor="logo-url">URL du logo</Label>
-                <div className="flex gap-2 mt-1">
+                <div className="flex gap-2">
                   <Input
-                    id="logo-url"
                     value={logoUrl}
                     onChange={handleLogoChange}
                     placeholder="URL de l'image ou chemin vers le fichier"
@@ -253,8 +279,6 @@ export const UserManager = () => {
                       input.onchange = (e) => {
                         const file = (e.target as HTMLInputElement).files?.[0];
                         if (file) {
-                          // Pour une vraie implémentation, il faudrait uploader le fichier
-                          // Ici on montre juste l'exemple avec une URL
                           toast({
                             title: "Fonctionnalité à implémenter",
                             description: "L'upload de fichier nécessite une implémentation backend.",

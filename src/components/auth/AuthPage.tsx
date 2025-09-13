@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 
 export const AuthPage = () => {
+  const [appName] = useState(localStorage.getItem('app-name') || 'Aloe Location');
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -170,7 +171,7 @@ export const AuthPage = () => {
       <Card className="w-full max-w-md shadow-lg">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold text-primary">
-            Aloe Location
+            {appName}
           </CardTitle>
         </CardHeader>
         
