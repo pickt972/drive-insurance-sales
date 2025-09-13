@@ -222,9 +222,7 @@ async function updateUser(supabaseAdmin: any, { username, newPassword, newRole, 
 
 async function deleteUser(supabaseAdmin: any, { username }: DeleteUserRequest) {
   try {
-    if (username === 'admin') {
-      throw new Error('Impossible de supprimer l\'administrateur principal');
-    }
+    // Permettre la suppression de tous les utilisateurs, y compris les admins
 
     // Récupérer le profil utilisateur (schéma public)
     const { data: profile, error: profileError } = await supabaseAdmin

@@ -173,20 +173,19 @@ export const UserManager = () => {
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      {user.role === "admin" ? (
+                      {user.role === "admin" && (
                         <span className="px-2 py-1 bg-primary/10 text-primary rounded-full text-xs">
                           Admin
                         </span>
-                      ) : (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleRemoveUser(user.username)}
-                          className="text-destructive hover:text-destructive"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
                       )}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleRemoveUser(user.username)}
+                        className="text-destructive hover:text-destructive"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     </div>
                   </div>
                 ))}
