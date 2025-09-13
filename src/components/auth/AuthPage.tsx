@@ -180,7 +180,7 @@ export const AuthPage = () => {
             Aloe Location
           </CardTitle>
           <p className="text-muted-foreground">
-            Connectez-vous pour accéder à votre tableau de bord
+            Application réservée à l'équipe Aloe Location
           </p>
         </CardHeader>
         
@@ -270,6 +270,16 @@ export const AuthPage = () => {
               {sendingReset ? 'Envoi en cours...' : 'Mot de passe oublié ?'}
             </Button>
           </div>
+
+          {/* Information sur l'accès restreint */}
+          <Alert className="mt-4 border-primary/20 bg-primary/5">
+            <UserIcon className="h-4 w-4 text-primary" />
+            <AlertDescription className="text-sm">
+              <strong>Accès restreint</strong><br />
+              Cette application est réservée à l'équipe Aloe Location. 
+              Si vous n'avez pas de compte, contactez votre administrateur.
+            </AlertDescription>
+          </Alert>
 
           {userOptions.length === 0 && (
             <div className="mt-2 text-center">

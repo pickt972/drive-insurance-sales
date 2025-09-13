@@ -29,3 +29,6 @@ verify_jwt = false
 
 [functions.user-management]
 verify_jwt = false
+
+[functions.prevent-signup]
+verify_jwt = false
