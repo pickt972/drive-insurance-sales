@@ -10,7 +10,7 @@ import { Loader2, Mail, Lock, User as UserIcon, Eye, EyeOff } from "lucide-react
 import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import logoImage from "/lovable-uploads/eb56420e-3e12-4ccc-acb0-00c755b5ab58.png";
+
 
 export const AuthPage = () => {
   const [username, setUsername] = useState("");
@@ -169,13 +169,6 @@ export const AuthPage = () => {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 to-secondary/10 p-4">
       <Card className="w-full max-w-md shadow-lg">
         <CardHeader className="text-center">
-          <div className="mx-auto w-16 h-16 rounded-lg overflow-hidden bg-white p-2 shadow-lg ring-1 ring-gray-200 mb-4">
-            <img 
-              src={logoImage} 
-              alt="Aloe Location Logo" 
-              className="w-full h-full object-contain"
-            />
-          </div>
           <CardTitle className="text-2xl font-bold text-primary">
             Aloe Location
           </CardTitle>

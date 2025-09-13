@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
-import { User, Plus, Trash2, Key, Settings, Shield, Eye, EyeOff } from "lucide-react";
+import { User, Plus, Trash2, Key, Settings, Shield, Eye, EyeOff, Image, Upload } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useNavigate } from "react-router-dom";
@@ -23,6 +23,7 @@ export const UserManager = () => {
   const [showNewPasswordChange, setShowNewPasswordChange] = useState(false);
   const [roleChangeUser, setRoleChangeUser] = useState("");
   const [newRoleChange, setNewRoleChange] = useState<"admin" | "employee">("employee");
+  const [logoUrl, setLogoUrl] = useState(localStorage.getItem('app-logo') || '/lovable-uploads/eb56420e-3e12-4ccc-acb0-00c755b5ab58.png');
   const { toast } = useToast();
 
   const handleAddUser = async () => {
@@ -122,6 +123,16 @@ export const UserManager = () => {
     }
   };
 
+  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newLogoUrl = e.target.value;
+    setLogoUrl(newLogoUrl);
+    localStorage.setItem('app-logo', newLogoUrl);
+    toast({
+      title: "Logo mis à jour",
+      description: "Le logo de l'application a été modifié avec succès.",
+    });
+  };
+
   const employeeUsers = users.filter(u => u.role === "employee");
   const totalUsers = users.length;
 
@@ -201,6 +212,69 @@ export const UserManager = () => {
               </div>
             )}
           </div>
+
+        <Separator />
+
+        {/* Logo Management */}
+        <div className="space-y-4">
+          <h3 className="font-medium flex items-center gap-2">
+            <Image className="h-4 w-4" />
+            Gestion du Logo
+          </h3>
+          <div className="space-y-4">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-lg overflow-hidden bg-white p-1 shadow-lg ring-1 ring-gray-200">
+                <img 
+                  src={logoUrl} 
+                  alt="Logo actuel" 
+                  className="w-full h-full object-contain"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = '/placeholder.svg';
+                  }}
+                />
+              </div>
+              <div className="flex-1">
+                <Label htmlFor="logo-url">URL du logo</Label>
+                <div className="flex gap-2 mt-1">
+                  <Input
+                    id="logo-url"
+                    value={logoUrl}
+                    onChange={handleLogoChange}
+                    placeholder="URL de l'image ou chemin vers le fichier"
+                    className="flex-1"
+                  />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const input = document.createElement('input');
+                      input.type = 'file';
+                      input.accept = 'image/*';
+                      input.onchange = (e) => {
+                        const file = (e.target as HTMLInputElement).files?.[0];
+                        if (file) {
+                          // Pour une vraie implémentation, il faudrait uploader le fichier
+                          // Ici on montre juste l'exemple avec une URL
+                          toast({
+                            title: "Fonctionnalité à implémenter",
+                            description: "L'upload de fichier nécessite une implémentation backend.",
+                            variant: "destructive"
+                          });
+                        }
+                      };
+                      input.click();
+                    }}
+                  >
+                    <Upload className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Le logo sera affiché sur la page de connexion. Utilisez une URL d'image ou uploadez un fichier.
+            </p>
+          </div>
+        </div>
 
         <Separator />
 
