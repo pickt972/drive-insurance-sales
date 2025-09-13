@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
-import { User, Plus, Trash2, Key, Settings, Shield, Eye, EyeOff, Image, Upload } from "lucide-react";
+import { User, Users, Plus, Trash2, Key, Settings, Shield, Eye, EyeOff, Image, Upload } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useNavigate } from "react-router-dom";
@@ -166,9 +166,85 @@ export const UserManager = () => {
           </AlertDescription>
         </Alert>
 
+        {/* Section Paramètres de l'Application en première position */}
+        <div className="space-y-4 p-4 bg-accent/30 rounded-lg border">
+          <h3 className="font-medium flex items-center gap-2">
+            <Settings className="h-4 w-4" />
+            Paramètres de l'Application
+          </h3>
+          
+          {/* App Name */}
+          <div className="space-y-2">
+            <Label htmlFor="app-name">Nom de l'application</Label>
+            <Input
+              id="app-name"
+              value={appName}
+              onChange={handleAppNameChange}
+              placeholder="Nom affiché sur la page de connexion"
+            />
+            <p className="text-xs text-muted-foreground">
+              Ce nom sera affiché comme titre sur la page de connexion.
+            </p>
+          </div>
+
+          {/* Logo Management */}
+          <div className="space-y-2">
+            <Label className="text-sm font-medium">Logo de l'application</Label>
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-lg overflow-hidden bg-white p-1 shadow-lg ring-1 ring-gray-200">
+                <img 
+                  src={logoUrl} 
+                  alt="Logo actuel" 
+                  className="w-full h-full object-contain"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = '/placeholder.svg';
+                  }}
+                />
+              </div>
+              <div className="flex-1">
+                <div className="flex gap-2">
+                  <Input
+                    value={logoUrl}
+                    onChange={handleLogoChange}
+                    placeholder="URL de l'image ou chemin vers le fichier"
+                    className="flex-1"
+                  />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const input = document.createElement('input');
+                      input.type = 'file';
+                      input.accept = 'image/*';
+                      input.onchange = (e) => {
+                        const file = (e.target as HTMLInputElement).files?.[0];
+                        if (file) {
+                          const reader = new FileReader();
+                          reader.onload = (event) => {
+                            const result = event.target?.result as string;
+                            setLogoUrl(result);
+                            localStorage.setItem('app-logo', result);
+                          };
+                          reader.readAsDataURL(file);
+                        }
+                      };
+                      input.click();
+                    }}
+                  >
+                    Choisir
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  URL d'une image ou sélectionnez un fichier local
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Users summary */}
         <Alert>
-          <Settings className="h-4 w-4" />
+          <Users className="h-4 w-4" />
           <AlertDescription>
             <strong>{totalUsers} utilisateurs</strong> au total : 1 administrateur et {employeeUsers.length} employé(s)
           </AlertDescription>
@@ -224,81 +300,6 @@ export const UserManager = () => {
             )}
           </div>
 
-        <Separator />
-
-        {/* App Settings */}
-        <div className="space-y-4">
-          <h3 className="font-medium flex items-center gap-2">
-            <Settings className="h-4 w-4" />
-            Paramètres de l'Application
-          </h3>
-          
-          {/* App Name */}
-          <div className="space-y-2">
-            <Label htmlFor="app-name">Nom de l'application</Label>
-            <Input
-              id="app-name"
-              value={appName}
-              onChange={handleAppNameChange}
-              placeholder="Nom affiché sur la page de connexion"
-            />
-            <p className="text-xs text-muted-foreground">
-              Ce nom sera affiché comme titre sur la page de connexion.
-            </p>
-          </div>
-
-          {/* Logo Management */}
-          <div className="space-y-2">
-            <Label className="text-sm font-medium">Logo de l'application</Label>
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-lg overflow-hidden bg-white p-1 shadow-lg ring-1 ring-gray-200">
-                <img 
-                  src={logoUrl} 
-                  alt="Logo actuel" 
-                  className="w-full h-full object-contain"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src = '/placeholder.svg';
-                  }}
-                />
-              </div>
-              <div className="flex-1">
-                <div className="flex gap-2">
-                  <Input
-                    value={logoUrl}
-                    onChange={handleLogoChange}
-                    placeholder="URL de l'image ou chemin vers le fichier"
-                    className="flex-1"
-                  />
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      const input = document.createElement('input');
-                      input.type = 'file';
-                      input.accept = 'image/*';
-                      input.onchange = (e) => {
-                        const file = (e.target as HTMLInputElement).files?.[0];
-                        if (file) {
-                          toast({
-                            title: "Fonctionnalité à implémenter",
-                            description: "L'upload de fichier nécessite une implémentation backend.",
-                            variant: "destructive"
-                          });
-                        }
-                      };
-                      input.click();
-                    }}
-                  >
-                    <Upload className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Le logo sera affiché sur la page de connexion. Utilisez une URL d'image ou uploadez un fichier.
-            </p>
-          </div>
-        </div>
 
         <Separator />
 
