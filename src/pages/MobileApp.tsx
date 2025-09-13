@@ -91,7 +91,7 @@ const ResponsiveApp = () => {
     switch (currentTab) {
       case "dashboard":
         return isMobile ? (
-          <MobileDashboard stats={stats} />
+          <MobileDashboard stats={stats} insuranceStats={insuranceStats} />
         ) : (
           <DesktopDashboard stats={stats} insuranceStats={insuranceStats} />
         );

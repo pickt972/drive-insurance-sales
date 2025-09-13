@@ -6,25 +6,20 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 
 interface MobileDashboardProps {
   stats: DashboardStats;
+  insuranceStats?: { name: string; value: number; color: string }[];
 }
 
-export const MobileDashboard = ({ stats }: MobileDashboardProps) => {
+export const MobileDashboard = ({ stats, insuranceStats = [] }: MobileDashboardProps) => {
   const formatCurrency = (amount: number) => `${amount.toFixed(2)} €`;
 
-  // Préparer les données pour le camembert des assurances
-  const insuranceData = stats.recentSales.reduce((acc, sale) => {
-    const insuranceName = sale.insurance_name || 'Autre';
-    acc[insuranceName] = (acc[insuranceName] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
-
-  const totalSalesForPie = Object.values(insuranceData).reduce((sum, count) => sum + count, 0);
-  
-  const pieData = Object.entries(insuranceData).map(([name, value]) => ({
-    name,
-    value,
-    percentage: ((value / totalSalesForPie) * 100).toFixed(1),
-  }));
+  // Utiliser les statistiques globales d'assurances si disponibles
+  const pieData = insuranceStats.length > 0 
+    ? insuranceStats.map(stat => ({
+        name: stat.name,
+        value: stat.value,
+        percentage: ((stat.value / insuranceStats.reduce((sum, s) => sum + s.value, 0)) * 100).toFixed(1),
+      }))
+    : [];
 
   const COLORS = ['hsl(214, 84%, 56%)', 'hsl(142, 71%, 45%)', 'hsl(38, 92%, 50%)', 'hsl(335, 78%, 42%)', 'hsl(280, 87%, 47%)'];
 
