@@ -9,6 +9,7 @@ import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import logoImage from "/lovable-uploads/eb56420e-3e12-4ccc-acb0-00c755b5ab58.png";
+import { useNavigate } from "react-router-dom";
 
 export const LoginPage = () => {
   const { signInWithUsername, loading } = useSupabaseAuth();
@@ -22,6 +23,7 @@ export const LoginPage = () => {
   const [creatingUsers, setCreatingUsers] = useState(false);
   const [appName, setAppName] = useState(localStorage.getItem('app-name') || 'Aloe Location');
   const [logoUrl, setLogoUrl] = useState(localStorage.getItem('app-logo') || logoImage);
+  const navigate = useNavigate();
 
   // Sync app name & logo with localStorage updates
   useEffect(() => {
@@ -248,7 +250,7 @@ export const LoginPage = () => {
                   type="button"
                   variant="link"
                   size="sm"
-                  onClick={() => window.location.href = '/recover-admin'}
+                  onClick={() => navigate('/recover-admin')}
                   className="text-muted-foreground hover:text-primary flex items-center gap-1"
                 >
                   <Shield className="h-3 w-3" />
