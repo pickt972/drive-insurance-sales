@@ -283,14 +283,16 @@ All colors MUST be HSL.
 }
 
 .mobile-content {
-  @apply flex-1 p-4 pb-20;
+  @apply flex-1 p-4;
+  padding-bottom: 84px; /* Espace pour le bandeau de navigation */
 }
 
 .mobile-bottom-nav {
-  @apply fixed bottom-0 left-0 right-0 border-t shadow-elevated z-40;
-  background: hsl(var(--background)/0.9);
+  @apply fixed bottom-0 left-0 right-0 border-t shadow-elevated z-50;
+  background: hsl(var(--background)/0.95);
   backdrop-filter: blur(20px);
   border-top: 1px solid hsl(var(--border)/0.5);
+  min-height: 64px;
 }
 
 .success-toast {
@@ -328,27 +330,27 @@ All colors MUST be HSL.
 
 /* Classes de couleurs vibrantes */
 .bg-purple {
-  @apply bg-gradient-to-r from-purple to-purple/90;
+  background: linear-gradient(to right, hsl(var(--purple)), hsl(var(--purple)/0.9));
 }
 
 .bg-orange {
-  @apply bg-gradient-to-r from-orange to-orange/90;
+  background: linear-gradient(to right, hsl(var(--orange)), hsl(var(--orange)/0.9));
 }
 
 .bg-info {
-  @apply bg-gradient-to-r from-info to-info/90;
+  background: linear-gradient(to right, hsl(var(--info)), hsl(var(--info)/0.9));
 }
 
 .text-purple {
-  @apply text-purple;
+  color: hsl(var(--purple));
 }
 
 .text-orange {
-  @apply text-orange;
+  color: hsl(var(--orange));
 }
 
 .text-info {
-  @apply text-info;
+  color: hsl(var(--info));
 }
 
 .rainbow-border {

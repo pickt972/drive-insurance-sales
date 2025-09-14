@@ -11,7 +11,7 @@ interface MobileLayoutProps {
 
 export const MobileLayout = ({ children, currentTab, onTabChange, isAdmin }: MobileLayoutProps) => {
   return (
-    <div className="mobile-container">
+    <div className="mobile-container relative">
       <MobileHeader />
       <main className="mobile-content">
         {children}

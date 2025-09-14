@@ -30,8 +30,8 @@ export const MobileBottomNav = ({ currentTab, onTabChange, isAdmin }: MobileBott
   const isAdminTabActive = adminTabs.some(tab => tab.id === currentTab);
 
   return (
-    <nav className="mobile-bottom-nav">
-      <div className="flex items-center justify-around p-2">
+    <nav className="mobile-bottom-nav" style={{ zIndex: 9999 }}>
+      <div className="flex items-center justify-around p-3 min-h-[64px]">
         {mainTabs.map(({ id, icon: Icon, label }) => (
           <Button
             key={id}
