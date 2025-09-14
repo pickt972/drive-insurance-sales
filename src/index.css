@@ -18,23 +18,23 @@ All colors MUST be HSL.
     --popover: 0 0% 100%;
     --popover-foreground: 215 25% 15%;
 
-    /* Palette primaire moderne - Bleu électrique vers violet */
-    --primary: 250 85% 60%;
+    /* Palette primaire moderne - Bleu professionnel */
+    --primary: 210 90% 50%;
     --primary-foreground: 0 0% 100%;
-    --primary-hover: 260 85% 55%;
-    --primary-light: 250 85% 96%;
-    --primary-variant: 240 90% 65%;
+    --primary-hover: 210 90% 45%;
+    --primary-light: 210 90% 96%;
+    --primary-variant: 215 85% 55%;
 
     /* Couleurs secondaires modernes */
-    --secondary: 280 15% 88%;
-    --secondary-foreground: 280 25% 15%;
+    --secondary: 220 15% 88%;
+    --secondary-foreground: 220 25% 15%;
 
-    --muted: 250 20% 96%;
-    --muted-foreground: 250 15% 45%;
+    --muted: 220 20% 96%;
+    --muted-foreground: 220 15% 45%;
 
-    --accent: 310 60% 70%;
-    --accent-foreground: 310 90% 15%;
-    --accent-light: 310 60% 95%;
+    --accent: 195 70% 65%;
+    --accent-foreground: 195 90% 15%;
+    --accent-light: 195 70% 95%;
 
     /* Couleurs d'état vibrantes */
     --success: 145 65% 45%;
@@ -51,40 +51,40 @@ All colors MUST be HSL.
     --destructive-light: 0 85% 95%;
 
     /* Couleurs neutres modernes */
-    --border: 250 20% 92%;
-    --input: 250 25% 98%;
-    --ring: 250 85% 60%;
+    --border: 220 20% 92%;
+    --input: 220 25% 98%;
+    --ring: 210 90% 50%;
 
     /* Nouvelles couleurs d'accent */
     --info: 200 90% 55%;
     --info-foreground: 0 0% 100%;
     --info-light: 200 90% 95%;
 
-    --purple: 280 85% 65%;
+    --purple: 270 70% 65%;
     --purple-foreground: 0 0% 100%;
-    --purple-light: 280 85% 95%;
+    --purple-light: 270 70% 95%;
 
     --orange: 25 95% 60%;
     --orange-foreground: 0 0% 100%;
     --orange-light: 25 95% 95%;
 
-    /* Gradients vibrants */
-    --gradient-primary: linear-gradient(135deg, hsl(250 85% 60%), hsl(260 85% 55%));
-    --gradient-secondary: linear-gradient(135deg, hsl(310 60% 70%), hsl(280 70% 65%));
+    /* Gradients modernes */
+    --gradient-primary: linear-gradient(135deg, hsl(210 90% 50%), hsl(210 90% 45%));
+    --gradient-secondary: linear-gradient(135deg, hsl(195 70% 65%), hsl(220 70% 65%));
     --gradient-success: linear-gradient(135deg, hsl(145 65% 45%), hsl(155 70% 50%));
-    --gradient-card: linear-gradient(135deg, hsl(0 0% 100%), hsl(250 25% 98%));
-    --gradient-hero: linear-gradient(135deg, hsl(250 85% 60%) 0%, hsl(310 60% 70%) 50%, hsl(260 85% 55%) 100%);
-    --gradient-rainbow: linear-gradient(135deg, hsl(250 85% 60%) 0%, hsl(310 60% 70%) 25%, hsl(35 95% 55%) 50%, hsl(145 65% 45%) 75%, hsl(200 90% 55%) 100%);
+    --gradient-card: linear-gradient(135deg, hsl(0 0% 100%), hsl(220 25% 98%));
+    --gradient-hero: linear-gradient(135deg, hsl(210 90% 50%) 0%, hsl(195 70% 65%) 50%, hsl(210 90% 45%) 100%);
+    --gradient-rainbow: linear-gradient(135deg, hsl(210 90% 50%) 0%, hsl(195 70% 65%) 25%, hsl(25 95% 60%) 50%, hsl(145 65% 45%) 75%, hsl(200 90% 55%) 100%);
     
     /* Ombres colorées */
-    --shadow-card: 0 4px 20px hsl(250 85% 60% / 0.08), 0 2px 8px hsl(0 0 0 / 0.04);
-    --shadow-elevated: 0 12px 40px hsl(250 85% 60% / 0.15), 0 4px 16px hsl(0 0 0 / 0.08);
+    --shadow-card: 0 4px 20px hsl(210 90% 50% / 0.08), 0 2px 8px hsl(0 0 0 / 0.04);
+    --shadow-elevated: 0 12px 40px hsl(210 90% 50% / 0.15), 0 4px 16px hsl(0 0 0 / 0.08);
     --shadow-success: 0 6px 20px hsl(145 65% 45% / 0.25);
-    --shadow-primary: 0 8px 30px hsl(250 85% 60% / 0.3);
-    --shadow-purple: 0 6px 20px hsl(280 85% 65% / 0.25);
+    --shadow-primary: 0 8px 30px hsl(210 90% 50% / 0.3);
+    --shadow-purple: 0 6px 20px hsl(270 70% 65% / 0.25);
     --shadow-orange: 0 6px 20px hsl(25 95% 60% / 0.25);
 
-/* Mobile-first radius - plus modernes */
+    /* Mobile-first radius - plus modernes */
     --radius: 16px;
     --radius-sm: 12px;
     --radius-lg: 24px;
@@ -116,11 +116,11 @@ All colors MUST be HSL.
     --popover: 240 15% 12%;
     --popover-foreground: 250 20% 92%;
 
-    --primary: 250 85% 65%;
+    --primary: 210 90% 55%;
     --primary-foreground: 0 0% 100%;
-    --primary-hover: 260 85% 60%;
-    --primary-light: 250 85% 15%;
-    --primary-variant: 240 90% 70%;
+    --primary-hover: 210 90% 50%;
+    --primary-light: 210 90% 15%;
+    --primary-variant: 215 85% 60%;
 
     --secondary: 280 15% 20%;
     --secondary-foreground: 250 20% 92%;
