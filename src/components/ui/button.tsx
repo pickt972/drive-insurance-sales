@@ -9,14 +9,17 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-gradient-to-r from-primary to-primary-hover text-primary-foreground hover:shadow-primary hover:scale-105 shadow-md",
+        default: "bg-gradient-to-r from-primary via-primary-variant to-primary-hover text-primary-foreground hover:shadow-primary hover:scale-105 shadow-md",
         destructive: "bg-gradient-to-r from-destructive to-destructive/90 text-destructive-foreground hover:shadow-lg shadow-md",
-        outline: "border-2 border-primary/20 bg-background/50 backdrop-blur-sm hover:bg-primary/5 hover:border-primary/40 hover:shadow-md",
-        secondary: "bg-gradient-to-r from-secondary to-secondary/80 text-secondary-foreground hover:shadow-md hover:scale-105",
-        ghost: "hover:bg-accent/50 hover:text-accent-foreground backdrop-blur-sm",
+        outline: "border-2 border-primary/30 bg-background/50 backdrop-blur-sm hover:bg-primary/10 hover:border-primary/50 hover:shadow-md",
+        secondary: "bg-gradient-to-r from-secondary to-accent/60 text-secondary-foreground hover:shadow-md hover:scale-105",
+        ghost: "hover:bg-accent/20 hover:text-accent-foreground backdrop-blur-sm",
         link: "text-primary underline-offset-4 hover:underline hover:text-primary-hover",
-        success: "bg-gradient-to-r from-success to-success/90 text-success-foreground hover:shadow-success shadow-md",
-        premium: "bg-gradient-to-r from-primary via-primary-hover to-primary text-primary-foreground hover:shadow-primary shadow-lg border border-primary/20",
+        success: "bg-gradient-to-r from-success to-success-variant text-success-foreground hover:shadow-success shadow-md",
+        premium: "bg-gradient-rainbow text-primary-foreground hover:shadow-primary shadow-lg border border-primary/30 hover:scale-105",
+        purple: "bg-gradient-to-r from-purple to-purple/90 text-purple-foreground hover:shadow-purple shadow-md",
+        orange: "bg-gradient-to-r from-orange to-orange/90 text-orange-foreground hover:shadow-orange shadow-md",
+        info: "bg-gradient-to-r from-info to-info/90 text-info-foreground hover:shadow-md shadow-md",
       },
       size: {
         default: "h-10 px-4 py-2",
