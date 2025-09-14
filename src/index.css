@@ -304,15 +304,15 @@ All colors MUST be HSL.
 }
 
 .metric-card {
-  @apply bg-gradient-card rounded-2xl p-6 border shadow-card backdrop-blur-sm transition-all duration-300 hover:shadow-elevated hover:scale-[1.02];
+  @apply bg-card rounded-2xl p-6 border shadow-card backdrop-blur-sm transition-all duration-300 hover:shadow-elevated hover:scale-[1.02];
 }
 
 .primary-button {
-  @apply bg-gradient-primary text-primary-foreground hover:shadow-primary transition-all duration-300 rounded-xl font-semibold active:scale-95 hover:scale-105;
+  @apply bg-primary text-primary-foreground hover:bg-primary-hover hover:shadow-primary transition-all duration-300 rounded-xl font-semibold active:scale-95 hover:scale-105;
 }
 
 .success-button {
-  @apply bg-gradient-success text-success-foreground hover:shadow-success transition-all duration-300 rounded-xl font-semibold active:scale-95 hover:scale-105;
+  @apply bg-success text-success-foreground hover:bg-success/90 hover:shadow-success transition-all duration-300 rounded-xl font-semibold active:scale-95 hover:scale-105;
 }
 
 /* Nouvelles classes modernes */
@@ -321,11 +321,11 @@ All colors MUST be HSL.
 }
 
 .gradient-text {
-  @apply bg-gradient-rainbow bg-clip-text text-transparent font-bold;
+  @apply bg-gradient-to-r from-primary to-primary-hover bg-clip-text text-transparent font-bold;
 }
 
 .floating-action {
-  @apply fixed bottom-6 right-6 bg-gradient-primary text-primary-foreground p-4 rounded-full shadow-primary hover:shadow-xl transition-all duration-300 hover:scale-110 active:scale-95 z-50;
+  @apply fixed bottom-6 right-6 bg-primary text-primary-foreground p-4 rounded-full shadow-primary hover:shadow-xl transition-all duration-300 hover:scale-110 active:scale-95 z-50;
 }
 
 /* Classes de couleurs vibrantes */
