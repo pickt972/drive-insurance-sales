@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Car, User, Lock, Mail, Eye, EyeOff, UserPlus } from "lucide-react";
+import { Car, User, Lock, Mail, Eye, EyeOff, UserPlus, Shield } from "lucide-react";
 import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -231,7 +231,7 @@ export const LoginPage = () => {
               </Button>
             </form>
             
-            <div className="text-center">
+            <div className="text-center space-y-2">
               <Button
                 type="button"
                 variant="link"
@@ -242,6 +242,19 @@ export const LoginPage = () => {
               >
                 {sendingReset ? 'Envoi…' : 'Mot de passe oublié ?'}
               </Button>
+              
+              <div>
+                <Button
+                  type="button"
+                  variant="link"
+                  size="sm"
+                  onClick={() => window.location.href = '/recover-admin'}
+                  className="text-muted-foreground hover:text-primary flex items-center gap-1"
+                >
+                  <Shield className="h-3 w-3" />
+                  Récupérer compte admin
+                </Button>
+              </div>
             </div>
 
             <div className="text-center">
