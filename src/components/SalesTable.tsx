@@ -6,6 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Trash2, FileText, Calendar, Eye, Edit } from "lucide-react";
 import { SaleDetailModal } from "./SaleDetailModal";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 interface SalesTableProps {
   sales: Sale[];
@@ -36,7 +37,7 @@ export const SalesTable = ({ sales, onDeleteSale, onEditSale }: SalesTableProps)
   };
 
   return (
-    <Card className="shadow-card bg-gradient-card">
+    <Card className="shadow-card bg-card">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <FileText className="h-5 w-5 text-primary" />
@@ -107,18 +108,16 @@ export const SalesTable = ({ sales, onDeleteSale, onEditSale }: SalesTableProps)
                             <Edit className="h-4 w-4" />
                           </Button>
                         )}
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          onClick={() => {
-                            if (window.confirm(`Êtes-vous sûr de vouloir supprimer la vente de ${sale.clientName} ?`)) {
-                              onDeleteSale(sale.id);
-                            }
-                          }}
-                          className="h-8 w-8 p-0"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        <ConfirmDialog
+                          title="Confirmer la suppression"
+                          description={`Supprimer la vente de ${sale.clientName} ? Cette action est irréversible.`}
+                          onConfirm={() => onDeleteSale(sale.id)}
+                          trigger={
+                            <Button variant="destructive" size="sm" className="h-8 w-8 p-0">
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          }
+                        />
                       </div>
                     </TableCell>
                   </TableRow>

@@ -10,6 +10,7 @@ import { User, Users, Plus, Trash2, Key, Shield, Eye, EyeOff, Settings } from "l
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useNavigate } from "react-router-dom";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 export const UserManager = () => {
   const { users, addUser, removeUser, updatePassword, updateRole, usersLoading, fetchUsers } = useSupabaseAuth();
@@ -180,18 +181,20 @@ export const UserManager = () => {
                           Admin
                         </span>
                       )}
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          if (window.confirm(`Êtes-vous sûr de vouloir supprimer l'utilisateur ${user.username} ?`)) {
-                            handleRemoveUser(user.username);
-                          }
-                        }}
-                        className="text-destructive hover:text-destructive"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      <ConfirmDialog
+                        title="Supprimer l'utilisateur"
+                        description={`Êtes-vous sûr de vouloir supprimer l'utilisateur ${user.username} ? Cette action est irréversible.`}
+                        onConfirm={() => handleRemoveUser(user.username)}
+                        trigger={
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-destructive hover:text-destructive"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        }
+                      />
                     </div>
                   </div>
                 ))}

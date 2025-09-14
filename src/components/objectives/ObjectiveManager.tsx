@@ -16,6 +16,7 @@ import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
 import { EmployeeObjective } from "@/types/objectives";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 export const ObjectiveManager = () => {
   const { objectivesProgress, loading, createObjective, updateObjective, deleteObjective } = useObjectives();
   const { profile } = useSupabaseAuth();
@@ -224,23 +225,18 @@ export const ObjectiveManager = () => {
   };
 
   const handleDelete = async (id: string) => {
-    const objective = objectivesProgress.find(op => op.objective.id === id);
-    const objectiveName = objective ? `l'objectif de ${objective.objective.employee_name}` : 'cet objectif';
-    
-    if (window.confirm(`Êtes-vous sûr de vouloir supprimer ${objectiveName} ?`)) {
-      const result = await deleteObjective(id);
-      if (result.success) {
-        toast({
-          title: "Objectif supprimé",
-          description: "L'objectif a été supprimé avec succès",
-        });
-      } else {
-        toast({
-          title: "Erreur",
-          description: result.error || "Une erreur est survenue",
-          variant: "destructive",
-        });
-      }
+    const result = await deleteObjective(id);
+    if (result.success) {
+      toast({
+        title: "Objectif supprimé",
+        description: "L'objectif a été supprimé avec succès",
+      });
+    } else {
+      toast({
+        title: "Erreur",
+        description: result.error || "Une erreur est survenue",
+        variant: "destructive",
+      });
     }
   };
 
@@ -507,15 +503,21 @@ export const ObjectiveManager = () => {
                     <Edit className="h-4 w-4" />
                     <span className="hidden sm:ml-2 sm:inline">Éditer</span>
                   </Button>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => handleDelete(progress.objective.id)}
-                    className="h-8 w-8 p-0 sm:w-auto sm:px-3"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                    <span className="hidden sm:ml-2 sm:inline">Supprimer</span>
-                  </Button>
+                  <ConfirmDialog
+                    title="Supprimer l'objectif"
+                    description={`Êtes-vous sûr de vouloir supprimer cet objectif ? Cette action est irréversible.`}
+                    onConfirm={() => handleDelete(progress.objective.id)}
+                    trigger={
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        className="h-8 w-8 p-0 sm:w-auto sm:px-3"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                        <span className="hidden sm:ml-2 sm:inline">Supprimer</span>
+                      </Button>
+                    }
+                  />
                 </div>
               )}
             </div>

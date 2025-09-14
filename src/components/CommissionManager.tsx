@@ -7,6 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { InsuranceType } from "@/types/database";
 import { Euro, Plus, Trash2, Settings, Save } from "lucide-react";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 export const CommissionManager = () => {
   const [insuranceTypes, setInsuranceTypes] = useState<InsuranceType[]>([]);
@@ -372,18 +373,21 @@ export const CommissionManager = () => {
                     onChange={(e) => handleUpdateCommission(insurance.id, e.target.value)}
                     className="w-20 text-right"
                   />
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      if (window.confirm(`Êtes-vous sûr de vouloir supprimer le type d'assurance "${insurance.name}" ?`)) {
-                        handleRemoveCommission(insurance.id);
-                      }
-                    }}
-                    className="text-destructive hover:text-destructive"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                  <ConfirmDialog
+                    title="Supprimer la commission"
+                    description={`Êtes-vous sûr de vouloir supprimer le type d'assurance "${insurance.name}" ?`}
+                    destructive
+                    onConfirm={() => handleRemoveCommission(insurance.id)}
+                    trigger={
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-destructive hover:text-destructive"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    }
+                  />
                 </div>
               </div>
             ))}

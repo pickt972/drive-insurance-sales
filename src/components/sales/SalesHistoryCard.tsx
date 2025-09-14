@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, Trash2, Eye, Edit, User, FileText } from "lucide-react";
 import { SaleDetailModal } from "../SaleDetailModal";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 interface SalesHistoryCardProps {
   sale: Sale;
@@ -62,18 +63,16 @@ export const SalesHistoryCard = ({ sale, onDeleteSale, onEditSale }: SalesHistor
                   <Edit className="h-3 w-3" />
                 </Button>
               )}
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={() => {
-                  if (window.confirm(`Êtes-vous sûr de vouloir supprimer la vente de ${sale.clientName} ?`)) {
-                    onDeleteSale(sale.id);
-                  }
-                }}
-                className="h-8 w-8 p-0"
-              >
-                <Trash2 className="h-3 w-3" />
-              </Button>
+              <ConfirmDialog
+                title="Confirmer la suppression"
+                description={`Supprimer la vente de ${sale.clientName} ? Cette action est irréversible.`}
+                onConfirm={() => onDeleteSale(sale.id)}
+                trigger={
+                  <Button variant="destructive" size="sm" className="h-8 w-8 p-0">
+                    <Trash2 className="h-3 w-3" />
+                  </Button>
+                }
+              />
             </div>
           </div>
 
