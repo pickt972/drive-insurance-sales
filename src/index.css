@@ -272,7 +272,6 @@ All colors MUST be HSL.
 .mobile-container {
   @apply max-w-md mx-auto min-h-screen;
   background: linear-gradient(to bottom, hsl(var(--background)), hsl(var(--background)/0.95));
-  backdrop-filter: blur(20px);
 }
 
 .mobile-header {
@@ -293,6 +292,7 @@ All colors MUST be HSL.
   backdrop-filter: blur(20px);
   border-top: 1px solid hsl(var(--border)/0.5);
   min-height: 64px;
+  padding-bottom: calc(env(safe-area-inset-bottom) + 8px);
 }
 
 .success-toast {
