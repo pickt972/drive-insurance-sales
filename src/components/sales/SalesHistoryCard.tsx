@@ -65,7 +65,11 @@ export const SalesHistoryCard = ({ sale, onDeleteSale, onEditSale }: SalesHistor
               <Button
                 variant="destructive"
                 size="sm"
-                onClick={() => onDeleteSale(sale.id)}
+                onClick={() => {
+                  if (window.confirm(`Êtes-vous sûr de vouloir supprimer la vente de ${sale.clientName} ?`)) {
+                    onDeleteSale(sale.id);
+                  }
+                }}
                 className="h-8 w-8 p-0"
               >
                 <Trash2 className="h-3 w-3" />

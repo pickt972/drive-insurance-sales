@@ -375,7 +375,11 @@ export const CommissionManager = () => {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => handleRemoveCommission(insurance.id)}
+                    onClick={() => {
+                      if (window.confirm(`Êtes-vous sûr de vouloir supprimer le type d'assurance "${insurance.name}" ?`)) {
+                        handleRemoveCommission(insurance.id);
+                      }
+                    }}
                     className="text-destructive hover:text-destructive"
                   >
                     <Trash2 className="h-4 w-4" />

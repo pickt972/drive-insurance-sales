@@ -224,18 +224,23 @@ export const ObjectiveManager = () => {
   };
 
   const handleDelete = async (id: string) => {
-    const result = await deleteObjective(id);
-    if (result.success) {
-      toast({
-        title: "Objectif supprimé",
-        description: "L'objectif a été supprimé avec succès",
-      });
-    } else {
-      toast({
-        title: "Erreur",
-        description: result.error || "Une erreur est survenue",
-        variant: "destructive",
-      });
+    const objective = objectivesProgress.find(op => op.objective.id === id);
+    const objectiveName = objective ? `l'objectif de ${objective.objective.employee_name}` : 'cet objectif';
+    
+    if (window.confirm(`Êtes-vous sûr de vouloir supprimer ${objectiveName} ?`)) {
+      const result = await deleteObjective(id);
+      if (result.success) {
+        toast({
+          title: "Objectif supprimé",
+          description: "L'objectif a été supprimé avec succès",
+        });
+      } else {
+        toast({
+          title: "Erreur",
+          description: result.error || "Une erreur est survenue",
+          variant: "destructive",
+        });
+      }
     }
   };
 

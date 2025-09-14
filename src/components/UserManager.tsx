@@ -183,7 +183,11 @@ export const UserManager = () => {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => handleRemoveUser(user.username)}
+                        onClick={() => {
+                          if (window.confirm(`Êtes-vous sûr de vouloir supprimer l'utilisateur ${user.username} ?`)) {
+                            handleRemoveUser(user.username);
+                          }
+                        }}
                         className="text-destructive hover:text-destructive"
                       >
                         <Trash2 className="h-4 w-4" />

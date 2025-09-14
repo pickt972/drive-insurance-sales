@@ -110,7 +110,11 @@ export const SalesTable = ({ sales, onDeleteSale, onEditSale }: SalesTableProps)
                         <Button
                           variant="destructive"
                           size="sm"
-                          onClick={() => onDeleteSale(sale.id)}
+                          onClick={() => {
+                            if (window.confirm(`Êtes-vous sûr de vouloir supprimer la vente de ${sale.clientName} ?`)) {
+                              onDeleteSale(sale.id);
+                            }
+                          }}
                           className="h-8 w-8 p-0"
                         >
                           <Trash2 className="h-4 w-4" />
