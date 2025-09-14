@@ -62,10 +62,10 @@ All colors MUST be HSL.
     --shadow-success: 0 4px 14px hsl(142 76% 36% / 0.15);
     --shadow-primary: 0 4px 14px hsl(212 90% 45% / 0.15);
 
-    /* Mobile-first radius */
-    --radius: 12px;
-    --radius-sm: 8px;
-    --radius-lg: 16px;
+/* Mobile-first radius - plus modernes */
+    --radius: 16px;
+    --radius-sm: 12px;
+    --radius-lg: 24px;
 
     --sidebar-background: 0 0% 98%;
 
@@ -230,12 +230,15 @@ All colors MUST be HSL.
 /* Classes utilitaires pour l'app mobile */
 .mobile-container {
   @apply max-w-md mx-auto min-h-screen;
-  background-color: hsl(0 0% 100%);
+  background: linear-gradient(to bottom, hsl(var(--background)), hsl(var(--background)/0.95));
+  backdrop-filter: blur(20px);
 }
 
 .mobile-header {
   @apply sticky top-0 z-50 border-b shadow-card;
-  background-color: hsl(0 0% 100%);
+  background: hsl(var(--background)/0.8);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid hsl(var(--border)/0.5);
 }
 
 .mobile-content {
@@ -244,7 +247,9 @@ All colors MUST be HSL.
 
 .mobile-bottom-nav {
   @apply fixed bottom-0 left-0 right-0 border-t shadow-elevated z-40;
-  background-color: hsl(0 0% 100%);
+  background: hsl(var(--background)/0.9);
+  backdrop-filter: blur(20px);
+  border-top: 1px solid hsl(var(--border)/0.5);
 }
 
 .success-toast {
@@ -256,13 +261,26 @@ All colors MUST be HSL.
 }
 
 .metric-card {
-  @apply bg-gradient-card rounded-lg p-4 border shadow-card;
+  @apply bg-gradient-card rounded-2xl p-6 border shadow-card backdrop-blur-sm transition-all duration-300 hover:shadow-elevated hover:scale-[1.02];
 }
 
 .primary-button {
-  @apply bg-gradient-primary text-primary-foreground hover:shadow-primary transition-all duration-200;
+  @apply bg-gradient-primary text-primary-foreground hover:shadow-primary transition-all duration-300 rounded-xl font-semibold active:scale-95 hover:scale-105;
 }
 
 .success-button {
-  @apply bg-gradient-success text-success-foreground hover:shadow-success transition-all duration-200;
+  @apply bg-gradient-success text-success-foreground hover:shadow-success transition-all duration-300 rounded-xl font-semibold active:scale-95 hover:scale-105;
+}
+
+/* Nouvelles classes modernes */
+.glass-card {
+  @apply bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl shadow-xl;
+}
+
+.gradient-text {
+  @apply bg-gradient-to-r from-primary to-primary-hover bg-clip-text text-transparent font-bold;
+}
+
+.floating-action {
+  @apply fixed bottom-6 right-6 bg-gradient-primary text-primary-foreground p-4 rounded-full shadow-primary hover:shadow-xl transition-all duration-300 hover:scale-110 active:scale-95 z-50;
 }
