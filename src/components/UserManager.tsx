@@ -68,6 +68,19 @@ export const UserManager = () => {
   };
 
   const handleRemoveUser = async (username: string) => {
+    // Vérifier si c'est le dernier administrateur
+    const adminUsers = users.filter(u => u.role === "admin");
+    const userToDelete = users.find(u => u.username === username);
+    
+    if (userToDelete?.role === "admin" && adminUsers.length === 1) {
+      toast({
+        title: "Suppression impossible",
+        description: "Impossible de supprimer le dernier administrateur. Il doit y avoir au moins un administrateur.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const result = await removeUser(username);
     
     if (result.success) {
@@ -190,6 +203,7 @@ export const UserManager = () => {
                             variant="outline"
                             size="sm"
                             className="text-destructive hover:text-destructive"
+                            disabled={user.role === "admin" && users.filter(u => u.role === "admin").length === 1}
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>

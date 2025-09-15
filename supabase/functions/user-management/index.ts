@@ -222,17 +222,30 @@ async function updateUser(supabaseAdmin: any, { username, newPassword, newRole, 
 
 async function deleteUser(supabaseAdmin: any, { username }: DeleteUserRequest) {
   try {
-    // Permettre la suppression de tous les utilisateurs, y compris les admins
+    // Vérifier d'abord qu'il ne s'agit pas du dernier administrateur
+    const { data: adminCount, error: countError } = await supabaseAdmin
+      .from('profiles')
+      .select('*', { count: 'exact' })
+      .eq('role', 'admin');
+
+    if (countError) {
+      throw new Error(`Erreur vérification admins: ${countError.message}`);
+    }
 
     // Récupérer le profil utilisateur (schéma public)
     const { data: profile, error: profileError } = await supabaseAdmin
       .from('profiles')
-      .select('user_id')
+      .select('user_id, role')
       .eq('username', username)
       .single();
 
     if (profileError || !profile) {
       throw new Error('Utilisateur non trouvé');
+    }
+
+    // Empêcher la suppression du dernier administrateur
+    if (profile.role === 'admin' && adminCount.length === 1) {
+      throw new Error('Impossible de supprimer le dernier administrateur. Il doit y avoir au moins un administrateur.');
     }
 
     // Supprimer l'utilisateur (le profil sera supprimé automatiquement par la contrainte CASCADE)
