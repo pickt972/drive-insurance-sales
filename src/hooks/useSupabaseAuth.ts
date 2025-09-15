@@ -244,33 +244,70 @@ export const useSupabaseAuth = () => {
     if (!user) return null;
 
     try {
-      console.log('Tentative de création de profil:', userData, 'pour user:', user.id);
-      
-      const { data, error } = await (supabase as any)
-        .from('profiles')
-        .insert({
-          user_id: user.id,
-          username: userData.username,
-          role: userData.role || 'employee',
-        })
-        .select()
-        .single();
+      const desiredRole: 'admin' | 'employee' =
+        userData.username?.trim().toLowerCase() === 'admin'
+          ? 'admin'
+          : (userData.role || 'employee');
 
-      if (error) {
-        console.error('Erreur détaillée lors de la création du profil:', error);
-        toast({
-          title: "Erreur",
-          description: `Impossible de créer le profil utilisateur: ${error.message}`,
-          variant: "destructive",
-        });
-        return null;
+      // Vérifier si un profil existe déjà
+      const { data: existing, error: selErr } = await (supabase as any)
+        .from('profiles')
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (selErr) {
+        console.error('Erreur sélection profil:', selErr);
       }
 
-      console.log('Profil créé avec succès:', data);
-      setProfile(data as Profile);
-      return data;
+      if (!existing) {
+        // Insérer le profil
+        const { data, error } = await (supabase as any)
+          .from('profiles')
+          .insert({
+            user_id: user.id,
+            username: userData.username,
+            role: desiredRole,
+          })
+          .select()
+          .single();
+
+        if (error) {
+          console.error('Erreur création profil:', error);
+          toast({
+            title: "Erreur",
+            description: `Impossible de créer le profil utilisateur: ${error.message}`,
+            variant: "destructive",
+          });
+          return null;
+        }
+
+        setProfile(data as Profile);
+        return data;
+      } else {
+        // Mettre à jour le profil existant (incluant le rôle)
+        const { data, error } = await (supabase as any)
+          .from('profiles')
+          .update({ username: userData.username, role: desiredRole })
+          .eq('user_id', user.id)
+          .select()
+          .single();
+
+        if (error) {
+          console.error('Erreur mise à jour profil:', error);
+          toast({
+            title: "Erreur",
+            description: `Impossible de mettre à jour le profil utilisateur: ${error.message}`,
+            variant: "destructive",
+          });
+          return null;
+        }
+
+        setProfile(data as Profile);
+        return data;
+      }
     } catch (error) {
-      console.error('Erreur lors de la création du profil:', error);
+      console.error('Erreur lors de la gestion du profil:', error);
       toast({
         title: "Erreur",
         description: `Une erreur est survenue: ${error instanceof Error ? error.message : 'Erreur inconnue'}`,
