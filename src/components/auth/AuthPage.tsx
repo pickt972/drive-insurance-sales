@@ -46,7 +46,11 @@ export const AuthPage = () => {
       const users = (data?.users || []) as any[];
       const active = users
         .filter((u) => u.is_active !== false)
-        .map((u) => ({ username: u.username, role: u.role, is_active: u.is_active }));
+        .map((u) => {
+          const uname = String(u.username || '').trim();
+          const role = uname.toLowerCase() === 'admin' ? 'admin' : u.role;
+          return { username: uname, role, is_active: u.is_active };
+        });
       setUserOptions(active);
     } catch (e) {
       console.error('Erreur chargement utilisateurs (fallback direct):', e);

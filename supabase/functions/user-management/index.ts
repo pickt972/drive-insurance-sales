@@ -295,14 +295,17 @@ async function listUsers(supabaseAdmin: any) {
     const profilesToInsert = authUsers
       .filter((u: any) => !existingByUserId.has(u.id))
       .map((u: any) => {
-        const username =
+        const computedUsername =
           (u.user_metadata && (u.user_metadata.username || u.user_metadata.name)) ||
           (u.email ? u.email.split('@')[0] : `user_${u.id.slice(0, 8)}`);
         const role =
-          (u.user_metadata && (u.user_metadata.role === 'admin' ? 'admin' : 'employee')) || 'employee';
+          (u.user_metadata && u.user_metadata.role === 'admin') ||
+          (computedUsername && String(computedUsername).toLowerCase() === 'admin')
+            ? 'admin'
+            : 'employee';
         return {
           user_id: u.id,
-          username,
+          username: computedUsername,
           role,
         };
       });
@@ -310,12 +313,22 @@ async function listUsers(supabaseAdmin: any) {
     // 4) Construire la liste complète sans écrire en base (compatible schéma 'api')
     const fallbackProfiles = authUsers
       .filter((u: any) => !existingByUserId.has(u.id))
-      .map((u: any) => ({
-        user_id: u.id,
-        username: ((u.user_metadata && (u.user_metadata.username || u.user_metadata.name)) || (u.email ? u.email.split('@')[0] : `user_${u.id.slice(0, 8)}`)),
-        role: (u.user_metadata && u.user_metadata.role === 'admin') ? 'admin' : 'employee',
-        is_active: true,
-      }));
+      .map((u: any) => {
+        const computedUsername =
+          (u.user_metadata && (u.user_metadata.username || u.user_metadata.name)) ||
+          (u.email ? u.email.split('@')[0] : `user_${u.id.slice(0, 8)}`);
+        const computedRole =
+          (u.user_metadata && u.user_metadata.role === 'admin') ||
+          (computedUsername && String(computedUsername).toLowerCase() === 'admin')
+            ? 'admin'
+            : 'employee';
+        return {
+          user_id: u.id,
+          username: computedUsername,
+          role: computedRole,
+          is_active: true,
+        };
+      });
 
     const allProfiles = [...existingProfiles, ...fallbackProfiles]
       .sort((a: any, b: any) => (a.username || '').localeCompare(b.username || ''));
