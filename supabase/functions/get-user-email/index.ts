@@ -26,45 +26,38 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Client pour lire la table profiles (schema api)
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      { db: { schema: 'api' } }
-    );
-
-    // Client admin pour lire l'email dans auth.users
+    // Client admin (service role) pour accéder aux utilisateurs Auth directement
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Récupérer le user_id depuis profiles (recherche insensible à la casse)
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('user_id')
-      .ilike('username', username.toLowerCase().trim())
-      .maybeSingle();
+    // Rechercher l'utilisateur directement dans Auth par metadata.username ou prefixe d'email
+    const { data: list, error: listError } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 });
 
-    if (profileError || !profile) {
+    if (listError) {
+      return new Response(
+        JSON.stringify({ error: "Impossible de récupérer la liste des utilisateurs" }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const uname = username.toLowerCase().trim();
+    const found = (list?.users || []).find((u: any) => {
+      const metaName = (u.user_metadata?.username || u.user_metadata?.name || '').toLowerCase().trim();
+      const emailPrefix = (u.email || '').split('@')[0].toLowerCase();
+      return metaName === uname || emailPrefix === uname;
+    });
+
+    if (!found?.email) {
       return new Response(
         JSON.stringify({ error: 'Utilisateur introuvable' }),
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Récupérer l'email via admin.getUserById
-    const { data: userData, error: userError } = await supabaseAdmin.auth.admin.getUserById(profile.user_id);
-
-    if (userError || !userData.user?.email) {
-      return new Response(
-        JSON.stringify({ error: "Impossible de récupérer l'email utilisateur" }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
     return new Response(
-      JSON.stringify({ email: userData.user.email }),
+      JSON.stringify({ email: found.email }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error: any) {
