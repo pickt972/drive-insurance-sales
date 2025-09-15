@@ -38,6 +38,9 @@ const handler = async (req: Request): Promise<Response> => {
       auth: {
         autoRefreshToken: false,
         persistSession: false
+      },
+      db: {
+        schema: 'api',
       }
     });
 
@@ -273,7 +276,49 @@ async function deleteUser(supabaseAdmin: any, { username }: DeleteUserRequest) {
 
 async function listUsers(supabaseAdmin: any) {
   try {
-    // Utiliser le schéma public (par défaut) au lieu du schéma api
+    // 1) Récupérer tous les utilisateurs Auth
+    const { data: authList, error: authError } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 });
+    if (authError) throw new Error(`Erreur récupération utilisateurs (auth): ${authError.message}`);
+
+    const authUsers = authList?.users || [];
+
+    // 2) Charger les profils existants (schéma "api")
+    const { data: existingProfiles, error: profilesError } = await supabaseAdmin
+      .from('profiles')
+      .select('*');
+
+    if (profilesError) throw new Error(`Erreur récupération profils: ${profilesError.message}`);
+
+    const existingByUserId = new Map(existingProfiles.map((p: any) => [p.user_id, p]));
+
+    // 3) Créer les profils manquants pour les utilisateurs Auth
+    const profilesToInsert = authUsers
+      .filter((u: any) => !existingByUserId.has(u.id))
+      .map((u: any) => {
+        const username =
+          (u.user_metadata && (u.user_metadata.username || u.user_metadata.name)) ||
+          (u.email ? u.email.split('@')[0] : `user_${u.id.slice(0, 8)}`);
+        const role =
+          (u.user_metadata && (u.user_metadata.role === 'admin' ? 'admin' : 'employee')) || 'employee';
+        return {
+          user_id: u.id,
+          username,
+          role,
+        };
+      });
+
+    if (profilesToInsert.length > 0) {
+      const { error: insertError } = await supabaseAdmin
+        .from('profiles')
+        .insert(profilesToInsert);
+
+      if (insertError) {
+        console.error('Erreur insertion profils manquants:', insertError);
+        // On n'échoue pas pour autant la requête
+      }
+    }
+
+    // 4) Retourner la liste complète des profils
     const { data: profiles, error } = await supabaseAdmin
       .from('profiles')
       .select('*')
@@ -290,7 +335,7 @@ async function listUsers(supabaseAdmin: any) {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error('Erreur listUsers:', error);
     return new Response(
       JSON.stringify({ error: error.message }),
