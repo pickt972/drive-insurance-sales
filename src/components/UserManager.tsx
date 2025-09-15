@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
-import { User, Users, Plus, Trash2, Key, Shield, Eye, EyeOff, Settings } from "lucide-react";
+import { User, Users, Plus, Trash2, Key, Shield, Eye, EyeOff, Settings, RefreshCw } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useNavigate } from "react-router-dom";
@@ -25,6 +25,11 @@ export const UserManager = () => {
   const [roleChangeUser, setRoleChangeUser] = useState("");
   const [newRoleChange, setNewRoleChange] = useState<"admin" | "employee">("employee");
   const { toast } = useToast();
+
+  // Charger les utilisateurs au montage du composant
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
 
   const handleAddUser = async () => {
     if (!newUsername || !newPassword) {
@@ -168,6 +173,15 @@ export const UserManager = () => {
           >
             <Shield className="h-4 w-4" />
             Réinitialisation Admin
+          </Button>
+          <Button
+            onClick={fetchUsers}
+            variant="outline"
+            className="flex items-center gap-2"
+            disabled={usersLoading}
+          >
+            <RefreshCw className={`h-4 w-4 ${usersLoading ? 'animate-spin' : ''}`} />
+            Actualiser
           </Button>
         </div>
 
