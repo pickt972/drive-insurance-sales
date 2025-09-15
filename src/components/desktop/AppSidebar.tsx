@@ -36,7 +36,7 @@ const adminItems = [
 
 export function AppSidebar({ currentTab, onTabChange, isAdmin }: AppSidebarProps) {
   const { state } = useSidebar();
-  const { signOut, profile, isAdmin: supabaseIsAdmin } = useSupabaseAuth();
+  const { signOut, profile, isAdmin: supabaseIsAdmin, user } = useSupabaseAuth();
   const collapsed = state === "collapsed";
   const [appName, setAppName] = useState(localStorage.getItem('app-name') || 'Aloe Location');
   const [logoUrl, setLogoUrl] = useState(localStorage.getItem('app-logo') || logoImage);
@@ -65,8 +65,9 @@ export function AppSidebar({ currentTab, onTabChange, isAdmin }: AppSidebarProps
     };
   }, []);
 
-  const effectiveIsAdmin = supabaseIsAdmin || isAdmin;
-  const displayUsername = profile?.username || 'Invité';
+const effectiveIsAdmin = supabaseIsAdmin || isAdmin;
+const uname = user?.user_metadata?.username || user?.user_metadata?.full_name || user?.email?.split('@')[0];
+const displayUsername = profile?.username || uname || 'Invité';
 
   const isActive = (itemId: string) => currentTab === itemId;
 

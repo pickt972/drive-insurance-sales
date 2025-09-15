@@ -5,8 +5,9 @@ import logoImage from "/lovable-uploads/eb56420e-3e12-4ccc-acb0-00c755b5ab58.png
 import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
 
 export const MobileHeader = () => {
-  const { signOut, profile, isAdmin } = useSupabaseAuth();
-  const displayUsername = profile?.username || 'Invité';
+  const { signOut, profile, isAdmin, user } = useSupabaseAuth();
+  const uname = user?.user_metadata?.username || user?.user_metadata?.full_name || user?.email?.split('@')[0];
+  const displayUsername = profile?.username || uname || 'Invité';
   const [appName, setAppName] = useState(localStorage.getItem('app-name') || 'Aloe Location');
   const [logoUrl, setLogoUrl] = useState(localStorage.getItem('app-logo') || logoImage);
 

@@ -50,20 +50,74 @@ export const useSupabaseAuth = () => {
 
   const fetchUserProfile = async (userId: string) => {
     try {
-      const { data, error } = await (supabase as any)
+      // 1) Tenter de récupérer par user_id
+      const { data: byId, error: byIdErr } = await (supabase as any)
         .from('profiles')
         .select('*')
         .eq('user_id', userId)
-        .single();
+        .maybeSingle();
 
-      if (error) {
-        console.error('Erreur lors de la récupération du profil:', error);
+      if (byId && !byIdErr) {
+        setProfile(byId as Profile);
         return;
       }
 
-      setProfile(data as Profile);
+      // 2) Si non trouvé, tenter de lier un profil existant (par username) à cet user_id
+      const unameFromUser = user?.user_metadata?.username || user?.user_metadata?.full_name || user?.email?.split('@')[0] || undefined;
+      const desiredRole: 'admin' | 'employee' =
+        (unameFromUser && unameFromUser.toLowerCase() === 'admin') || (user?.user_metadata as any)?.role === 'admin'
+          ? 'admin'
+          : 'employee';
+
+      if (unameFromUser) {
+        try {
+          await (supabase as any).rpc('link_profile_to_user', {
+            p_username: unameFromUser,
+            p_user_id: userId,
+          });
+        } catch (rpcErr) {
+          console.warn('link_profile_to_user RPC error (non bloquant):', rpcErr);
+        }
+
+        // Rechercher à nouveau
+        const { data: linked, error: linkedErr } = await (supabase as any)
+          .from('profiles')
+          .select('*')
+          .eq('user_id', userId)
+          .maybeSingle();
+
+        if (linked && !linkedErr) {
+          // S’assurer du bon rôle pour l’admin
+          if (linked.role !== desiredRole) {
+            const { data: updated } = await (supabase as any)
+              .from('profiles')
+              .update({ role: desiredRole })
+              .eq('user_id', userId)
+              .select()
+              .maybeSingle();
+            setProfile((updated || linked) as Profile);
+            return;
+          }
+          setProfile(linked as Profile);
+          return;
+        }
+      }
+
+      // 3) Toujours rien ? Créer le profil
+      if (unameFromUser) {
+        const { data: created, error: createErr } = await (supabase as any)
+          .from('profiles')
+          .insert({ user_id: userId, username: unameFromUser, role: desiredRole })
+          .select()
+          .maybeSingle();
+        if (createErr) {
+          console.error('Erreur création profil:', createErr);
+          return;
+        }
+        setProfile(created as Profile);
+      }
     } catch (error) {
-      console.error('Erreur lors de la récupération du profil:', error);
+      console.error('Erreur lors de la récupération/liaison du profil:', error);
     }
   };
 
