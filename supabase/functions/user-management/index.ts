@@ -40,7 +40,7 @@ const handler = async (req: Request): Promise<Response> => {
         persistSession: false
       },
   db: {
-    schema: 'public',
+    schema: 'api',
   }
     });
 
@@ -307,29 +307,21 @@ async function listUsers(supabaseAdmin: any) {
         };
       });
 
-    if (profilesToInsert.length > 0) {
-      const { error: insertError } = await supabaseAdmin
-        .from('profiles')
-        .insert(profilesToInsert);
+    // 4) Construire la liste complète sans écrire en base (compatible schéma 'api')
+    const fallbackProfiles = authUsers
+      .filter((u: any) => !existingByUserId.has(u.id))
+      .map((u: any) => ({
+        user_id: u.id,
+        username: ((u.user_metadata && (u.user_metadata.username || u.user_metadata.name)) || (u.email ? u.email.split('@')[0] : `user_${u.id.slice(0, 8)}`)),
+        role: (u.user_metadata && u.user_metadata.role === 'admin') ? 'admin' : 'employee',
+        is_active: true,
+      }));
 
-      if (insertError) {
-        console.error('Erreur insertion profils manquants:', insertError);
-        // On n'échoue pas pour autant la requête
-      }
-    }
-
-    // 4) Retourner la liste complète des profils
-    const { data: profiles, error } = await supabaseAdmin
-      .from('profiles')
-      .select('*')
-      .order('created_at', { ascending: true });
-
-    if (error) {
-      throw new Error(`Erreur récupération utilisateurs: ${error.message}`);
-    }
+    const allProfiles = [...existingProfiles, ...fallbackProfiles]
+      .sort((a: any, b: any) => (a.username || '').localeCompare(b.username || ''));
 
     return new Response(
-      JSON.stringify({ users: profiles }),
+      JSON.stringify({ users: allProfiles }),
       { 
         status: 200,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
