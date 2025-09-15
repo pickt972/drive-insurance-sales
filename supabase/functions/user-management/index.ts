@@ -39,9 +39,9 @@ const handler = async (req: Request): Promise<Response> => {
         autoRefreshToken: false,
         persistSession: false
       },
-      db: {
-        schema: 'public',
-      }
+  db: {
+    schema: 'api',
+  }
     });
 
     const { action, ...body } = await req.json();
