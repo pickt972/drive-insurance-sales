@@ -38,9 +38,6 @@ const handler = async (req: Request): Promise<Response> => {
       auth: {
         autoRefreshToken: false,
         persistSession: false
-      },
-      db: {
-        schema: 'public'
       }
     });
 
