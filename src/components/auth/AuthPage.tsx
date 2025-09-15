@@ -32,7 +32,9 @@ export const AuthPage = () => {
     user, 
     session, 
     loading: authLoading, 
-    signInWithUsername
+    signInWithUsername,
+    createUserProfile,
+    fetchUserProfile
   } = useSupabaseAuth();
 
   const loadUsers = async () => {
@@ -122,6 +124,12 @@ export const AuthPage = () => {
         setError(result.error || "Erreur de connexion");
         return;
       }
+
+      // Assurer la création du profil après connexion (première fois)
+      setTimeout(async () => {
+        const desiredRole = username.trim().toLowerCase() === 'admin' ? 'admin' : 'employee';
+        await createUserProfile({ username, role: desiredRole });
+      }, 0);
 
       // Redirection gérée par useEffect
     } catch (error: any) {
