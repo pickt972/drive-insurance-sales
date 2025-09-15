@@ -524,7 +524,7 @@ export const useSupabaseAuth = () => {
     profile,
     loading,
     isAuthenticated: !!user,
-    isAdmin: profile?.role === 'admin',
+    isAdmin: (profile?.role === 'admin') || (user?.user_metadata?.username?.toLowerCase?.() === 'admin') || (user?.email?.split('@')[0]?.toLowerCase?.() === 'admin') || ((user?.user_metadata as any)?.role === 'admin'),
     signInWithUsername,
     signOut,
     createUserProfile,
