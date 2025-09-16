@@ -9,37 +9,54 @@ export const useSupabaseCommissions = () => {
   const { toast } = useToast();
 
   const fetchInsuranceTypes = async () => {
+    const MAX_RETRIES = 3;
+    let attempt = 0;
+    setLoading(true);
     try {
-      setLoading(true);
-      const { data, error } = await (supabase as any)
-        .from('insurance_types')
-        .select('*')
-        .eq('is_active', true)
-        .order('name');
-
-      if (error) {
-        console.error('Erreur récupération types assurance:', error);
-        toast({
-          title: "Erreur",
-          description: "Impossible de récupérer les types d'assurance",
-          variant: "destructive",
-        });
-        return;
+      // S'assurer que la session est prête (évite des erreurs RLS au chargement)
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        await new Promise((r) => setTimeout(r, 300));
       }
 
-      setInsuranceTypes(data || []);
+      while (attempt < MAX_RETRIES) {
+        const { data, error } = await (supabase as any)
+          .from('insurance_types')
+          .select('id,name,commission,is_active')
+          .eq('is_active', true)
+          .order('name', { ascending: true });
+
+        if (!error) {
+          setInsuranceTypes(data || []);
+          return;
+        }
+
+        console.error(`Erreur récupération types assurance (tentative ${attempt + 1}):`, error);
+        attempt += 1;
+
+        if (attempt >= MAX_RETRIES) {
+          toast({
+            title: "Erreur",
+            description: `Impossible de récupérer les types d'assurance: ${error.message}`,
+            variant: "destructive",
+          });
+          return;
+        }
+
+        // Petite pause avant de réessayer (exponentiel léger)
+        await new Promise((r) => setTimeout(r, 500 * attempt));
+      }
     } catch (error: any) {
       console.error('Erreur fetchInsuranceTypes:', error);
       toast({
         title: "Erreur",
-        description: error.message,
+        description: error?.message || 'Une erreur est survenue',
         variant: "destructive",
       });
     } finally {
       setLoading(false);
     }
   };
-
   const updateCommission = async (insuranceId: string, newCommission: number) => {
     try {
       const { error } = await (supabase as any)
