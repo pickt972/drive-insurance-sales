@@ -82,7 +82,7 @@ serve(async (req) => {
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
-      { db: { schema: 'api' } }
+      { db: { schema: 'public' } }
     );
 
     console.log('Querying sales with date range:', startDate, 'to', endDate);

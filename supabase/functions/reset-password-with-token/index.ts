@@ -34,7 +34,7 @@ const handler = async (req: Request): Promise<Response> => {
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
       {
         db: { 
-          schema: 'api' 
+          schema: 'public' 
         }
       }
     );
