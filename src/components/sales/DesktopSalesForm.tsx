@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,9 +9,9 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, Check, FileText, DollarSign, X, Shield } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
+import { useSupabaseCommissions } from "@/hooks/useSupabaseCommissions";
 import { useToast } from "@/hooks/use-toast";
 import { SuccessPopup } from "@/components/ui/success-popup";
-import { InsuranceType } from "@/types/database";
 
 const ENCOURAGEMENTS = [
   "Vente d'assurance enregistrée avec succès !",
@@ -30,61 +30,18 @@ interface DesktopSalesFormProps {
   onSaleAdded?: () => void;
 }
 
-// Composant d'animation de confettis
-
 export const DesktopSalesForm = ({ onSaleAdded }: DesktopSalesFormProps) => {
   const [clientName, setClientName] = useState("");
   const [reservationNumber, setReservationNumber] = useState("");
   const [selectedInsuranceIds, setSelectedInsuranceIds] = useState<string[]>([]);
   const [notes, setNotes] = useState("");
   const [loading, setLoading] = useState(false);
-  const [insuranceTypes, setInsuranceTypes] = useState<InsuranceType[]>([]);
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
   
   const { profile } = useSupabaseAuth();
+  const { insuranceTypes } = useSupabaseCommissions();
   const { toast } = useToast();
-
-  useEffect(() => {
-    fetchInsuranceTypes();
-  }, []);
-
-  // Fonction pour rafraîchir les types d'assurance
-  const refreshInsuranceTypes = () => {
-    fetchInsuranceTypes();
-  };
-
-  const fetchInsuranceTypes = async () => {
-    try {
-      console.log('🔍 Récupération des types d\'assurance...');
-      
-      const { data, error } = await (supabase as any)
-        .from('insurance_types')
-        .select('*')
-        .eq('is_active', true)
-        .order('name');
-
-      if (error) {
-        console.error('❌ Erreur lors de la récupération des types d\'assurance:', error);
-        toast({
-          title: "Erreur",
-          description: "Impossible de charger les types d'assurance",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      console.log('✅ Types d\'assurance récupérés:', data?.length || 0, 'éléments');
-      setInsuranceTypes((data as InsuranceType[]) || []);
-    } catch (error) {
-      console.error('❌ Erreur:', error);
-      toast({
-        title: "Erreur",
-        description: "Une erreur est survenue lors du chargement",
-        variant: "destructive",
-      });
-    }
-  };
 
   const selectedInsurances = insuranceTypes.filter(ins => selectedInsuranceIds.includes(ins.id));
 
