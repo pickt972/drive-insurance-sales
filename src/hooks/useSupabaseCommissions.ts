@@ -21,10 +21,11 @@ export const useSupabaseCommissions = () => {
 
       while (attempt < MAX_RETRIES) {
         const { data, error } = await (supabase as any)
-          .from('insurance_types')
-          .select('id,name,commission,is_active')
-          .eq('is_active', true)
-          .order('name', { ascending: true });
+        .schema('public')
+        .from('insurance_types')
+        .select('id,name,commission,is_active')
+        .eq('is_active', true)
+        .order('name', { ascending: true });
 
         if (!error) {
           setInsuranceTypes(data || []);

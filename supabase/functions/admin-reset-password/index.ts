@@ -44,7 +44,6 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Get user profile to find the user_id
     const { data: profile, error: profileError } = await supabaseAdmin
-      .schema('api')
       .from('profiles')
       .select('user_id')
       .eq('username', username)
