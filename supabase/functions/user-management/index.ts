@@ -91,8 +91,9 @@ async function createUser(supabaseAdmin: any, { username, email, password, role 
       throw new Error(`Erreur création auth: ${authError.message}`);
     }
 
-    // Créer le profil dans la table profiles (schéma public)
+    // Créer le profil dans la table profiles (schéma api)
     const { data: profileData, error: profileError } = await supabaseAdmin
+      .schema('api')
       .from('profiles')
       .insert({
         user_id: userData.user.id,
@@ -133,8 +134,9 @@ async function createUser(supabaseAdmin: any, { username, email, password, role 
 
 async function updateUser(supabaseAdmin: any, { username, newPassword, newRole, userEmail }: UpdateUserRequest) {
   try {
-    // Récupérer le profil utilisateur (schéma public)
+    // Récupérer le profil utilisateur (schéma api)
     const { data: profile, error: profileError } = await supabaseAdmin
+      .schema('api')
       .from('profiles')
       .select('user_id')
       .eq('username', username)
@@ -186,9 +188,10 @@ async function updateUser(supabaseAdmin: any, { username, newPassword, newRole, 
       }
     }
 
-    // Mettre à jour le rôle si fourni (schéma public)
+    // Mettre à jour le rôle si fourni (schéma api)
     if (newRole) {
       const { error: roleError } = await supabaseAdmin
+        .schema('api')
         .from('profiles')
         .update({ role: newRole })
         .eq('username', username);
@@ -221,6 +224,7 @@ async function deleteUser(supabaseAdmin: any, { username }: DeleteUserRequest) {
   try {
     // Vérifier d'abord qu'il ne s'agit pas du dernier administrateur
     const { data: adminCount, error: countError } = await supabaseAdmin
+      .schema('api')
       .from('profiles')
       .select('*', { count: 'exact' })
       .eq('role', 'admin');
@@ -229,8 +233,9 @@ async function deleteUser(supabaseAdmin: any, { username }: DeleteUserRequest) {
       throw new Error(`Erreur vérification admins: ${countError.message}`);
     }
 
-    // Récupérer le profil utilisateur (schéma public)
+    // Récupérer le profil utilisateur (schéma api)
     const { data: profile, error: profileError } = await supabaseAdmin
+      .schema('api')
       .from('profiles')
       .select('user_id, role')
       .eq('username', username)
@@ -281,6 +286,7 @@ async function listUsers(supabaseAdmin: any) {
 
     // 2) Charger les profils existants (schéma "api")
     const { data: existingProfiles, error: profilesError } = await supabaseAdmin
+      .schema('api')
       .from('profiles')
       .select('*');
 
