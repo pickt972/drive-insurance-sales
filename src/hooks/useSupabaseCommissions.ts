@@ -45,7 +45,7 @@ export const useSupabaseCommissions = () => {
         
         const { data, error } = await supabase
           .from('insurance_types')
-          .select('id,name,commission,is_active,created_at,updated_at')
+          .select('*')
           .eq('is_active', true)
           .order('name', { ascending: true });
 
