@@ -11,7 +11,6 @@ import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
-
 export const AuthPage = () => {
   const [appName, setAppName] = useState(localStorage.getItem('app-name') || 'Aloe Location');
   const [logoUrl, setLogoUrl] = useState(localStorage.getItem('app-logo') || '/lovable-uploads/eb56420e-3e12-4ccc-acb0-00c755b5ab58.png');
@@ -22,56 +21,24 @@ export const AuthPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [sendingReset, setSendingReset] = useState(false);
   const [initializingUsers, setInitializingUsers] = useState(false);
-  
-  // Liste locale d'utilisateurs pour le sélecteur
-  const [userOptions, setUserOptions] = useState<{ username: string; role: string; is_active: boolean }[]>([]);
-  
+
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { 
-    user, 
-    session, 
-    loading: authLoading, 
+  const {
+    user,
+    session,
+    loading: authLoading,
     signInWithUsername,
     createUserProfile,
-    fetchUserProfile
+    fetchUserProfile,
+    users,
+    usersLoading,
   } = useSupabaseAuth();
 
-  const loadUsers = async () => {
-    try {
-      const { data, error } = await supabase.functions.invoke('user-management', {
-        body: { action: 'list' },
-      });
-      if (error) throw error;
-      const users = (data?.users || []) as any[];
-      const active = users
-        .filter((u) => u.is_active !== false)
-        .map((u) => {
-          const uname = String(u.username || '').trim();
-          const role = uname.toLowerCase() === 'admin' ? 'admin' : u.role;
-          return { username: uname, role, is_active: u.is_active };
-        });
-      setUserOptions(active);
-    } catch (e) {
-      console.error('Erreur chargement utilisateurs (fallback direct):', e);
-      try {
-        const { data, error } = await (supabase as any)
-          .from('profiles')
-          .select('username, role, is_active')
-          .eq('is_active', true)
-          .order('username', { ascending: true });
-        if (error) throw error;
-        setUserOptions((data || []) as any);
-      } catch (inner) {
-        console.error('Erreur chargement utilisateurs:', inner);
-        setUserOptions([]);
-      }
-    }
-  };
-
-  useEffect(() => {
-    loadUsers();
-  }, []);
+  // Dériver les options utilisateur depuis le hook (avec fallback interne en cas d'erreur Supabase)
+  const userOptions = (users || [])
+    .filter((u) => u?.is_active)
+    .map((u) => ({ username: u.username, role: u.role, is_active: u.is_active }));
 
   // Sync app name & logo with localStorage updates and same-tab edits
   useEffect(() => {
@@ -79,27 +46,19 @@ export const AuthPage = () => {
       setAppName(localStorage.getItem('app-name') || 'Aloe Location');
       setLogoUrl(localStorage.getItem('app-logo') || '/lovable-uploads/eb56420e-3e12-4ccc-acb0-00c755b5ab58.png');
     };
-
-    // Initial refresh (in case values changed before mount)
     refresh();
-
     const onStorage = (e: StorageEvent) => {
       if (!e.key || e.key === 'app-name' || e.key === 'app-logo') {
         refresh();
       }
     };
-
     const onCustomUpdate = () => refresh();
     const onFocus = () => refresh();
-    const onVisibility = () => {
-      if (!document.hidden) refresh();
-    };
-
+    const onVisibility = () => { if (!document.hidden) refresh(); };
     window.addEventListener('storage', onStorage);
     window.addEventListener('app-settings-updated', onCustomUpdate as EventListener);
     window.addEventListener('focus', onFocus);
     document.addEventListener('visibilitychange', onVisibility);
-
     return () => {
       window.removeEventListener('storage', onStorage);
       window.removeEventListener('app-settings-updated', onCustomUpdate as EventListener);
@@ -109,33 +68,25 @@ export const AuthPage = () => {
   }, []);
 
   useEffect(() => {
-    // Rediriger si déjà authentifié
     if (!authLoading && user) {
       navigate("/");
     }
   }, [user, authLoading, navigate]);
 
-
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError("");
-
     try {
       const result = await signInWithUsername(username, password);
-
       if (!result.success) {
         setError(result.error || "Erreur de connexion");
         return;
       }
-
-      // Assurer la création du profil après connexion (première fois)
       setTimeout(async () => {
         const desiredRole = username.trim().toLowerCase() === 'admin' ? 'admin' : 'employee';
         await createUserProfile({ username, role: desiredRole });
       }, 0);
-
-      // Redirection gérée par useEffect
     } catch (error: any) {
       setError(error.message);
     } finally {
@@ -152,19 +103,12 @@ export const AuthPage = () => {
       });
       return;
     }
-
-    // Utiliser directement le nom d'utilisateur
     try {
       setSendingReset(true);
       const { error } = await supabase.functions.invoke('password-reset-request', {
-        body: {
-          username: username,
-          origin: window.location.origin,
-        },
+        body: { username, origin: window.location.origin },
       });
-      
       if (error) throw error;
-      
       toast({
         title: "Demande envoyée",
         description: "L'administrateur a été notifié par email de votre demande de réinitialisation.",
@@ -185,12 +129,7 @@ export const AuthPage = () => {
       setInitializingUsers(true);
       const { data, error } = await supabase.functions.invoke('create-default-users', { body: {} });
       if (error) throw error;
-      toast({
-        title: "Utilisateurs par défaut",
-        description: data?.message || "Initialisation terminée.",
-      });
-      // Recharger la liste
-      await loadUsers?.();
+      toast({ title: "Utilisateurs par défaut", description: data?.message || "Initialisation terminée." });
     } catch (err: any) {
       toast({
         title: "Échec de l'initialisation",
@@ -202,7 +141,6 @@ export const AuthPage = () => {
     }
   };
 
-  // Afficher un loader pendant l'initialisation de l'auth
   if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 to-secondary/10">
@@ -225,16 +163,12 @@ export const AuthPage = () => {
               className="w-full h-full object-contain"
               loading="lazy"
               decoding="async"
-              onError={(e) => {
-                (e.target as HTMLImageElement).src = '/placeholder.svg';
-              }}
+              onError={(e) => { (e.target as HTMLImageElement).src = '/placeholder.svg'; }}
             />
           </div>
-          <CardTitle className="text-2xl font-bold text-primary">
-            {appName}
-          </CardTitle>
+          <CardTitle className="text-2xl font-bold text-primary">{appName}</CardTitle>
         </CardHeader>
-        
+
         <CardContent>
           <form onSubmit={handleSignIn} className="space-y-4">
             <div className="space-y-2">
@@ -259,53 +193,53 @@ export const AuthPage = () => {
                 </SelectContent>
               </Select>
             </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="signin-password" className="flex items-center gap-2">
-                    <Lock className="h-4 w-4" />
-                    Mot de passe
-                  </Label>
-                  <div className="relative">
-                    <Input
-                      id="signin-password"
-                      type={showPassword ? "text" : "password"}
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder="••••••••"
-                      className="pr-10"
-                      required
-                    />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                      onClick={() => setShowPassword(!showPassword)}
-                    >
-                      {showPassword ? (
-                        <EyeOff className="h-4 w-4 text-muted-foreground" />
-                      ) : (
-                        <Eye className="h-4 w-4 text-muted-foreground" />
-                      )}
-                    </Button>
-                  </div>
-                </div>
 
-                {error && (
-                  <Alert variant="destructive">
-                    <AlertDescription>{error}</AlertDescription>
-                  </Alert>
-                )}
-
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Connexion...
-                    </>
+            <div className="space-y-2">
+              <Label htmlFor="signin-password" className="flex items-center gap-2">
+                <Lock className="h-4 w-4" />
+                Mot de passe
+              </Label>
+              <div className="relative">
+                <Input
+                  id="signin-password"
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="pr-10"
+                  required
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4 text-muted-foreground" />
                   ) : (
-                    "Se connecter"
+                    <Eye className="h-4 w-4 text-muted-foreground" />
                   )}
+                </Button>
+              </div>
+            </div>
+
+            {error && (
+              <Alert variant="destructive">
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
+
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Connexion...
+                </>
+              ) : (
+                "Se connecter"
+              )}
             </Button>
           </form>
 
@@ -322,12 +256,9 @@ export const AuthPage = () => {
             </Button>
           </div>
 
-
           {userOptions.length === 0 && (
             <div className="mt-2 text-center">
-              <p className="text-sm text-muted-foreground mb-2">
-                Aucun utilisateur disponible.
-              </p>
+              <p className="text-sm text-muted-foreground mb-2">Aucun utilisateur disponible.</p>
               <Button
                 type="button"
                 variant="secondary"
