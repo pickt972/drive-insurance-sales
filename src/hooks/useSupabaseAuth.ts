@@ -131,6 +131,9 @@ export const useSupabaseAuth = () => {
       }
     } catch (error) {
       console.error('Erreur lors de la récupération/liaison du profil:', error);
+    } finally {
+      // Ne jamais bloquer l'UI sur la récupération du profil
+      setLoading(false);
     }
   };
 
