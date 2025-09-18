@@ -19,7 +19,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 export const ObjectiveManager = () => {
   const { objectivesProgress, loading, createObjective, updateObjective, deleteObjective } = useObjectives();
-  const { profile } = useSupabaseAuth();
+  const { profile, users } = useSupabaseAuth();
   const { archiveObjective } = useObjectiveHistory();
   const { toast } = useToast();
   
@@ -37,29 +37,11 @@ export const ObjectiveManager = () => {
     use_custom_dates: false, // Nouveau: pour activer/désactiver les dates personnalisées
   });
 
-  const [employees, setEmployees] = useState<string[]>([]);
-
-  useEffect(() => {
-    const loadEmployees = async () => {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('username, role, is_active')
-        .eq('is_active', true)
-        .eq('role', 'employee')
-        .order('username', { ascending: true });
-
-      if (error) {
-        console.error('Erreur chargement employés:', error);
-        return;
-      }
-
-      setEmployees((data || [])
-        .map((p: any) => p.username)
-        .filter((username: string) => username && username.trim() !== ''));
-    };
-
-    loadEmployees();
-  }, []);
+  // Utiliser les utilisateurs du hook useSupabaseAuth qui a déjà un fallback
+  const employees = users
+    .filter(user => user.role === 'employee' && user.is_active)
+    .map(user => user.username)
+    .filter(username => username && username.trim() !== '');
   const isAdmin = profile?.role === 'admin';
 
   // Fonction pour calculer les dates automatiquement
