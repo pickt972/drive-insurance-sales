@@ -14,9 +14,35 @@ export const useSupabaseAuth = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    let initialSessionChecked = false;
+
+    // Vérifier une session existante en premier
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      if (error) {
+        console.error('Erreur lors de la récupération de la session:', error);
+      }
+      
+      console.log('Session initiale récupérée:', session ? 'présente' : 'absente');
+      setSession(session);
+      setUser(session?.user ?? null);
+      
+      if (session?.user) {
+        fetchUserProfile(session.user.id);
+      } else {
+        setLoading(false);
+      }
+      
+      initialSessionChecked = true;
+    });
+
     // Écouter les changements d'état d'authentification
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        console.log('Auth state change:', event, session ? 'session présente' : 'session absente');
+        
+        // Ne pas traiter les événements si on n'a pas encore vérifié la session initiale
+        if (!initialSessionChecked) return;
+        
         setSession(session);
         setUser(session?.user ?? null);
         
@@ -27,23 +53,10 @@ export const useSupabaseAuth = () => {
           }, 0);
         } else {
           setProfile(null);
+          setLoading(false);
         }
-        
-        setLoading(false);
       }
     );
-
-    // Vérifier une session existante
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        fetchUserProfile(session.user.id);
-      } else {
-        setLoading(false);
-      }
-    });
 
     return () => subscription.unsubscribe();
   }, []);

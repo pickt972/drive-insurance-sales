@@ -54,6 +54,7 @@ const ResponsiveApp = () => {
   // Not authenticated - redirect to auth page
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
+      console.log('Redirection vers auth - utilisateur non authentifié');
       navigate('/auth');
     }
   }, [isAuthenticated, authLoading, navigate]);
@@ -70,7 +71,10 @@ const ResponsiveApp = () => {
     );
   }
   
-  if (!isAuthenticated) return null;
+  if (!isAuthenticated) {
+    console.log('Utilisateur non authentifié, affichage null');
+    return null;
+  }
 
   const handleSaleAdded = () => {
     refreshStats(); // Refresh data after adding a sale
