@@ -498,12 +498,18 @@ export const useSupabaseAuth = () => {
       const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
         .select('id, username, role, is_active, created_at, updated_at, user_id')
-        .eq('is_active', true)
         .order('created_at', { ascending: false });
       
       if (profilesError) {
         console.error('Erreur lors de la requête profiles:', profilesError);
         // Utiliser des utilisateurs par défaut si la base de données n'est pas disponible
+        setUsers([
+          { id: '1', username: 'admin', role: 'admin' as const, is_active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString(), user_id: null },
+          { id: '2', username: 'vendeur1', role: 'employee' as const, is_active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString(), user_id: null },
+          { id: '3', username: 'vendeur2', role: 'employee' as const, is_active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString(), user_id: null }
+        ]);
+      } else if (!profilesData || profilesData.length === 0) {
+        console.warn('Aucun utilisateur trouvé, utilisation des valeurs par défaut.');
         setUsers([
           { id: '1', username: 'admin', role: 'admin' as const, is_active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString(), user_id: null },
           { id: '2', username: 'vendeur1', role: 'employee' as const, is_active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString(), user_id: null },

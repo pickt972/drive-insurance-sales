@@ -181,7 +181,9 @@ export const AuthPage = () => {
                   <SelectValue placeholder="Sélectionner un compte" />
                 </SelectTrigger>
                 <SelectContent className="bg-background border shadow-lg z-50">
-                  {userOptions.length > 0 ? (
+                  {usersLoading ? (
+                    <SelectItem disabled value="__loading">Chargement…</SelectItem>
+                  ) : userOptions.length > 0 ? (
                     userOptions.map((u) => (
                       <SelectItem key={u.username} value={u.username}>
                         {u.username} ({u.role === 'admin' ? 'Admin' : 'Employé'})
