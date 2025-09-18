@@ -14,30 +14,49 @@ export const useSupabaseCommissions = () => {
     try {
       console.log('🔄 Récupération des types d\'assurance...');
       
-      const { data, error } = await supabase
+      // Approche plus directe avec gestion d'erreur améliorée
+      const response = await supabase
         .from('insurance_types')
-        .select('*')
+        .select('id, name, commission, is_active, created_at, updated_at')
         .eq('is_active', true)
         .order('name', { ascending: true });
 
+      const { data, error } = response;
+
       if (error) {
-        console.error('❌ Erreur récupération insurance_types:', error);
-        toast({
-          title: "Erreur",
-          description: `Impossible de récupérer les types d'assurance: ${error.message}`,
-          variant: "destructive",
-        });
+        console.error('❌ Erreur Supabase:', error);
+        
+        // Retry une fois avec un délai
+        console.log('🔄 Tentative de retry...');
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        const retryResponse = await supabase
+          .from('insurance_types')
+          .select('*')
+          .eq('is_active', true);
+          
+        if (retryResponse.error) {
+          toast({
+            title: "Erreur",
+            description: "Problème de connexion à la base de données. Veuillez rafraîchir la page.",
+            variant: "destructive",
+          });
+          return;
+        }
+        
+        setInsuranceTypes(retryResponse.data || []);
+        console.log('✅ Retry réussi:', retryResponse.data?.length || 0, 'éléments');
         return;
       }
 
-      console.log('✅ Insurance types récupérés:', data?.length || 0, 'éléments');
+      console.log('✅ Types d\'assurance récupérés:', data?.length || 0, 'éléments');
       setInsuranceTypes(data || []);
       
     } catch (error: any) {
       console.error('💥 Exception fetchInsuranceTypes:', error);
       toast({
-        title: "Erreur",
-        description: "Erreur de connexion à la base de données",
+        title: "Erreur de connexion",
+        description: "Impossible de se connecter à la base de données. Vérifiez votre connexion.",
         variant: "destructive",
       });
     } finally {
