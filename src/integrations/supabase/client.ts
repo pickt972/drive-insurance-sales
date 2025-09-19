@@ -16,6 +16,6 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
     detectSessionInUrl: true,
   },
   db: {
-    schema: 'api'
+    schema: 'public'
   }
 });
