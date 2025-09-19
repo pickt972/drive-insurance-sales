@@ -3,80 +3,79 @@ import { supabase } from '@/integrations/supabase/client';
 import { InsuranceType } from '@/types/database';
 import { useToast } from '@/hooks/use-toast';
 
-const CACHE_KEY = 'insurance_types_cache_v1';
-
 export const useSupabaseCommissions = () => {
   const [insuranceTypes, setInsuranceTypes] = useState<InsuranceType[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
   const fetchInsuranceTypes = async () => {
+    const MAX_RETRIES = 5;
+    let attempt = 0;
     setLoading(true);
+    
+    console.log('🔄 Début fetchInsuranceTypes, session check...');
+    
+    // Attendre que l'auth soit prête (plus longue attente)
+    let sessionReady = false;
+    for (let i = 0; i < 10; i++) {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        sessionReady = true;
+        console.log('✅ Session utilisateur détectée:', session.user.id);
+        break;
+      }
+      console.log(`⏳ Attente session (${i + 1}/10)...`);
+      await new Promise((r) => setTimeout(r, 300));
+    }
+
+    if (!sessionReady) {
+      console.log('❌ Aucune session trouvée après 3s');
+      setLoading(false);
+      toast({
+        title: "Erreur d'authentification",
+        description: "Veuillez vous reconnecter",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
-      console.log("🔄 Récupération des types d'assurance...");
-
-      // Multi-retry avec backoff pour contourner les erreurs PGRST002 (cache de schéma)
-      const delays = [0, 1000, 2000]; // 3 tentatives: immédiate, +1s, +2s
-      let lastError: any = null;
-
-      for (let i = 0; i < delays.length; i++) {
-        if (delays[i] > 0) {
-          console.log(`⏳ Retry dans ${delays[i]}ms (tentative ${i + 1}/${delays.length})`);
-          await new Promise((resolve) => setTimeout(resolve, delays[i]));
-        }
-
+      while (attempt < MAX_RETRIES) {
+        console.log(`🔍 Tentative ${attempt + 1}/${MAX_RETRIES} - récupération insurance_types`);
+        
         const { data, error } = await supabase
           .from('insurance_types')
-          .select('id, name, commission, is_active, created_at, updated_at')
+          .select('id,name,commission,is_active,created_at,updated_at')
           .eq('is_active', true)
           .order('name', { ascending: true });
 
-        if (!error) {
-          console.log(`✅ Types d'assurance récupérés: ${data?.length || 0} éléments${i > 0 ? ` (après retry ${i})` : ''}`);
+        if (!error && data) {
+          console.log('✅ Insurance types récupérés:', data.length, 'éléments');
           setInsuranceTypes(data || []);
-          try {
-            localStorage.setItem(CACHE_KEY, JSON.stringify({ data, ts: Date.now() }));
-          } catch (e) {
-            console.warn('⚠️ Impossible de mettre en cache les types d’assurance:', e);
-          }
           return;
         }
 
-        lastError = error;
-        console.warn('⚠️ Échec de récupération (tentative):', error);
-      }
+        console.error(`❌ Erreur tentative ${attempt + 1}:`, error);
+        attempt += 1;
 
-      console.error('❌ Erreur après plusieurs tentatives:', lastError);
-      // Tentative d'utiliser le cache local si disponible
-      try {
-        const cachedRaw = localStorage.getItem(CACHE_KEY);
-        if (cachedRaw) {
-          const cached = JSON.parse(cachedRaw);
-          if (Array.isArray(cached.data) && cached.data.length > 0) {
-            console.warn('📦 Utilisation des types d’assurance en cache');
-            setInsuranceTypes(cached.data);
-            toast({
-              title: 'Mode dégradé',
-              description: "Affichage des types d'assurance en cache (peuvent ne pas être à jour).",
-            });
-            return;
-          }
+        if (attempt >= MAX_RETRIES) {
+          toast({
+            title: "Erreur",
+            description: `Impossible de récupérer les types d'assurance: ${error?.message || 'Erreur inconnue'}`,
+            variant: "destructive",
+          });
+          return;
         }
-      } catch (e) {
-        console.warn('⚠️ Lecture du cache échouée:', e);
+
+        // Pause progressive entre les tentatives
+        await new Promise((r) => setTimeout(r, 1000 * attempt));
       }
-      toast({
-        title: 'Erreur',
-        description: "Problème de connexion à la base de données. Réessayez en appuyant sur Réessayer.",
-        variant: 'destructive',
-      });
-      setInsuranceTypes([]);
     } catch (error: any) {
       console.error('💥 Exception fetchInsuranceTypes:', error);
       toast({
-        title: 'Erreur de connexion',
-        description: 'Impossible de se connecter à la base de données. Vérifiez votre connexion.',
-        variant: 'destructive',
+        title: "Erreur",
+        description: error?.message || 'Une erreur est survenue',
+        variant: "destructive",
       });
     } finally {
       setLoading(false);
@@ -167,18 +166,6 @@ export const useSupabaseCommissions = () => {
   };
 
   useEffect(() => {
-    try {
-      const cachedRaw = localStorage.getItem(CACHE_KEY);
-      if (cachedRaw) {
-        const cached = JSON.parse(cachedRaw);
-        if (Array.isArray(cached.data) && cached.data.length > 0) {
-          setInsuranceTypes(cached.data);
-          setLoading(false);
-        }
-      }
-    } catch (e) {
-      console.warn('⚠️ Lecture du cache des types d’assurance échouée:', e);
-    }
     fetchInsuranceTypes();
   }, []);
 

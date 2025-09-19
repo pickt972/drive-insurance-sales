@@ -40,7 +40,7 @@ export const DesktopSalesForm = ({ onSaleAdded }: DesktopSalesFormProps) => {
   const [successMessage, setSuccessMessage] = useState("");
   
   const { profile } = useSupabaseAuth();
-  const { insuranceTypes, loading: loadingInsurance, refreshInsuranceTypes } = useSupabaseCommissions();
+  const { insuranceTypes } = useSupabaseCommissions();
   const { toast } = useToast();
 
   const selectedInsurances = insuranceTypes.filter(ins => selectedInsuranceIds.includes(ins.id));
@@ -284,14 +284,6 @@ export const DesktopSalesForm = ({ onSaleAdded }: DesktopSalesFormProps) => {
                      <Label className="text-sm font-medium">
                        Types d'assurance * (sélection multiple)
                      </Label>
-                     {insuranceTypes.length === 0 && (
-                       <div className="mt-2 p-3 rounded-md border bg-muted/30">
-                         <p className="text-sm">Impossible de charger les types d'assurance. {loadingInsurance ? 'Nouvelle tentative...' : 'Veuillez réessayer.'}</p>
-                         <Button type="button" variant="secondary" size="sm" onClick={refreshInsuranceTypes} disabled={loadingInsurance} className="mt-2">
-                           {loadingInsurance ? 'Chargement...' : 'Réessayer'}
-                         </Button>
-                       </div>
-                     )}
                      <Select 
                        onValueChange={(value) => {
                          if (!selectedInsuranceIds.includes(value)) {

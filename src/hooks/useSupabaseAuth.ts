@@ -14,35 +14,9 @@ export const useSupabaseAuth = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    let initialSessionChecked = false;
-
-    // Vérifier une session existante en premier
-    supabase.auth.getSession().then(({ data: { session }, error }) => {
-      if (error) {
-        console.error('Erreur lors de la récupération de la session:', error);
-      }
-      
-      console.log('Session initiale récupérée:', session ? 'présente' : 'absente');
-      setSession(session);
-      setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        fetchUserProfile(session.user.id);
-      } else {
-        setLoading(false);
-      }
-      
-      initialSessionChecked = true;
-    });
-
     // Écouter les changements d'état d'authentification
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('Auth state change:', event, session ? 'session présente' : 'session absente');
-        
-        // Ne pas traiter les événements si on n'a pas encore vérifié la session initiale
-        if (!initialSessionChecked) return;
-        
         setSession(session);
         setUser(session?.user ?? null);
         
@@ -53,10 +27,23 @@ export const useSupabaseAuth = () => {
           }, 0);
         } else {
           setProfile(null);
-          setLoading(false);
         }
+        
+        setLoading(false);
       }
     );
+
+    // Vérifier une session existante
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      
+      if (session?.user) {
+        fetchUserProfile(session.user.id);
+      } else {
+        setLoading(false);
+      }
+    });
 
     return () => subscription.unsubscribe();
   }, []);
@@ -131,9 +118,6 @@ export const useSupabaseAuth = () => {
       }
     } catch (error) {
       console.error('Erreur lors de la récupération/liaison du profil:', error);
-    } finally {
-      // Ne jamais bloquer l'UI sur la récupération du profil
-      setLoading(false);
     }
   };
 
@@ -506,51 +490,33 @@ export const useSupabaseAuth = () => {
   const [usersLoading, setUsersLoading] = useState(false);
 
   const fetchUsers = async () => {
-    setUsersLoading(true);
     try {
-      console.log('Chargement des utilisateurs depuis profiles...');
-      
-      // Essayer directement la table profiles avec une requête simple
-      const { data: profilesData, error: profilesError } = await supabase
-        .from('profiles')
-        .select('id, username, role, is_active, created_at, updated_at, user_id')
-        .order('created_at', { ascending: false });
-      
-      if (profilesError) {
-        console.error('Erreur lors de la requête profiles:', profilesError);
-        // Utiliser des utilisateurs par défaut si la base de données n'est pas disponible
-        setUsers([
-          { id: '1', username: 'admin', role: 'admin' as const, is_active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString(), user_id: null },
-          { id: '2', username: 'vendeur1', role: 'employee' as const, is_active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString(), user_id: null },
-          { id: '3', username: 'vendeur2', role: 'employee' as const, is_active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString(), user_id: null }
-        ]);
-      } else if (!profilesData || profilesData.length === 0) {
-        console.warn('Aucun utilisateur trouvé, utilisation des valeurs par défaut.');
-        setUsers([
-          { id: '1', username: 'admin', role: 'admin' as const, is_active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString(), user_id: null },
-          { id: '2', username: 'vendeur1', role: 'employee' as const, is_active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString(), user_id: null },
-          { id: '3', username: 'vendeur2', role: 'employee' as const, is_active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString(), user_id: null }
-        ]);
-      } else {
-        console.log('Utilisateurs chargés:', profilesData);
-        setUsers(profilesData || []);
-      }
+      setUsersLoading(true);
+      const { data, error } = await supabase.functions.invoke('user-management', {
+        body: { action: 'list' }
+      });
+
+      if (error) throw error;
+
+      setUsers(data.users || []);
     } catch (error: any) {
-      console.error('Erreur générale chargement utilisateurs:', error);
-      // Utiliser des utilisateurs par défaut en cas d'erreur
-      setUsers([
-        { id: '1', username: 'admin', role: 'admin' as const, is_active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString(), user_id: null },
-        { id: '2', username: 'vendeur1', role: 'employee' as const, is_active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString(), user_id: null },
-        { id: '3', username: 'vendeur2', role: 'employee' as const, is_active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString(), user_id: null }
-      ]);
+      console.error('Erreur récupération utilisateurs:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de récupérer la liste des utilisateurs",
+        variant: "destructive",
+      });
+    } finally {
+      setUsersLoading(false);
     }
-    setUsersLoading(false);
   };
 
-  // Charger les utilisateurs au démarrage - toujours charger pour le menu déroulant
+  // Charger les utilisateurs au démarrage
   useEffect(() => {
-    fetchUsers();
-  }, []);
+    if (user && profile?.role === 'admin') {
+      fetchUsers();
+    }
+  }, [user, profile?.role]);
 
   return {
     user,
