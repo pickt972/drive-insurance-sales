@@ -3,6 +3,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { InsuranceType } from '@/types/database';
 import { useToast } from '@/hooks/use-toast';
 
+const CACHE_KEY = 'insurance_types_cache_v1';
+
 export const useSupabaseCommissions = () => {
   const [insuranceTypes, setInsuranceTypes] = useState<InsuranceType[]>([]);
   const [loading, setLoading] = useState(true);
@@ -32,6 +34,11 @@ export const useSupabaseCommissions = () => {
         if (!error) {
           console.log(`✅ Types d'assurance récupérés: ${data?.length || 0} éléments${i > 0 ? ` (après retry ${i})` : ''}`);
           setInsuranceTypes(data || []);
+          try {
+            localStorage.setItem(CACHE_KEY, JSON.stringify({ data, ts: Date.now() }));
+          } catch (e) {
+            console.warn('⚠️ Impossible de mettre en cache les types d’assurance:', e);
+          }
           return;
         }
 
@@ -40,6 +47,24 @@ export const useSupabaseCommissions = () => {
       }
 
       console.error('❌ Erreur après plusieurs tentatives:', lastError);
+      // Tentative d'utiliser le cache local si disponible
+      try {
+        const cachedRaw = localStorage.getItem(CACHE_KEY);
+        if (cachedRaw) {
+          const cached = JSON.parse(cachedRaw);
+          if (Array.isArray(cached.data) && cached.data.length > 0) {
+            console.warn('📦 Utilisation des types d’assurance en cache');
+            setInsuranceTypes(cached.data);
+            toast({
+              title: 'Mode dégradé',
+              description: "Affichage des types d'assurance en cache (peuvent ne pas être à jour).",
+            });
+            return;
+          }
+        }
+      } catch (e) {
+        console.warn('⚠️ Lecture du cache échouée:', e);
+      }
       toast({
         title: 'Erreur',
         description: "Problème de connexion à la base de données. Réessayez en appuyant sur Réessayer.",
@@ -142,6 +167,18 @@ export const useSupabaseCommissions = () => {
   };
 
   useEffect(() => {
+    try {
+      const cachedRaw = localStorage.getItem(CACHE_KEY);
+      if (cachedRaw) {
+        const cached = JSON.parse(cachedRaw);
+        if (Array.isArray(cached.data) && cached.data.length > 0) {
+          setInsuranceTypes(cached.data);
+          setLoading(false);
+        }
+      }
+    } catch (e) {
+      console.warn('⚠️ Lecture du cache des types d’assurance échouée:', e);
+    }
     fetchInsuranceTypes();
   }, []);
 
