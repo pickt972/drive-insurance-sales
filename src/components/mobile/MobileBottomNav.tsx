@@ -7,7 +7,7 @@ import {
   Settings, 
   Target 
 } from 'lucide-react';
-import { TabType } from '@/pages/HomePage';
+import { TabType } from '@/types/tabs';
 import { cn } from '@/lib/utils';
 
 interface MobileBottomNavProps {

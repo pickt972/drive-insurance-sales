@@ -2,7 +2,7 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { LogOut, User } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { TabType } from '@/pages/HomePage';
+import { TabType } from '@/types/tabs';
 import { Badge } from '@/components/ui/badge';
 
 interface DesktopHeaderProps {
@@ -14,7 +14,10 @@ const tabTitles: Record<TabType, string> = {
   sales: 'Nouvelle vente',
   history: 'Historique des ventes',
   admin: 'Administration',
-  objectives: 'Gestion des objectifs'
+  objectives: 'Gestion des objectifs',
+  add: 'Nouvelle vente',
+  users: 'Gestion des utilisateurs',
+  export: 'Export des données'
 };
 
 export const DesktopHeader: React.FC<DesktopHeaderProps> = ({ currentTab }) => {

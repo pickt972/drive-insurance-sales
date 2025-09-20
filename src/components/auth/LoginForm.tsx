@@ -3,11 +3,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Eye, EyeOff, LogIn, RefreshCw, Key } from 'lucide-react';
+import { Eye, EyeOff, LogIn, RefreshCw, Key, UserPlus } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { CreateAdmin } from '@/components/admin/CreateAdmin';
 
 export const LoginForm: React.FC = () => {
   const [username, setUsername] = useState('');
@@ -18,6 +19,7 @@ export const LoginForm: React.FC = () => {
   const [loadingUsers, setLoadingUsers] = useState(true);
   const [forgotPasswordMode, setForgotPasswordMode] = useState(false);
   const [resetSuccess, setResetSuccess] = useState(false);
+  const [showCreateAdmin, setShowCreateAdmin] = useState(false);
 
   const { signIn } = useAuth();
 
@@ -256,6 +258,16 @@ export const LoginForm: React.FC = () => {
                 <Key className="h-4 w-4 mr-2" />
                 Mot de passe oublié ?
               </Button>
+
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full text-sm"
+                onClick={() => setShowCreateAdmin(!showCreateAdmin)}
+              >
+                <UserPlus className="h-4 w-4 mr-2" />
+                {showCreateAdmin ? 'Masquer' : 'Créer un administrateur'}
+              </Button>
             </>
           ) : (
             <>
@@ -293,6 +305,12 @@ export const LoginForm: React.FC = () => {
           )}
         </div>
       </form>
+
+      {showCreateAdmin && (
+        <div className="mt-6">
+          <CreateAdmin />
+        </div>
+      )}
     </div>
   );
 };

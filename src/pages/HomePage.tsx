@@ -10,7 +10,7 @@ import { AdminPanel } from '@/components/admin/AdminPanel';
 import { ObjectivesManager } from '@/components/objectives/ObjectivesManager';
 import { useSalesData } from '@/hooks/useSalesData';
 
-export type TabType = 'dashboard' | 'sales' | 'history' | 'admin' | 'objectives';
+import { TabType } from '@/types/tabs';
 
 const HomePage: React.FC = () => {
   const { profile, isAdmin } = useAuth();

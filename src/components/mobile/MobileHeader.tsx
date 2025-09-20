@@ -2,7 +2,7 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { LogOut, Car, Shield } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { TabType } from '@/pages/HomePage';
+import { TabType } from '@/types/tabs';
 
 interface MobileHeaderProps {
   currentTab: TabType;
@@ -13,7 +13,10 @@ const tabTitles: Record<TabType, string> = {
   sales: 'Nouvelle vente',
   history: 'Historique',
   admin: 'Administration',
-  objectives: 'Objectifs'
+  objectives: 'Objectifs',
+  add: 'Nouvelle vente',
+  users: 'Utilisateurs',
+  export: 'Export'
 };
 
 export const MobileHeader: React.FC<MobileHeaderProps> = ({ currentTab }) => {

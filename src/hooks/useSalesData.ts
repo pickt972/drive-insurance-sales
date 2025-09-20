@@ -58,7 +58,7 @@ export const useSalesData = () => {
         reservation_number: sale.reservation_number,
         commission_amount: sale.commission_amount,
         created_at: sale.created_at,
-        insurance_types: sale.sale_insurances?.map(si => si.insurance_types?.name || '').filter(Boolean) || []
+        insurance_types: sale.sale_insurances?.map((si: any) => si.insurance_types?.name).filter((name: string) => Boolean(name)) || []
       })) || [];
 
       setSales(transformedSales);

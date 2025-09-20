@@ -21,7 +21,7 @@ import {
   Car,
   Shield
 } from 'lucide-react';
-import { TabType } from '@/pages/HomePage';
+import { TabType } from '@/types/tabs';
 import { cn } from '@/lib/utils';
 
 interface DesktopSidebarProps {
@@ -55,7 +55,7 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
   const visibleItems = navItems.filter(item => !item.adminOnly || isAdmin);
 
   return (
-    <Sidebar className={collapsed ? "w-14" : "w-64"} collapsible>
+    <Sidebar className={collapsed ? "w-14" : "w-64"} collapsible="icon">
       <SidebarTrigger className="m-2 self-end" />
       
       <SidebarContent>

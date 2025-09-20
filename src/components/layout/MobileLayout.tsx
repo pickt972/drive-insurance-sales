@@ -1,7 +1,7 @@
 import React from 'react';
 import { MobileHeader } from '@/components/mobile/MobileHeader';
 import { MobileBottomNav } from '@/components/mobile/MobileBottomNav';
-import { TabType } from '@/pages/HomePage';
+import { TabType } from '@/types/tabs';
 
 interface MobileLayoutProps {
   children: React.ReactNode;

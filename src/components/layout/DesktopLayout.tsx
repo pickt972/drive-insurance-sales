@@ -2,7 +2,7 @@ import React from 'react';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { DesktopSidebar } from '@/components/desktop/DesktopSidebar';
 import { DesktopHeader } from '@/components/desktop/DesktopHeader';
-import { TabType } from '@/pages/HomePage';
+import { TabType } from '@/types/tabs';
 
 interface DesktopLayoutProps {
   children: React.ReactNode;

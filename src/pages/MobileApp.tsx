@@ -19,6 +19,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Download, FileText, Loader2 } from "lucide-react";
 import { Sale } from "@/types/sales";
 
+import { TabType } from '@/types/tabs';
+
 const useResponsive = () => {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   
@@ -32,7 +34,7 @@ const useResponsive = () => {
 };
 
 const ResponsiveApp = () => {
-  const [currentTab, setCurrentTab] = useState("dashboard");
+  const [currentTab, setCurrentTab] = useState<TabType>("dashboard");
   const [editingSale, setEditingSale] = useState<Sale | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const { user, isAuthenticated, isAdmin, profile, loading: authLoading } = useSupabaseAuth();
