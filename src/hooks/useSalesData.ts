@@ -1,89 +1,92 @@
-import { useState, useEffect } from "react";
-import { Sale, SalesStats, EMPLOYEES } from "@/types/sales";
-import { useCommissions } from "./useCommissions";
+import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+import { toast } from '@/hooks/use-toast';
+
+export interface Sale {
+  id: string;
+  employee_name: string;
+  client_name: string;
+  reservation_number: string;
+  commission_amount: number;
+  created_at: string;
+  insurance_types: string[];
+}
 
 export const useSalesData = () => {
   const [sales, setSales] = useState<Sale[]>([]);
-  const { calculateTotal } = useCommissions();
+  const [loading, setLoading] = useState(true);
+  const { profile, isAdmin } = useAuth();
 
-  // Load data from localStorage on mount
-  useEffect(() => {
-    const savedSales = localStorage.getItem("insurance-sales");
-    if (savedSales) {
-      setSales(JSON.parse(savedSales));
-    }
-  }, []);
+  const fetchSales = async () => {
+    try {
+      setLoading(true);
+      
+      let query = supabase
+        .from('sales')
+        .select(`
+          id,
+          employee_name,
+          client_name,
+          reservation_number,
+          commission_amount,
+          created_at,
+          sale_insurances (
+            insurance_type_id,
+            insurance_types (
+              name
+            )
+          )
+        `)
+        .eq('status', 'active')
+        .order('created_at', { ascending: false });
 
-  // Save to localStorage whenever sales change
-  useEffect(() => {
-    localStorage.setItem("insurance-sales", JSON.stringify(sales));
-  }, [sales]);
+      // If not admin, only show own sales
+      if (!isAdmin && profile?.username) {
+        query = query.eq('employee_name', profile.username);
+      }
 
-  const addSale = (sale: Omit<Sale, "id" | "timestamp" | "commissions">) => {
-    const commissions = calculateTotal(sale.insuranceTypes);
-    const newSale: Sale = {
-      ...sale,
-      id: crypto.randomUUID(),
-      timestamp: Date.now(),
-      commissions,
-    };
-    setSales(prev => [newSale, ...prev]);
-    return newSale;
-  };
+      const { data, error } = await query;
 
-  const deleteSale = (id: string) => {
-    setSales(prev => prev.filter(sale => sale.id !== id));
-  };
+      if (error) throw error;
 
-  const getStats = (): SalesStats => {
-    const totalSales = sales.length;
-    const totalCommissions = sales.reduce((sum, sale) => sum + sale.commissions, 0);
-    
-    const salesByEmployee = EMPLOYEES.reduce((acc, employee) => {
-      acc[employee] = sales.filter(sale => sale.employeeName === employee).length;
-      return acc;
-    }, {} as Record<string, number>);
+      // Transform data to include insurance types
+      const transformedSales = data?.map(sale => ({
+        id: sale.id,
+        employee_name: sale.employee_name,
+        client_name: sale.client_name,
+        reservation_number: sale.reservation_number,
+        commission_amount: sale.commission_amount,
+        created_at: sale.created_at,
+        insurance_types: sale.sale_insurances?.map(si => si.insurance_types?.name || '').filter(Boolean) || []
+      })) || [];
 
-    const commissionsByEmployee = EMPLOYEES.reduce((acc, employee) => {
-      acc[employee] = sales
-        .filter(sale => sale.employeeName === employee)
-        .reduce((sum, sale) => sum + sale.commissions, 0);
-      return acc;
-    }, {} as Record<string, number>);
-
-    // Get all unique insurance types from sales
-    const allInsuranceTypes = [...new Set(sales.flatMap(sale => sale.insuranceTypes))];
-    
-    const salesByInsurance = allInsuranceTypes.reduce((acc, insurance) => {
-      acc[insurance] = sales.filter(sale => 
-        sale.insuranceTypes.includes(insurance)
-      ).length;
-      return acc;
-    }, {} as Record<string, number>);
-
-    const salesByMonth = sales.reduce((acc, sale) => {
-      const month = new Date(sale.date).toLocaleDateString('fr-FR', { 
-        year: 'numeric', 
-        month: 'long' 
+      setSales(transformedSales);
+    } catch (error) {
+      console.error('Error fetching sales:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de charger les ventes",
+        variant: "destructive",
       });
-      acc[month] = (acc[month] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
-
-    return {
-      totalSales,
-      totalCommissions,
-      salesByEmployee,
-      salesByInsurance,
-      salesByMonth,
-      commissionsByEmployee,
-    };
+    } finally {
+      setLoading(false);
+    }
   };
+
+  const refreshSales = () => {
+    fetchSales();
+  };
+
+  useEffect(() => {
+    if (profile) {
+      fetchSales();
+    }
+  }, [profile, isAdmin]);
 
   return {
     sales,
-    addSale,
-    deleteSale,
-    getStats,
+    loading,
+    refreshSales
   };
 };

@@ -1,78 +1,50 @@
-import { useState, useEffect } from "react";
-import { Car, LogOut, User, Crown } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import logoImage from "/lovable-uploads/eb56420e-3e12-4ccc-acb0-00c755b5ab58.png";
-import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
+import React from 'react';
+import { Button } from '@/components/ui/button';
+import { LogOut, Car, Shield } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { TabType } from '@/pages/HomePage';
 
-export const MobileHeader = () => {
-  const { signOut, profile, isAdmin, user } = useSupabaseAuth();
-  const uname = user?.user_metadata?.username || user?.user_metadata?.full_name || user?.email?.split('@')[0];
-  const displayUsername = profile?.username || uname || 'Invité';
-  const [appName, setAppName] = useState(localStorage.getItem('app-name') || 'Aloe Location');
-  const [logoUrl, setLogoUrl] = useState(localStorage.getItem('app-logo') || logoImage);
+interface MobileHeaderProps {
+  currentTab: TabType;
+}
 
-  // Sync app name & logo with localStorage updates
-  useEffect(() => {
-    const refresh = () => {
-      setAppName(localStorage.getItem('app-name') || 'Aloe Location');
-      setLogoUrl(localStorage.getItem('app-logo') || logoImage);
-    };
+const tabTitles: Record<TabType, string> = {
+  dashboard: 'Tableau de bord',
+  sales: 'Nouvelle vente',
+  history: 'Historique',
+  admin: 'Administration',
+  objectives: 'Objectifs'
+};
 
-    const onStorage = (e: StorageEvent) => {
-      if (!e.key || e.key === 'app-name' || e.key === 'app-logo') {
-        refresh();
-      }
-    };
-
-    const onCustomUpdate = () => refresh();
-
-    window.addEventListener('storage', onStorage);
-    window.addEventListener('app-settings-updated', onCustomUpdate as EventListener);
-
-    return () => {
-      window.removeEventListener('storage', onStorage);
-      window.removeEventListener('app-settings-updated', onCustomUpdate as EventListener);
-    };
-  }, []);
+export const MobileHeader: React.FC<MobileHeaderProps> = ({ currentTab }) => {
+  const { signOut, profile } = useAuth();
 
   return (
-    <header className="mobile-header">
-      <div className="flex items-center justify-between p-4">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg overflow-hidden bg-white p-1 shadow-lg ring-1 ring-gray-200">
-            <img 
-              src={logoUrl} 
-              alt={`${appName} - logo`} 
-              className="w-full h-full object-contain"
-            />
+    <header className="mobile-header bg-primary text-primary-foreground p-4">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-1">
+            <Car className="h-6 w-6" />
+            <Shield className="h-6 w-6" />
           </div>
           <div>
-            <h1 className="font-bold text-lg text-primary">{appName}</h1>
-            <p className="text-xs text-muted-foreground">Ventes assurances</p>
+            <h1 className="font-bold text-lg">AloeLocation</h1>
+            <p className="text-xs text-primary-foreground/80">
+              {profile?.username} • {profile?.role}
+            </p>
           </div>
         </div>
-        
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-accent rounded-full">
-            {isAdmin ? (
-              <Crown className="h-3 w-3 text-primary" />
-            ) : (
-              <User className="h-3 w-3 text-primary" />
-            )}
-            <span className="text-xs font-medium text-primary">
-              {displayUsername}
-            </span>
-          </div>
-          
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={signOut}
-            className="h-8 w-8 p-0"
-          >
-            <LogOut className="h-4 w-4" />
-          </Button>
-        </div>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={signOut}
+          className="text-primary-foreground hover:bg-primary-foreground/20"
+        >
+          <LogOut className="h-5 w-5" />
+        </Button>
+      </div>
+      <div className="mt-3">
+        <h2 className="text-xl font-semibold">{tabTitles[currentTab]}</h2>
       </div>
     </header>
   );
