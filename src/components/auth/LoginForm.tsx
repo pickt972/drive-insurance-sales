@@ -28,12 +28,11 @@ export const LoginForm: React.FC = () => {
     try {
       setLoadingUsers(true);
       
-      // Fallback immédiat : liste connue des utilisateurs (basée sur la BDD vérifiée)
-      const knownUsers = ['admin', 'Alvin', 'Julie', 'Sherman'];
-      setUsernames(knownUsers);
-      setLoadingUsers(false);
+      // Toujours avoir au moins un admin disponible
+      const baseUsers = ['admin'];
+      setUsernames(baseUsers);
       
-      // Tentative en arrière-plan d'obtenir la liste à jour (sans bloquer l'UI)
+      // Essayer d'obtenir d'autres utilisateurs de la base de données en arrière-plan
       try {
         const { data, error } = await supabase
           .from('profiles')
@@ -43,18 +42,18 @@ export const LoginForm: React.FC = () => {
 
         if (!error && data && data.length > 0) {
           const fetchedUsernames = data.map(profile => profile.username);
-          // Mise à jour uniquement si différent
-          if (JSON.stringify(fetchedUsernames.sort()) !== JSON.stringify(knownUsers.sort())) {
-            setUsernames(fetchedUsernames);
-          }
+          // Combiner avec admin et éviter les doublons
+          const allUsers = [...new Set([...baseUsers, ...fetchedUsernames])];
+          setUsernames(allUsers);
         }
       } catch (backgroundError) {
-        console.log('Background fetch failed, keeping fallback usernames:', backgroundError);
+        console.log('Background fetch failed, using base admin user:', backgroundError);
       }
     } catch (error) {
       console.error('Error in fetchUsernames:', error);
-      // Garantir qu'on a toujours les utilisateurs de base
-      setUsernames(['admin', 'Alvin', 'Julie', 'Sherman']);
+      // En cas d'erreur, toujours garder au moins admin
+      setUsernames(['admin']);
+    } finally {
       setLoadingUsers(false);
     }
   };
@@ -225,6 +224,8 @@ export const LoginForm: React.FC = () => {
 
   useEffect(() => {
     fetchUsernames();
+    // Auto-sélectionner admin par défaut
+    setUsername('admin');
   }, []);
 
   return (
