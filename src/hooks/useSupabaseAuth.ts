@@ -62,6 +62,13 @@ export const useSupabaseAuth = () => {
         return;
       }
 
+      // Si erreur de schéma, on continue quand même sans profil
+      if (byIdErr && byIdErr.code === 'PGRST002') {
+        console.warn('Schema cache error, proceeding without profile:', byIdErr);
+        setProfile(null);
+        return;
+      }
+
       // 2) Si non trouvé, tenter de lier un profil existant (par username) à cet user_id
       const unameFromUser = user?.user_metadata?.username || user?.user_metadata?.full_name || user?.email?.split('@')[0] || undefined;
       const desiredRole: 'admin' | 'employee' =
@@ -118,6 +125,8 @@ export const useSupabaseAuth = () => {
       }
     } catch (error) {
       console.error('Erreur lors de la récupération/liaison du profil:', error);
+      // En cas d'erreur, on continue sans profil pour éviter de bloquer l'app
+      setProfile(null);
     }
   };
 
