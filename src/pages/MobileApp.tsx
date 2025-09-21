@@ -174,7 +174,7 @@ const ResponsiveApp = () => {
     <>
       <Layout 
         currentTab={currentTab} 
-        onTabChange={setCurrentTab}
+        onTabChange={(tab: string) => setCurrentTab(tab as TabType)}
         isAdmin={isAdmin}
       >
         {renderTabContent()}
