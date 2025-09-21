@@ -79,10 +79,10 @@ export const useSalesData = () => {
   };
 
   useEffect(() => {
-    if (profile) {
-      fetchSales();
-    }
-  }, [profile, isAdmin]);
+    // Always attempt to fetch, even if profile isn't loaded yet.
+    // RLS will ensure users only see allowed rows.
+    fetchSales();
+  }, [isAdmin, profile?.username]);
 
   return {
     sales,
