@@ -62,9 +62,37 @@ export const useSupabaseAuth = () => {
         return;
       }
 
-      // Si erreur de schéma, on continue quand même sans profil
+      // Si erreur de schéma (PGRST002), essayer plusieurs fois avant d'abandonner
       if (byIdErr && byIdErr.code === 'PGRST002') {
-        console.warn('Schema cache error, proceeding without profile:', byIdErr);
+        console.warn('Schema cache error, retrying...', byIdErr);
+        
+        // Attendre et réessayer jusqu'à 3 fois
+        for (let attempt = 1; attempt <= 3; attempt++) {
+          console.log(`Retry attempt ${attempt}/3 for profile fetch...`);
+          await new Promise(resolve => setTimeout(resolve, 2000 * attempt));
+          
+          const { data: retryData, error: retryErr } = await (supabase as any)
+            .from('profiles')
+            .select('*')
+            .eq('user_id', userId)
+            .maybeSingle();
+          
+          if (retryData && !retryErr) {
+            console.log('Profile fetch successful on retry:', attempt);
+            setProfile(retryData as Profile);
+            return;
+          }
+          
+          if (!retryErr || retryErr.code !== 'PGRST002') {
+            console.log('Different error, stopping retries:', retryErr);
+            break; // Erreur différente, on arrête les retry
+          }
+          
+          console.warn(`Retry attempt ${attempt} failed:`, retryErr);
+        }
+        
+        // Après 3 tentatives, continuer sans profil
+        console.warn('All retries failed, proceeding without profile');
         setProfile(null);
         return;
       }
