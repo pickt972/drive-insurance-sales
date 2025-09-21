@@ -155,6 +155,9 @@ export const useSupabaseAuth = () => {
       console.error('Erreur lors de la récupération/liaison du profil:', error);
       // En cas d'erreur, on continue sans profil pour éviter de bloquer l'app
       setProfile(null);
+    } finally {
+      // Toujours arrêter l'état de chargement, même en cas d'erreur ou de retours anticipés
+      setLoading(false);
     }
   };
 

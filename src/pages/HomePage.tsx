@@ -39,13 +39,14 @@ const HomePage: React.FC = () => {
     }
   };
 
-  if (!profile) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-2 border-primary border-t-transparent" />
-      </div>
-    );
-  }
+  // Affiche l'app même si le profil n'est pas encore chargé (évite le blocage sur erreurs Supabase)
+  // if (!profile) {
+  //   return (
+  //     <div className="min-h-screen flex items-center justify-center">
+  //       <div className="animate-spin rounded-full h-12 w-12 border-2 border-primary border-t-transparent" />
+  //     </div>
+  //   );
+  // }
 
   const LayoutComponent = isMobile ? MobileLayout : DesktopLayout;
 
