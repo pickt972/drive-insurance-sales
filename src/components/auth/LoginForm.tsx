@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Eye, EyeOff, LogIn, RefreshCw, Key, UserPlus } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/hooks/use-toast';
@@ -15,73 +14,12 @@ export const LoginForm: React.FC = () => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [usernames, setUsernames] = useState<string[]>([]);
-  const [loadingUsers, setLoadingUsers] = useState(true);
   const [forgotPasswordMode, setForgotPasswordMode] = useState(false);
   const [resetSuccess, setResetSuccess] = useState(false);
   const [showCreateAdmin, setShowCreateAdmin] = useState(false);
   const [resettingDatabase, setResettingDatabase] = useState(false);
 
   const { signIn } = useAuth();
-
-  const fetchUsernames = async () => {
-    try {
-      setLoadingUsers(true);
-      
-      // Toujours avoir au moins un admin disponible
-      const baseUsers = ['admin'];
-      setUsernames(baseUsers);
-      
-      // Essayer d'obtenir d'autres utilisateurs de la base de données en arrière-plan
-      try {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('username')
-          .eq('is_active', true)
-          .order('username');
-
-        if (!error && data && data.length > 0) {
-          const fetchedUsernames = data.map(profile => profile.username);
-          // Combiner avec admin et éviter les doublons
-          const allUsers = [...new Set([...baseUsers, ...fetchedUsernames])];
-          setUsernames(allUsers);
-        }
-      } catch (backgroundError) {
-        console.log('Background fetch failed, using base admin user:', backgroundError);
-      }
-    } catch (error) {
-      console.error('Error in fetchUsernames:', error);
-      // En cas d'erreur, toujours garder au moins admin
-      setUsernames(['admin']);
-    } finally {
-      setLoadingUsers(false);
-    }
-  };
-
-  const createDefaultUsers = async () => {
-    try {
-      setLoadingUsers(true);
-      const { error } = await supabase.functions.invoke('create-default-users');
-      
-      if (error) throw error;
-      
-      toast({
-        title: "Utilisateurs créés",
-        description: "Les utilisateurs par défaut ont été créés avec succès",
-      });
-      
-      await fetchUsernames();
-    } catch (error) {
-      console.error('Error creating default users:', error);
-      toast({
-        title: "Erreur",
-        description: "Impossible de créer les utilisateurs par défaut",
-        variant: "destructive",
-      });
-    } finally {
-      setLoadingUsers(false);
-    }
-  };
 
   const createAdminUser = async () => {
     try {
@@ -91,17 +29,12 @@ export const LoginForm: React.FC = () => {
       if (error) throw error;
       
       if (data.success) {
-        // Optimistic UI: ajouter immédiatement 'admin' et le sélectionner
-        setUsernames((prev) => Array.from(new Set([...(prev || []), data.credentials.username || 'admin'])));
         setUsername(data.credentials.username || 'admin');
         
         toast({
           title: "Administrateur créé",
           description: `Identifiants: ${data.credentials.username} / ${data.credentials.password}`,
         });
-        
-        // Tentative de rafraîchissement (en arrière-plan)
-        fetchUsernames();
       } else {
         toast({
           title: "Information",
@@ -133,9 +66,6 @@ export const LoginForm: React.FC = () => {
           description: "Un seul admin a été recréé. Vous pouvez maintenant vous connecter.",
         });
         
-        // Rafraîchir la liste des utilisateurs
-        await fetchUsernames();
-        
         // Sélectionner automatiquement admin
         setUsername('admin');
       } else {
@@ -157,7 +87,7 @@ export const LoginForm: React.FC = () => {
     if (!username) {
       toast({
         title: "Erreur",
-        description: "Veuillez sélectionner un nom d'utilisateur",
+        description: "Veuillez saisir un nom d'utilisateur",
         variant: "destructive",
       });
       return;
@@ -223,7 +153,6 @@ export const LoginForm: React.FC = () => {
   };
 
   useEffect(() => {
-    fetchUsernames();
     // Auto-sélectionner admin par défaut
     setUsername('admin');
   }, []);
@@ -239,77 +168,17 @@ export const LoginForm: React.FC = () => {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Sélection utilisateur */}
+        {/* Nom d'utilisateur */}
         <div className="space-y-2">
           <Label htmlFor="username">Nom d'utilisateur</Label>
-          <div className="flex space-x-2">
-            <Select value={username} onValueChange={setUsername} disabled={loadingUsers}>
-              <SelectTrigger className="flex-1">
-                <SelectValue placeholder={loadingUsers ? "Chargement..." : "Sélectionnez votre nom"} />
-              </SelectTrigger>
-              <SelectContent>
-                {usernames.map((name) => (
-                  <SelectItem key={name} value={name}>
-                    {name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              onClick={fetchUsernames}
-              disabled={loadingUsers}
-            >
-              <RefreshCw className={`h-4 w-4 ${loadingUsers ? 'animate-spin' : ''}`} />
-            </Button>
-          </div>
-          
-          {/* Bouton de réinitialisation toujours visible */}
-          <div className="mt-2">
-            <Button
-              type="button"
-              variant="destructive"
-              onClick={resetDatabase}
-              disabled={resettingDatabase}
-              className="w-full text-sm"
-            >
-              <RefreshCw className={`h-4 w-4 mr-2 ${resettingDatabase ? 'animate-spin' : ''}`} />
-              {resettingDatabase ? "Réinitialisation..." : "Réinitialiser la base (admin uniquement)"}
-            </Button>
-          </div>
-          
-          {usernames.length === 0 && !loadingUsers && (
-            <div className="text-center py-4">
-              <p className="text-sm text-muted-foreground mb-3">
-                Aucun utilisateur trouvé. Créez les utilisateurs par défaut.
-              </p>
-              <div className="space-y-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={createDefaultUsers}
-                  disabled={loadingUsers}
-                  className="w-full"
-                >
-                  <RefreshCw className={`h-4 w-4 mr-2 ${loadingUsers ? 'animate-spin' : ''}`} />
-                  Initialiser des utilisateurs par défaut
-                </Button>
-                
-                <Button
-                  type="button"
-                  variant="destructive"
-                  onClick={resetDatabase}
-                  disabled={resettingDatabase}
-                  className="w-full text-sm"
-                >
-                  <RefreshCw className={`h-4 w-4 mr-2 ${resettingDatabase ? 'animate-spin' : ''}`} />
-                  {resettingDatabase ? "Réinitialisation..." : "Réinitialiser la base (admin uniquement)"}
-                </Button>
-              </div>
-            </div>
-          )}
+          <Input
+            id="username"
+            type="text"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            placeholder="Entrez votre nom d'utilisateur"
+            disabled={loading}
+          />
         </div>
 
         {/* Mot de passe */}
