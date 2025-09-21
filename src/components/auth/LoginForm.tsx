@@ -71,6 +71,37 @@ export const LoginForm: React.FC = () => {
     }
   };
 
+  const createAdminUser = async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase.functions.invoke('create-admin-user');
+      
+      if (error) throw error;
+      
+      if (data.success) {
+        toast({
+          title: "Administrateur créé",
+          description: `Username: ${data.credentials.username} / Password: ${data.credentials.password}`,
+        });
+        await fetchUsernames();
+      } else {
+        toast({
+          title: "Information",
+          description: data.message,
+        });
+      }
+    } catch (error) {
+      console.error('Error creating admin:', error);
+      toast({
+        title: "Erreur",
+        description: "Erreur lors de la création de l'administrateur",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleForgotPassword = async () => {
     if (!username) {
       toast({
@@ -259,15 +290,27 @@ export const LoginForm: React.FC = () => {
                 Mot de passe oublié ?
               </Button>
 
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full text-sm"
-                onClick={() => setShowCreateAdmin(!showCreateAdmin)}
-              >
-                <UserPlus className="h-4 w-4 mr-2" />
-                {showCreateAdmin ? 'Masquer' : 'Créer un administrateur'}
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={createAdminUser}
+                  disabled={loading}
+                  className="flex-1 text-sm"
+                >
+                  <UserPlus className="h-4 w-4 mr-2" />
+                  {loading ? "Création..." : "Créer Admin"}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="flex-1 text-sm"
+                  onClick={() => setShowCreateAdmin(!showCreateAdmin)}
+                >
+                  <UserPlus className="h-4 w-4 mr-2" />
+                  {showCreateAdmin ? 'Masquer' : 'Admin personnalisé'}
+                </Button>
+              </div>
             </>
           ) : (
             <>

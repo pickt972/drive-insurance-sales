@@ -1,5 +1,8 @@
 project_id = "jwvkvyhwhpbyruattzbx"
 
+[functions.create-admin-user]
+verify_jwt = false
+
 [functions.google-drive-export]
 verify_jwt = true
 
