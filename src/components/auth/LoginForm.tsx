@@ -265,21 +265,48 @@ export const LoginForm: React.FC = () => {
             </Button>
           </div>
           
+          {/* Bouton de réinitialisation toujours visible */}
+          <div className="mt-2">
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={resetDatabase}
+              disabled={resettingDatabase}
+              className="w-full text-sm"
+            >
+              <RefreshCw className={`h-4 w-4 mr-2 ${resettingDatabase ? 'animate-spin' : ''}`} />
+              {resettingDatabase ? "Réinitialisation..." : "Réinitialiser la base (admin uniquement)"}
+            </Button>
+          </div>
+          
           {usernames.length === 0 && !loadingUsers && (
             <div className="text-center py-4">
               <p className="text-sm text-muted-foreground mb-3">
                 Aucun utilisateur trouvé. Créez les utilisateurs par défaut.
               </p>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={createDefaultUsers}
-                disabled={loadingUsers}
-                className="w-full"
-              >
-                <RefreshCw className={`h-4 w-4 mr-2 ${loadingUsers ? 'animate-spin' : ''}`} />
-                Initialiser des utilisateurs par défaut
-              </Button>
+              <div className="space-y-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={createDefaultUsers}
+                  disabled={loadingUsers}
+                  className="w-full"
+                >
+                  <RefreshCw className={`h-4 w-4 mr-2 ${loadingUsers ? 'animate-spin' : ''}`} />
+                  Initialiser des utilisateurs par défaut
+                </Button>
+                
+                <Button
+                  type="button"
+                  variant="destructive"
+                  onClick={resetDatabase}
+                  disabled={resettingDatabase}
+                  className="w-full text-sm"
+                >
+                  <RefreshCw className={`h-4 w-4 mr-2 ${resettingDatabase ? 'animate-spin' : ''}`} />
+                  {resettingDatabase ? "Réinitialisation..." : "Réinitialiser la base (admin uniquement)"}
+                </Button>
+              </div>
             </div>
           )}
         </div>
