@@ -55,29 +55,109 @@ serve(async (req) => {
     
     const supabase = createClient<Database>(supabaseUrl, supabaseServiceKey);
 
-    console.log('Starting database reset...');
+    console.log('Starting complete database reset...');
 
-    // 1. Supprimer tous les profils existants
-    const { error: deleteError } = await supabase
+    // 1. Supprimer tous les utilisateurs auth existants (sauf les admins système)
+    const { data: authUsers, error: listError } = await supabase.auth.admin.listUsers();
+    
+    if (listError) {
+      console.error('Error listing users:', listError);
+    } else if (authUsers && authUsers.users) {
+      for (const user of authUsers.users) {
+        const { error: deleteUserError } = await supabase.auth.admin.deleteUser(user.id);
+        if (deleteUserError) {
+          console.error('Error deleting user:', user.id, deleteUserError);
+        } else {
+          console.log('Deleted auth user:', user.id);
+        }
+      }
+    }
+
+    // 2. Supprimer tous les profils existants
+    const { error: deleteProfilesError } = await supabase
       .from('profiles')
       .delete()
       .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all (dummy condition)
 
-    if (deleteError) {
-      console.error('Error deleting profiles:', deleteError);
-      throw deleteError;
+    if (deleteProfilesError) {
+      console.error('Error deleting profiles:', deleteProfilesError);
+    } else {
+      console.log('All profiles deleted successfully');
     }
 
-    console.log('All profiles deleted successfully');
+    // 3. Supprimer toutes les ventes
+    const { error: deleteSalesError } = await supabase
+      .from('sales')
+      .delete()
+      .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all
 
-    // 2. Recréer un administrateur par défaut
+    if (deleteSalesError) {
+      console.error('Error deleting sales:', deleteSalesError);
+    } else {
+      console.log('All sales deleted successfully');
+    }
+
+    // 4. Supprimer tous les objectifs
+    const { error: deleteObjectivesError } = await supabase
+      .from('employee_objectives')
+      .delete()
+      .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all
+
+    if (deleteObjectivesError) {
+      console.error('Error deleting objectives:', deleteObjectivesError);
+    } else {
+      console.log('All objectives deleted successfully');
+    }
+
+    // 5. Supprimer l'historique des objectifs
+    const { error: deleteHistoryError } = await supabase
+      .from('objective_history')
+      .delete()
+      .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all
+
+    if (deleteHistoryError) {
+      console.error('Error deleting objective history:', deleteHistoryError);
+    } else {
+      console.log('All objective history deleted successfully');
+    }
+
+    // 6. Nettoyer les tokens de réinitialisation
+    const { error: tokenError } = await supabase
+      .from('password_reset_tokens')
+      .delete()
+      .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all
+
+    if (tokenError) {
+      console.log('Note: Could not clean reset tokens (may not exist):', tokenError);
+    } else {
+      console.log('All reset tokens deleted successfully');
+    }
+
+    // 7. Créer un nouvel utilisateur admin dans auth
+    const { data: newUser, error: createUserError } = await supabase.auth.admin.createUser({
+      email: 'admin@aloelocation.com',
+      password: 'admin123',
+      email_confirm: true,
+      user_metadata: {
+        username: 'admin'
+      }
+    });
+
+    if (createUserError) {
+      console.error('Error creating admin user:', createUserError);
+      throw createUserError;
+    }
+
+    console.log('Admin user created successfully:', newUser.user?.id);
+
+    // 8. Créer le profil admin
     const { error: insertError } = await supabase
       .from('profiles')
       .insert({
         username: 'admin',
         role: 'admin',
         is_active: true,
-        user_id: null
+        user_id: newUser.user?.id || null
       });
 
     if (insertError) {
@@ -87,21 +167,13 @@ serve(async (req) => {
 
     console.log('Admin profile created successfully');
 
-    // 3. Nettoyer les tokens de réinitialisation
-    const { error: tokenError } = await supabase
-      .from('password_reset_tokens')
-      .delete()
-      .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all
-
-    if (tokenError) {
-      console.log('Note: Could not clean reset tokens (may not exist):', tokenError);
-    }
-
     return new Response(
       JSON.stringify({ 
         success: true, 
-        message: 'Base de données nettoyée et admin recréé avec succès',
-        admin_username: 'admin'
+        message: 'Base de données complètement nettoyée et admin recréé',
+        admin_username: 'admin',
+        admin_email: 'admin@aloelocation.com',
+        admin_password: 'admin123'
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
