@@ -20,6 +20,7 @@ export const LoginForm: React.FC = () => {
   const [forgotPasswordMode, setForgotPasswordMode] = useState(false);
   const [resetSuccess, setResetSuccess] = useState(false);
   const [showCreateAdmin, setShowCreateAdmin] = useState(false);
+  const [resettingDatabase, setResettingDatabase] = useState(false);
 
   const { signIn } = useAuth();
 
@@ -117,6 +118,39 @@ export const LoginForm: React.FC = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const resetDatabase = async () => {
+    try {
+      setResettingDatabase(true);
+      const { data, error } = await supabase.functions.invoke('reset-database');
+      
+      if (error) throw error;
+      
+      if (data.success) {
+        toast({
+          title: "Base de données réinitialisée",
+          description: "Un seul admin a été recréé. Vous pouvez maintenant vous connecter.",
+        });
+        
+        // Rafraîchir la liste des utilisateurs
+        await fetchUsernames();
+        
+        // Sélectionner automatiquement admin
+        setUsername('admin');
+      } else {
+        throw new Error(data.error || 'Erreur inconnue');
+      }
+    } catch (error) {
+      console.error('Error resetting database:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de réinitialiser la base de données",
+        variant: "destructive",
+      });
+    } finally {
+      setResettingDatabase(false);
     }
   };
 
@@ -329,6 +363,17 @@ export const LoginForm: React.FC = () => {
                   {showCreateAdmin ? 'Masquer' : 'Admin personnalisé'}
                 </Button>
               </div>
+
+              <Button
+                type="button"
+                variant="destructive"
+                onClick={resetDatabase}
+                disabled={resettingDatabase}
+                className="w-full text-sm"
+              >
+                <RefreshCw className={`h-4 w-4 mr-2 ${resettingDatabase ? 'animate-spin' : ''}`} />
+                {resettingDatabase ? "Réinitialisation..." : "Réinitialiser la base (admin uniquement)"}
+              </Button>
             </>
           ) : (
             <>
