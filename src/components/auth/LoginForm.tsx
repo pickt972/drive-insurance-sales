@@ -79,11 +79,17 @@ export const LoginForm: React.FC = () => {
       if (error) throw error;
       
       if (data.success) {
+        // Optimistic UI: ajouter immédiatement 'admin' et le sélectionner
+        setUsernames((prev) => Array.from(new Set([...(prev || []), data.credentials.username || 'admin'])));
+        setUsername(data.credentials.username || 'admin');
+        
         toast({
           title: "Administrateur créé",
-          description: `Username: ${data.credentials.username} / Password: ${data.credentials.password}`,
+          description: `Identifiants: ${data.credentials.username} / ${data.credentials.password}`,
         });
-        await fetchUsernames();
+        
+        // Tentative de rafraîchissement (en arrière-plan)
+        fetchUsernames();
       } else {
         toast({
           title: "Information",
