@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2, Mail, Lock, User as UserIcon, Eye, EyeOff } from "lucide-react";
 import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
@@ -147,7 +147,7 @@ export const AuthPage = () => {
     if (!username) {
       toast({
         title: "Nom d'utilisateur requis",
-        description: "Veuillez sélectionner un nom d'utilisateur avant de demander la réinitialisation.",
+        description: "Veuillez saisir un nom d'utilisateur avant de demander la réinitialisation.",
         variant: "destructive",
       });
       return;
@@ -242,22 +242,13 @@ export const AuthPage = () => {
                 <UserIcon className="h-4 w-4" />
                 Nom d'utilisateur
               </Label>
-              <Select value={username} onValueChange={setUsername}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Sélectionner un compte" />
-                </SelectTrigger>
-                <SelectContent className="bg-background border shadow-lg z-50">
-                  {userOptions.length > 0 ? (
-                    userOptions.map((u) => (
-                      <SelectItem key={u.username} value={u.username}>
-                        {u.username} ({u.role === 'admin' ? 'Admin' : 'Employé'})
-                      </SelectItem>
-                    ))
-                  ) : (
-                    <SelectItem disabled value="__empty">Aucun utilisateur</SelectItem>
-                  )}
-                </SelectContent>
-              </Select>
+              <Input
+                id="signin-username"
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="Entrez votre nom d'utilisateur"
+              />
             </div>
                 
                 <div className="space-y-2">
