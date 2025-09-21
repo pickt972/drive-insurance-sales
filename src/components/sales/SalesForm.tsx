@@ -71,13 +71,17 @@ export const SalesForm: React.FC<SalesFormProps> = ({ onSaleAdded }) => {
         if (employeesError) throw employeesError;
         setEmployees(employeesData || []);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching data:', error);
-      toast({
-        title: "Erreur",
-        description: "Impossible de charger les données",
-        variant: "destructive",
-      });
+      const msg = (error?.code || error?.message || '').toString().toLowerCase();
+      const isTransient = msg.includes('pgrst002') || msg.includes('schema cache') || msg.includes('service unavailable') || msg.includes('503');
+      if (!isTransient) {
+        toast({
+          title: "Erreur",
+          description: "Impossible de charger les données",
+          variant: "destructive",
+        });
+      }
     } finally {
       setLoadingData(false);
     }

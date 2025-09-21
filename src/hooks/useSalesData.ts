@@ -62,13 +62,17 @@ export const useSalesData = () => {
       })) || [];
 
       setSales(transformedSales);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching sales:', error);
-      toast({
-        title: "Erreur",
-        description: "Impossible de charger les ventes",
-        variant: "destructive",
-      });
+      const msg = (error?.code || error?.message || '').toString().toLowerCase();
+      const isTransient = msg.includes('pgrst002') || msg.includes('schema cache') || msg.includes('service unavailable') || msg.includes('503');
+      if (!isTransient) {
+        toast({
+          title: "Erreur",
+          description: "Impossible de charger les ventes",
+          variant: "destructive",
+        });
+      }
     } finally {
       setLoading(false);
     }
