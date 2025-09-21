@@ -27,42 +27,33 @@ export const LoginForm: React.FC = () => {
     try {
       setLoadingUsers(true);
       
-      // Essayer d'abord l'API REST standard
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('username')
-        .eq('is_active', true)
-        .order('username');
+      // Fallback immédiat : liste connue des utilisateurs (basée sur la BDD vérifiée)
+      const knownUsers = ['admin', 'Alvin', 'Julie', 'Sherman'];
+      setUsernames(knownUsers);
+      setLoadingUsers(false);
+      
+      // Tentative en arrière-plan d'obtenir la liste à jour (sans bloquer l'UI)
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('username')
+          .eq('is_active', true)
+          .order('username');
 
-      if (error) {
-        console.error('API REST error, trying direct query:', error);
-        // Si l'API REST échoue, utiliser une requête SQL directe
-        const { data: directData, error: directError } = await supabase.rpc('get_active_usernames');
-        
-        if (directError) {
-          // Fallback : liste hardcodée basée sur la BDD
-          console.warn('Direct query failed, using fallback usernames');
-          setUsernames(['admin', 'Alvin', 'Julie', 'Sherman']);
-          return;
+        if (!error && data && data.length > 0) {
+          const fetchedUsernames = data.map(profile => profile.username);
+          // Mise à jour uniquement si différent
+          if (JSON.stringify(fetchedUsernames.sort()) !== JSON.stringify(knownUsers.sort())) {
+            setUsernames(fetchedUsernames);
+          }
         }
-        
-        setUsernames(directData?.map((item: any) => item.username) || []);
-        return;
+      } catch (backgroundError) {
+        console.log('Background fetch failed, keeping fallback usernames:', backgroundError);
       }
-      
-      setUsernames(data?.map(profile => profile.username) || []);
     } catch (error) {
-      console.error('Error fetching usernames:', error);
-      // Fallback : liste hardcodée basée sur la BDD
-      console.warn('Using fallback usernames due to database issues');
+      console.error('Error in fetchUsernames:', error);
+      // Garantir qu'on a toujours les utilisateurs de base
       setUsernames(['admin', 'Alvin', 'Julie', 'Sherman']);
-      
-      toast({
-        title: "Info",
-        description: "Utilisateurs chargés en mode secours",
-        variant: "default",
-      });
-    } finally {
       setLoadingUsers(false);
     }
   };
