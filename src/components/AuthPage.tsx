@@ -7,6 +7,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { LogIn, User, Lock, Eye, EyeOff, UserPlus } from "lucide-react";
 import { useFirebase } from "@/hooks/useFirebase";
 import { useNavigate } from "react-router-dom";
+import { isFirebaseConfigured } from "@/lib/firebase";
 
 export const AuthPage = () => {
   const [username, setUsername] = useState("");
@@ -15,7 +16,7 @@ export const AuthPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   
-  const { user, signIn, loading: authLoading } = useFirebase();
+  const { user, signIn, loading: authLoading, demoMode } = useFirebase();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -59,9 +60,20 @@ export const AuthPage = () => {
         <CardContent>
           <div className="mb-4 p-3 bg-muted rounded-lg">
             <p className="text-sm text-muted-foreground text-center">
+              {!isFirebaseConfigured && (
+                <>
+                  <strong className="text-warning">⚠️ Mode Démonstration</strong><br />
+                  <span className="text-xs">Firebase non configuré - Fonctionnalités limitées</span><br /><br />
+                </>
+              )}
               <strong>Compte admin par défaut :</strong><br />
               Utilisateur: <code>admin</code><br />
               Mot de passe: <code>admin123</code>
+              {demoMode && (
+                <><br /><br />
+                <span className="text-xs text-info">💡 Configurez Firebase dans le fichier .env pour activer toutes les fonctionnalités</span>
+                </>
+              )}
             </p>
           </div>
           

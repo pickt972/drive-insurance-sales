@@ -13,13 +13,16 @@ const getEnvVar = (key: string, fallback: string = '') => {
 };
 
 const firebaseConfig = {
-  apiKey: getEnvVar('VITE_FIREBASE_API_KEY', 'demo-api-key'),
-  authDomain: getEnvVar('VITE_FIREBASE_AUTH_DOMAIN', 'demo-project.firebaseapp.com'),
-  projectId: getEnvVar('VITE_FIREBASE_PROJECT_ID', 'demo-project'),
-  storageBucket: getEnvVar('VITE_FIREBASE_STORAGE_BUCKET', 'demo-project.appspot.com'),
-  messagingSenderId: getEnvVar('VITE_FIREBASE_MESSAGING_SENDER_ID', '123456789'),
-  appId: getEnvVar('VITE_FIREBASE_APP_ID', '1:123456789:web:abcdef')
+  apiKey: getEnvVar('VITE_FIREBASE_API_KEY'),
+  authDomain: getEnvVar('VITE_FIREBASE_AUTH_DOMAIN'),
+  projectId: getEnvVar('VITE_FIREBASE_PROJECT_ID'),
+  storageBucket: getEnvVar('VITE_FIREBASE_STORAGE_BUCKET'),
+  messagingSenderId: getEnvVar('VITE_FIREBASE_MESSAGING_SENDER_ID'),
+  appId: getEnvVar('VITE_FIREBASE_APP_ID')
 };
+
+// Vérifier si Firebase est configuré
+const isFirebaseConfigured = Object.values(firebaseConfig).every(value => value && value !== '');
 
 // Initialize Firebase with error handling
 let app;
@@ -27,31 +30,25 @@ let auth;
 let db;
 let storage;
 
-try {
-  app = initializeApp(firebaseConfig);
-  auth = getAuth(app);
-  db = getFirestore(app);
-  storage = getStorage(app);
-} catch (error) {
-  console.error('Firebase initialization failed:', error);
-  console.log('Please check your Firebase configuration in the .env file');
-  
-  // Create mock objects to prevent app crashes
+if (isFirebaseConfigured) {
+  try {
+    app = initializeApp(firebaseConfig);
+    auth = getAuth(app);
+    db = getFirestore(app);
+    storage = getStorage(app);
+    console.log('✅ Firebase initialisé avec succès');
+  } catch (error) {
+    console.error('❌ Échec de l\'initialisation Firebase:', error);
+    auth = null;
+    db = null;
+    storage = null;
+  }
+} else {
+  console.warn('⚠️ Configuration Firebase manquante - Mode démonstration activé');
   auth = null;
   db = null;
   storage = null;
 }
 
-// Connect to emulators in development
-if (import.meta.env.DEV && auth && db && storage) {
-  try {
-    connectAuthEmulator(auth, 'http://localhost:9099');
-    connectFirestoreEmulator(db, 'localhost', 8080);
-    connectStorageEmulator(storage, 'localhost', 9199);
-  } catch (error) {
-    console.log('Firebase emulators already connected or not available');
-  }
-}
-
-export { auth, db, storage };
+export { auth, db, storage, isFirebaseConfigured };
 export default app;

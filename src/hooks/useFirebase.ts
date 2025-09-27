@@ -21,35 +21,70 @@ import {
 import { auth, db } from '@/lib/firebase';
 import { User, InsuranceType, Sale, DashboardStats } from '@/types';
 import { toast } from '@/hooks/use-toast';
+import { isFirebaseConfigured } from '@/lib/firebase';
+
+// Données de démonstration
+const DEMO_USERS = [
+  { id: '1', username: 'admin', email: 'admin@demo.com', role: 'admin' as const, isActive: true, createdAt: new Date().toISOString() },
+  { id: '2', username: 'vendeur1', email: 'vendeur1@demo.com', role: 'employee' as const, isActive: true, createdAt: new Date().toISOString() }
+];
+
+const DEMO_INSURANCE_TYPES = [
+  { id: '1', name: 'Assurance Annulation', commission: 15.00, isActive: true },
+  { id: '2', name: 'Assurance Bagages', commission: 12.50, isActive: true },
+  { id: '3', name: 'Assurance Médicale', commission: 20.00, isActive: true }
+];
+
+const DEMO_SALES = [
+  {
+    id: '1',
+    employeeName: 'admin',
+    clientName: 'Client Démo',
+    reservationNumber: 'DEMO-001',
+    insuranceTypes: ['Assurance Annulation'],
+    commissionAmount: 15.00,
+    createdAt: new Date().toISOString()
+  }
+];
 
 export const useFirebase = () => {
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [profile, setProfile] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [insuranceTypes, setInsuranceTypes] = useState<InsuranceType[]>([]);
-  const [sales, setSales] = useState<Sale[]>([]);
+  const [insuranceTypes, setInsuranceTypes] = useState<InsuranceType[]>(DEMO_INSURANCE_TYPES);
+  const [sales, setSales] = useState<Sale[]>(DEMO_SALES);
   const [stats, setStats] = useState<DashboardStats>({
-    totalSales: 0,
-    totalCommission: 0,
-    salesThisWeek: 0,
-    topSellers: []
+    totalSales: 1,
+    totalCommission: 15.00,
+    salesThisWeek: 1,
+    topSellers: [{ name: 'admin', sales: 1, commission: 15.00 }]
   });
+  const [demoMode, setDemoMode] = useState(!isFirebaseConfigured);
 
   // Auth
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      setUser(user);
-      if (user) {
-        await fetchProfile(user.uid);
-      } else {
-        setProfile(null);
-      }
+    if (isFirebaseConfigured && auth) {
+      const unsubscribe = onAuthStateChanged(auth, async (user) => {
+        setUser(user);
+        if (user) {
+          await fetchProfile(user.uid);
+        } else {
+          setProfile(null);
+        }
+        setLoading(false);
+      });
+      return () => unsubscribe();
+    } else {
+      // Mode démonstration
+      setDemoMode(true);
+      setProfile(DEMO_USERS[0]);
       setLoading(false);
-    });
-    return () => unsubscribe();
+    }
   }, []);
 
   const fetchProfile = async (userId: string) => {
+    if (!db) return;
+    
     try {
       const q = query(collection(db, 'users'), where('id', '==', userId));
       const snapshot = await getDocs(q);
@@ -62,6 +97,16 @@ export const useFirebase = () => {
   };
 
   const signIn = async (username: string, password: string) => {
+    if (demoMode) {
+      // Mode démonstration
+      if (username === 'admin' && password === 'admin123') {
+        setProfile(DEMO_USERS[0]);
+        toast({ title: "Connexion réussie (Mode Démo)" });
+        return { success: true };
+      }
+      return { success: false, error: "Identifiants incorrects (Mode Démo)" };
+    }
+    
     try {
       const email = `${username.toLowerCase()}@aloelocation.com`;
       await signInWithEmailAndPassword(auth, email, password);
@@ -72,6 +117,12 @@ export const useFirebase = () => {
   };
 
   const signOut = async () => {
+    if (demoMode) {
+      setProfile(null);
+      toast({ title: "Déconnexion réussie (Mode Démo)" });
+      return;
+    }
+    
     await firebaseSignOut(auth);
     toast({ title: "Déconnexion réussie" });
   };
@@ -79,6 +130,9 @@ export const useFirebase = () => {
   // Insurance Types
   const fetchInsuranceTypes = async () => {
     try {
+      if (demoMode || !db) {
+        return; // Utilise les données de démo déjà définies
+      }
       const q = query(collection(db, 'insuranceTypes'), where('isActive', '==', true));
       const snapshot = await getDocs(q);
       const types = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as InsuranceType));
@@ -89,6 +143,12 @@ export const useFirebase = () => {
   };
 
   const addInsuranceType = async (name: string, commission: number) => {
+    if (demoMode) {
+      const newType = { id: Date.now().toString(), name, commission, isActive: true };
+      setInsuranceTypes([...insuranceTypes, newType]);
+      toast({ title: "Type d'assurance ajouté (Mode Démo)" });
+      return { success: true };
+    }
     try {
       await addDoc(collection(db, 'insuranceTypes'), {
         name,
@@ -105,6 +165,9 @@ export const useFirebase = () => {
   // Sales
   const fetchSales = async () => {
     try {
+      if (demoMode || !db) {
+        return; // Utilise les données de démo déjà définies
+      }
       const q = query(collection(db, 'sales'), orderBy('createdAt', 'desc'));
       const snapshot = await getDocs(q);
       const salesData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Sale));
@@ -121,6 +184,14 @@ export const useFirebase = () => {
   };
 
   const addSale = async (saleData: Omit<Sale, 'id'>) => {
+    if (demoMode) {
+      const newSale = { ...saleData, id: Date.now().toString() };
+      const newSales = [newSale, ...sales];
+      setSales(newSales);
+      calculateStats(newSales);
+      toast({ title: "Vente ajoutée (Mode Démo)" });
+      return { success: true };
+    }
     try {
       await addDoc(collection(db, 'sales'), saleData);
       await fetchSales();
@@ -131,6 +202,13 @@ export const useFirebase = () => {
   };
 
   const deleteSale = async (saleId: string) => {
+    if (demoMode) {
+      const newSales = sales.filter(sale => sale.id !== saleId);
+      setSales(newSales);
+      calculateStats(newSales);
+      toast({ title: "Vente supprimée (Mode Démo)" });
+      return { success: true };
+    }
     try {
       await deleteDoc(doc(db, 'sales', saleId));
       await fetchSales();
@@ -175,6 +253,7 @@ export const useFirebase = () => {
   return {
     user,
     profile,
+    demoMode,
     loading,
     isAdmin: profile?.role === 'admin',
     signIn,
