@@ -1,11 +1,11 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { AuthPage as SupabaseAuthPage } from "@/components/auth/AuthPage";
-import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
+import { FirebaseAuthPage } from "@/components/auth/FirebaseAuthPage";
+import { useFirebaseAuth } from "@/hooks/useFirebaseAuth";
 
 const AuthPage = () => {
   const navigate = useNavigate();
-  const { isAuthenticated } = useSupabaseAuth();
+  const { isAuthenticated } = useFirebaseAuth();
   
   // Rediriger si déjà connecté
   useEffect(() => {
@@ -19,7 +19,7 @@ const AuthPage = () => {
     return null;
   }
 
-  return <SupabaseAuthPage />;
+  return <FirebaseAuthPage />;
 };
 
 export default AuthPage;
