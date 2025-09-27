@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from "@/components/ui/button";
-import { LogOut, BarChart3, Plus, Clock, Settings } from "lucide-react";
+import { LogOut, ChartBar as BarChart3, Plus, Clock, Settings } from "lucide-react";
 import { Dashboard } from "@/components/Dashboard";
 import { SalesForm } from "@/components/SalesForm";
 import { SalesHistory } from "@/components/SalesHistory";
