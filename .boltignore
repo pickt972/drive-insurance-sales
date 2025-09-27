@@ -1,0 +1,59 @@
+# Dépendances et modules
+node_modules/
+bun.lockb
+package-lock.json
+
+# Builds et distributions
+dist/
+build/
+.vite/
+
+# Fichiers de configuration système
+.git/
+.gitignore
+.env
+.env.local
+.env.production
+
+# Fichiers temporaires et logs
+*.log
+*.tmp
+.cache/
+.temp/
+
+# Assets et uploads non essentiels
+public/placeholder.svg
+public/favicon.ico
+public/lovable-uploads/
+src/assets/
+
+# Fichiers de configuration IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Fichiers de test et documentation
+README.md
+*.md
+*.test.*
+*.spec.*
+
+# Fichiers TypeScript compilés
+*.js.map
+*.d.ts.map
+
+# Fichiers de cache
+.DS_Store
+Thumbs.db
+
+# Fichiers de sauvegarde
+*.bak
+*.backup
+*~
+
+# Dossiers de développement
+coverage/
+.nyc_output/
+.pytest_cache/
+__pycache__/
