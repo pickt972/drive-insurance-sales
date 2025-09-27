@@ -217,31 +217,3 @@ export const AdminPanel = () => {
     </div>
   );
 };
-                />
-              </div>
-              <div className="flex items-end">
-                <Button type="submit" className="w-full">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Ajouter
-                </Button>
-              </div>
-            </div>
-          </form>
-
-          <div className="space-y-3">
-            <h3 className="font-medium">Assurances existantes</h3>
-            {insuranceTypes.map((insurance) => (
-              <div key={insurance.id} className="flex items-center justify-between p-3 border rounded-lg">
-                <span className="font-medium">{insurance.name}</span>
-                <div className="flex items-center gap-2">
-                  <Euro className="h-4 w-4" />
-                  <span>{insurance.commission.toFixed(2)} €</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
-};
