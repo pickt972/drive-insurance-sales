@@ -1,16 +1,34 @@
+import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Clock, Trash2, User, FileText } from "lucide-react";
-import { Sale } from "@/types";
-import { useFirebase } from "@/hooks/useFirebase";
+import { useAuth } from "@/contexts/AuthContext";
 
-interface SalesHistoryProps {
-  sales: Sale[];
-}
+export const SalesHistory = () => {
+  const { isAdmin } = useAuth();
 
-export const SalesHistory = ({ sales }: SalesHistoryProps) => {
-  const { deleteSale, isAdmin } = useFirebase();
+  // Données de démonstration
+  const sales = [
+    {
+      id: '1',
+      clientName: 'Jean Dupont',
+      reservationNumber: 'RES-2024-001',
+      employeeName: 'admin',
+      commissionAmount: 35.00,
+      createdAt: new Date().toISOString(),
+      insuranceTypes: ['Assurance Annulation', 'Assurance Médicale']
+    },
+    {
+      id: '2',
+      clientName: 'Marie Martin',
+      reservationNumber: 'RES-2024-002',
+      employeeName: 'vendeur1',
+      commissionAmount: 22.50,
+      createdAt: new Date(Date.now() - 86400000).toISOString(),
+      insuranceTypes: ['Assurance Bagages', 'Assurance Vol/Perte']
+    }
+  ];
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('fr-FR', {
@@ -23,8 +41,9 @@ export const SalesHistory = ({ sales }: SalesHistoryProps) => {
   };
 
   const handleDelete = async (saleId: string) => {
-    if (confirm('Êtes-vous sûr de vouloir supprimer cette vente ?')) {
-      await deleteSale(saleId);
+    if (window.confirm('Êtes-vous sûr de vouloir supprimer cette vente ?')) {
+      // Simuler la suppression
+      console.log('Suppression de la vente:', saleId);
     }
   };
 

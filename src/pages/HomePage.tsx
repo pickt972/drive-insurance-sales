@@ -1,68 +1,92 @@
 import React, { useState } from 'react';
-import { useAuth } from '@/contexts/FirebaseAuthContext';
-import { useIsMobile } from '@/hooks/use-mobile';
-import { MobileLayout } from '@/components/layout/MobileLayout';
-import { DesktopLayout } from '@/components/layout/DesktopLayout';
-import { Dashboard } from '@/components/dashboard/Dashboard';
-import { FirebaseSalesForm } from '@/components/sales/FirebaseSalesForm';
-import { SalesHistory } from '@/components/sales/SalesHistory';
-import { AdminPanel } from '@/components/admin/AdminPanel';
-import { ObjectivesManager } from '@/components/objectives/ObjectivesManager';
-import { useFirebaseSales } from '@/hooks/useFirebaseSales';
-
-import { TabType } from '@/types/tabs';
+import { useAuth } from '@/contexts/AuthContext';
+import { Button } from "@/components/ui/button";
+import { LogOut, BarChart3, Plus, Clock, Settings } from "lucide-react";
+import { Dashboard } from "@/components/Dashboard";
+import { SalesForm } from "@/components/SalesForm";
+import { SalesHistory } from "@/components/SalesHistory";
+import { AdminPanel } from "@/components/AdminPanel";
 
 const HomePage: React.FC = () => {
-  const { profile, isAdmin } = useAuth();
-  const isMobile = useIsMobile();
-  const [currentTab, setCurrentTab] = useState<TabType>('dashboard');
-  const { stats, allSales, loading, refreshStats } = useFirebaseSales();
+  const { profile, isAdmin, signOut } = useAuth();
+  const [currentTab, setCurrentTab] = useState('dashboard');
 
-  const handleTabChange = (tab: TabType) => {
+  const handleTabChange = (tab: string) => {
     setCurrentTab(tab);
   };
 
   const handleSaleAdded = () => {
-    refreshStats();
     setCurrentTab('dashboard');
   };
+
+  const tabs = [
+    { id: "dashboard", label: "Tableau de bord", icon: BarChart3 },
+    { id: "sales", label: "Nouvelle vente", icon: Plus },
+    { id: "history", label: "Historique", icon: Clock },
+    ...(isAdmin ? [{ id: "admin", label: "Administration", icon: Settings }] : [])
+  ];
 
   const renderContent = () => {
     switch (currentTab) {
       case 'dashboard':
-        return <Dashboard sales={allSales} loading={loading} />;
+        return <Dashboard />;
       case 'sales':
-        return <FirebaseSalesForm onSaleAdded={handleSaleAdded} />;
+        return <SalesForm onSaleAdded={handleSaleAdded} />;
       case 'history':
-        return <SalesHistory sales={allSales} loading={loading} onSaleDeleted={refreshStats} />;
+        return <SalesHistory />;
       case 'admin':
-        return isAdmin ? <AdminPanel /> : <div>Accès non autorisé</div>;
-      case 'objectives':
-        return <ObjectivesManager />;
+        return isAdmin ? <AdminPanel /> : <div className="text-center py-8">Accès non autorisé</div>;
       default:
-        return <Dashboard sales={allSales} loading={loading} />;
+        return <Dashboard />;
     }
   };
 
-  // Affiche l'app même si le profil n'est pas encore chargé (évite le blocage sur erreurs Supabase)
-  // if (!profile) {
-  //   return (
-  //     <div className="min-h-screen flex items-center justify-center">
-  //       <div className="animate-spin rounded-full h-12 w-12 border-2 border-primary border-t-transparent" />
-  //     </div>
-  //   );
-  // }
-
-  const LayoutComponent = isMobile ? MobileLayout : DesktopLayout;
-
   return (
-    <LayoutComponent
-      currentTab={currentTab}
-      onTabChange={handleTabChange}
-      isAdmin={isAdmin}
-    >
-      {renderContent()}
-    </LayoutComponent>
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <header className="border-b bg-card p-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-primary">Aloe Location</h1>
+            <p className="text-sm text-muted-foreground">Gestion des ventes d'assurances</p>
+          </div>
+          <div className="flex items-center gap-4">
+            <span className="text-sm">{profile?.username} ({profile?.role})</span>
+            <Button variant="outline" size="sm" onClick={signOut}>
+              <LogOut className="h-4 w-4 mr-2" />
+              Déconnexion
+            </Button>
+          </div>
+        </div>
+      </header>
+
+      <div className="flex">
+        {/* Sidebar */}
+        <nav className="w-64 border-r bg-card p-4">
+          <div className="space-y-2">
+            {tabs.map((tab) => {
+              const Icon = tab.icon;
+              return (
+                <Button
+                  key={tab.id}
+                  variant={currentTab === tab.id ? "default" : "ghost"}
+                  className="w-full justify-start"
+                  onClick={() => handleTabChange(tab.id)}
+                >
+                  <Icon className="h-4 w-4 mr-2" />
+                  {tab.label}
+                </Button>
+              );
+            })}
+          </div>
+        </nav>
+
+        {/* Main content */}
+        <main className="flex-1 p-6">
+          {renderContent()}
+        </main>
+      </div>
+    </div>
   );
 };
 

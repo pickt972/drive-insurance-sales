@@ -1,12 +1,20 @@
+import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TrendingUp, Users, DollarSign, Trophy } from "lucide-react";
-import { DashboardStats } from "@/types";
 
-interface DashboardProps {
-  stats: DashboardStats;
-}
+export const Dashboard = () => {
+  // Données de démonstration
+  const stats = {
+    totalSales: 15,
+    totalCommission: 450.00,
+    salesThisWeek: 8,
+    topSellers: [
+      { name: 'admin', sales: 8, commission: 240.00 },
+      { name: 'vendeur1', sales: 5, commission: 150.00 },
+      { name: 'vendeur2', sales: 2, commission: 60.00 }
+    ]
+  };
 
-export const Dashboard = ({ stats }: DashboardProps) => {
   const formatCurrency = (amount: number) => `${amount.toFixed(2)} €`;
 
   return (
