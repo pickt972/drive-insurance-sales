@@ -57,6 +57,14 @@ export const AuthPage = () => {
         </CardHeader>
         
         <CardContent>
+          <div className="mb-4 p-3 bg-muted rounded-lg">
+            <p className="text-sm text-muted-foreground text-center">
+              <strong>Compte admin par défaut :</strong><br />
+              Utilisateur: <code>admin</code><br />
+              Mot de passe: <code>admin123</code>
+            </p>
+          </div>
+          
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="username" className="flex items-center gap-2">

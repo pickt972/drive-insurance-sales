@@ -36,6 +36,7 @@ export const useFirebaseAuth = () => {
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState<Profile[]>([]);
   const [usersLoading, setUsersLoading] = useState(false);
+  const [initialized, setInitialized] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -45,6 +46,10 @@ export const useFirebaseAuth = () => {
       
       if (user) {
         await fetchUserProfile(user.uid);
+        if (!initialized) {
+          await initializeDefaultAdmin();
+          setInitialized(true);
+        }
       } else {
         setProfile(null);
       }
@@ -87,6 +92,90 @@ export const useFirebaseAuth = () => {
       }
     } catch (error) {
       console.error('Erreur lors de la récupération du profil:', error);
+    }
+  };
+
+  const initializeDefaultAdmin = async () => {
+    try {
+      // Vérifier si un admin existe déjà
+      const adminQuery = query(
+        collection(db, 'profiles'),
+        where('role', '==', 'admin')
+      );
+      
+      const adminSnapshot = await getDocs(adminQuery);
+      
+      if (adminSnapshot.empty) {
+        console.log('🔧 Aucun admin trouvé, création de l\'admin par défaut...');
+        
+        // Créer l'utilisateur admin par défaut
+        const defaultAdminEmail = 'admin@aloelocation.com';
+        const defaultAdminPassword = 'admin123';
+        
+        try {
+          const userCredential = await createUserWithEmailAndPassword(
+            auth, 
+            defaultAdminEmail, 
+            defaultAdminPassword
+          );
+          
+          // Créer le profil admin
+          const adminProfile = {
+            username: 'admin',
+            role: 'admin' as const,
+            isActive: true,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          };
+
+          await setDoc(doc(db, 'profiles', userCredential.user.uid), adminProfile);
+          
+          console.log('✅ Admin par défaut créé avec succès');
+          console.log('📧 Email: admin@aloelocation.com');
+          console.log('🔑 Mot de passe: admin123');
+          
+          toast({
+            title: "Admin initialisé",
+            description: "Utilisateur admin créé (admin/admin123)",
+          });
+          
+        } catch (authError: any) {
+          if (authError.code === 'auth/email-already-in-use') {
+            console.log('📧 Email admin déjà utilisé, recherche du profil...');
+            
+            // L'email existe mais pas le profil, créer juste le profil
+            const existingUserQuery = query(
+              collection(db, 'profiles'),
+              where('username', '==', 'admin')
+            );
+            
+            const existingUserSnapshot = await getDocs(existingUserQuery);
+            
+            if (existingUserSnapshot.empty) {
+              // Récupérer l'utilisateur existant et créer son profil
+              const currentUser = auth.currentUser;
+              if (currentUser && currentUser.email === defaultAdminEmail) {
+                const adminProfile = {
+                  username: 'admin',
+                  role: 'admin' as const,
+                  isActive: true,
+                  createdAt: new Date().toISOString(),
+                  updatedAt: new Date().toISOString()
+                };
+
+                await setDoc(doc(db, 'profiles', currentUser.uid), adminProfile);
+                console.log('✅ Profil admin créé pour utilisateur existant');
+              }
+            }
+          } else {
+            console.warn('⚠️ Erreur création admin:', authError.message);
+          }
+        }
+      } else {
+        console.log('✅ Admin déjà présent dans la base');
+      }
+    } catch (error) {
+      console.warn('⚠️ Erreur initialisation admin:', error);
     }
   };
 
