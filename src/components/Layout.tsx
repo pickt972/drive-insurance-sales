@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
-import { LogOut, BarChart3, Plus, Clock, Settings } from "lucide-react";
+import { LogOut, ChartBar as BarChart3, Plus, Clock, Settings } from "lucide-react";
 import { useFirebase } from "@/hooks/useFirebase";
 
 interface LayoutProps {
