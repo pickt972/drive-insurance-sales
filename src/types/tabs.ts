@@ -1,1 +1,0 @@
-export type TabType = 'dashboard' | 'sales' | 'history' | 'admin' | 'objectives' | 'add' | 'users' | 'export';
