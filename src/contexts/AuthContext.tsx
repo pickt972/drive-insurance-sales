@@ -23,6 +23,8 @@ interface AuthContextType {
   updateUserRole: (username: string, newRole: 'admin' | 'employee') => Promise<{ success: boolean; error?: string }>;
   removeUser: (username: string) => Promise<{ success: boolean; error?: string }>;
   fetchUsers: () => void;
+  updateUser: (username: string, updates: { email?: string; role?: 'admin' | 'employee' }) => Promise<{ success: boolean; error?: string }>;
+  updatePassword: (username: string, newPassword: string) => Promise<{ success: boolean; error?: string }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -236,6 +238,72 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
+  const updateUser = async (username: string, updates: { email?: string; role?: 'admin' | 'employee' }): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const storedUsers = localStorage.getItem('aloelocation_users');
+      if (!storedUsers) {
+        return { success: false, error: 'Erreur système' };
+      }
+
+      const usersList: User[] = JSON.parse(storedUsers);
+      
+      // Vérifier si le nouvel email est déjà utilisé
+      if (updates.email) {
+        const emailExists = usersList.find(u => u.email === updates.email && u.username !== username);
+        if (emailExists) {
+          return { success: false, error: 'Email déjà utilisé' };
+        }
+      }
+
+      const updatedUsers = usersList.map(u => 
+        u.username === username ? { ...u, ...updates } : u
+      );
+
+      localStorage.setItem('aloelocation_users', JSON.stringify(updatedUsers));
+      setUsers(updatedUsers);
+
+      // Mettre à jour l'utilisateur connecté si c'est lui
+      if (user?.username === username) {
+        const updatedUser = { ...user, ...updates };
+        setUser(updatedUser);
+        localStorage.setItem('aloelocation_current_user', JSON.stringify(updatedUser));
+      }
+
+      toast({
+        title: "Utilisateur modifié",
+        description: `Les informations de ${username} ont été mises à jour`,
+      });
+
+      return { success: true };
+    } catch (error) {
+      console.error('Erreur modification utilisateur:', error);
+      return { success: false, error: 'Erreur lors de la modification' };
+    }
+  };
+
+  const updatePassword = async (username: string, newPassword: string): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const storedPasswords = localStorage.getItem('aloelocation_passwords');
+      if (!storedPasswords) {
+        return { success: false, error: 'Erreur système' };
+      }
+
+      const passwordsList: Record<string, string> = JSON.parse(storedPasswords);
+      const updatedPasswords = { ...passwordsList, [username]: newPassword };
+
+      localStorage.setItem('aloelocation_passwords', JSON.stringify(updatedPasswords));
+
+      toast({
+        title: "Mot de passe modifié",
+        description: `Le mot de passe de ${username} a été mis à jour`,
+      });
+
+      return { success: true };
+    } catch (error) {
+      console.error('Erreur modification mot de passe:', error);
+      return { success: false, error: 'Erreur lors de la modification du mot de passe' };
+    }
+  };
   const removeUser = async (username: string): Promise<{ success: boolean; error?: string }> => {
     try {
       if (username === 'admin') {
@@ -296,7 +364,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     addUser,
     updateUserRole,
     removeUser,
-    fetchUsers
+    fetchUsers,
+    updateUser,
+    updatePassword
   };
 
   return (

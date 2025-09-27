@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Settings, Plus, Euro, Users, Trash2 } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Settings, Plus, Euro, Users, Trash2, Edit, Key } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
 
@@ -14,8 +15,13 @@ export const AdminPanel = () => {
   const [newPassword, setNewPassword] = useState("");
   const [newRole, setNewRole] = useState<'admin' | 'employee'>('employee');
   const [loading, setLoading] = useState(false);
+  const [editingUser, setEditingUser] = useState<any>(null);
+  const [editEmail, setEditEmail] = useState("");
+  const [editRole, setEditRole] = useState<'admin' | 'employee'>('employee');
+  const [changingPassword, setChangingPassword] = useState<string | null>(null);
+  const [newPasswordValue, setNewPasswordValue] = useState("");
   
-  const { users, addUser, updateUserRole, removeUser, fetchUsers } = useAuth();
+  const { users, addUser, updateUserRole, removeUser, fetchUsers, updateUser, updatePassword } = useAuth();
 
   useEffect(() => {
     fetchUsers();
@@ -46,9 +52,48 @@ export const AdminPanel = () => {
     setLoading(false);
   };
 
-  const handleRoleChange = async (username: string, currentRole: 'admin' | 'employee') => {
-    const newRole = currentRole === 'admin' ? 'employee' : 'admin';
-    await updateUserRole(username, newRole);
+  const handleEditUser = (user: any) => {
+    setEditingUser(user);
+    setEditEmail(user.email);
+    setEditRole(user.role);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingUser) return;
+
+    const result = await updateUser(editingUser.username, {
+      email: editEmail,
+      role: editRole
+    });
+
+    if (result.success) {
+      setEditingUser(null);
+      setEditEmail("");
+      setEditRole('employee');
+    }
+  };
+
+  const handleChangePassword = (username: string) => {
+    setChangingPassword(username);
+    setNewPasswordValue("");
+  };
+
+  const handleSavePassword = async () => {
+    if (!changingPassword || !newPasswordValue) {
+      toast({
+        title: "Erreur",
+        description: "Veuillez saisir un nouveau mot de passe",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const result = await updatePassword(changingPassword, newPasswordValue);
+    
+    if (result.success) {
+      setChangingPassword(null);
+      setNewPasswordValue("");
+    }
   };
 
   const handleRemoveUser = async (username: string) => {
@@ -137,7 +182,125 @@ export const AdminPanel = () => {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => handleRoleChange(user.username, user.role)}
+                    onClick={() => handleEditUser(user)}
+                  >
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleChangePassword(user.username)}
+                  >
+                    <Key className="h-4 w-4" />
+                  </Button>
+                  {user.username !== 'admin' && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleRemoveUser(user.username)}
+                      className="text-destructive hover:text-destructive"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Dialog d'édition utilisateur */}
+      <Dialog open={!!editingUser} onOpenChange={(open) => !open && setEditingUser(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Modifier l'utilisateur {editingUser?.username}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="editEmail">Email</Label>
+              <Input
+                id="editEmail"
+                type="email"
+                value={editEmail}
+                onChange={(e) => setEditEmail(e.target.value)}
+                placeholder="email@example.com"
+              />
+            </div>
+            <div>
+              <Label htmlFor="editRole">Rôle</Label>
+              <select
+                id="editRole"
+                value={editRole}
+                onChange={(e) => setEditRole(e.target.value as 'admin' | 'employee')}
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              >
+                <option value="employee">Employé</option>
+                <option value="admin">Administrateur</option>
+              </select>
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setEditingUser(null)}>
+                Annuler
+              </Button>
+              <Button onClick={handleSaveEdit}>
+                Sauvegarder
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog de changement de mot de passe */}
+      <Dialog open={!!changingPassword} onOpenChange={(open) => !open && setChangingPassword(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Changer le mot de passe de {changingPassword}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="newPassword">Nouveau mot de passe</Label>
+              <Input
+                id="newPassword"
+                type="password"
+                value={newPasswordValue}
+                onChange={(e) => setNewPasswordValue(e.target.value)}
+                placeholder="••••••••"
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setChangingPassword(null)}>
+                Annuler
+              </Button>
+              <Button onClick={handleSavePassword}>
+                Changer le mot de passe
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Ancienne section des utilisateurs existants - supprimée car remplacée par la nouvelle */}
+      <Card style={{ display: 'none' }}>
+        <CardContent>
+          <div className="space-y-3">
+            <h3 className="font-medium">Utilisateurs existants</h3>
+            {users.map((user) => (
+              <div key={user.id} className="flex items-center justify-between p-3 border rounded-lg">
+                <div className="flex items-center gap-3">
+                  <div>
+                    <div className="font-medium">{user.username}</div>
+                    <div className="text-sm text-muted-foreground">{user.email}</div>
+                  </div>
+                  <Badge variant={user.role === 'admin' ? 'default' : 'secondary'}>
+                    {user.role === 'admin' ? 'Admin' : 'Employé'}
+                  </Badge>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => updateUserRole(user.username, user.role === 'admin' ? 'employee' : 'admin')}
                   >
                     {user.role === 'admin' ? 'Rétrograder' : 'Promouvoir'}
                   </Button>
