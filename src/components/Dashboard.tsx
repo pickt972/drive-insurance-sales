@@ -130,7 +130,7 @@ export const Dashboard = () => {
             ) : (
               <div className="relative">
                 {/* Podium avec animation */}
-                <div className="flex items-end justify-center gap-4 mb-8 h-48">
+                <div className="flex items-end justify-center gap-4 mb-8 h-48 mt-6">
                   {/* 2ème place */}
                   {employeeStats[1] && (
                     <div className="flex flex-col items-center animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
@@ -155,7 +155,7 @@ export const Dashboard = () => {
                         className="bg-gradient-to-t from-yellow-500 to-yellow-300 rounded-t-lg p-4 w-24 flex flex-col items-center justify-end shadow-xl transform hover:scale-105 transition-all duration-300 relative"
                         style={{ height: `${calculatePodiumHeight(employeeStats[0].sales, maxSales, 96)}px` }}
                       >
-                        <div className="absolute -top-2 text-2xl">👑</div>
+                        <div className="absolute -top-3 text-2xl">👑</div>
                         <div className="text-white font-bold text-xl">1</div>
                       </div>
                       <div className="mt-2 text-center">
