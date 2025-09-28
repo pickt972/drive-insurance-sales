@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Clock, Trash2, User, FileText, TrendingUp, Euro, Target, Phone, Mail, Filter, Download, Calendar } from "lucide-react";
-import { Edit } from "lucide-react";
+import { CreditCard as Edit } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
@@ -516,6 +516,91 @@ export const SalesHistory = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Dialog d'édition de vente */}
+      <Dialog open={!!editingSale} onOpenChange={(open) => !open && setEditingSale(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Modifier la vente</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="editClientName">Nom du client *</Label>
+              <Input
+                id="editClientName"
+                value={editClientName}
+                onChange={(e) => setEditClientName(e.target.value)}
+                placeholder="Nom du client"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="editReservationNumber">N° de réservation *</Label>
+              <Input
+                id="editReservationNumber"
+                value={editReservationNumber}
+                onChange={(e) => setEditReservationNumber(e.target.value)}
+                placeholder="Ex: LOC-2024-001"
+              />
+            </div>
+
+            <div className="space-y-3">
+              <Label>Assurances souscrites *</Label>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-60 overflow-y-auto">
+                {insuranceTypes.filter(ins => ins.isActive).map((insurance) => (
+                  <div key={insurance.id} className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-muted/50">
+                    <Checkbox
+                      checked={editSelectedInsurances.includes(insurance.name)}
+                      onCheckedChange={(checked) => {
+                        if (checked) {
+                          setEditSelectedInsurances([...editSelectedInsurances, insurance.name]);
+                        } else {
+                          setEditSelectedInsurances(editSelectedInsurances.filter(name => name !== insurance.name));
+                        }
+                      }}
+                    />
+                    <div className="flex-1">
+                      <Label className="font-medium">{insurance.name}</Label>
+                      <p className="text-sm text-success">{insurance.commission.toFixed(2)} €</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="editNotes">Notes (optionnel)</Label>
+              <Textarea
+                id="editNotes"
+                value={editNotes}
+                onChange={(e) => setEditNotes(e.target.value)}
+                placeholder="Informations complémentaires..."
+                rows={3}
+              />
+            </div>
+
+            {editSelectedInsurances.length > 0 && (
+              <div className="p-3 bg-success/10 border border-success/20 rounded-lg">
+                <div className="text-sm font-medium text-success">
+                  Commission totale: {editSelectedInsurances.reduce((sum, insuranceName) => {
+                    const insurance = insuranceTypes.find(ins => ins.name === insuranceName);
+                    return sum + (insurance?.commission || 0);
+                  }, 0).toFixed(2)} €
+                </div>
+              </div>
+            )}
+
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setEditingSale(null)} disabled={editLoading}>
+                Annuler
+              </Button>
+              <Button onClick={handleSaveEdit} disabled={editLoading}>
+                {editLoading ? "Modification..." : "Sauvegarder"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
