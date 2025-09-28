@@ -31,6 +31,14 @@ export const Dashboard = () => {
 
   const employeeStats = sellerStats.sort((a, b) => b.commission - a.commission);
 
+  // Calculer les hauteurs dynamiques du podium basées sur les ventes
+  const calculatePodiumHeight = (sales: number, maxSales: number, baseHeight: number) => {
+    if (maxSales === 0) return baseHeight;
+    const ratio = sales / maxSales;
+    return Math.max(baseHeight, baseHeight + (ratio * 60)); // 60px de variation max
+  };
+
+  const maxSales = Math.max(...employeeStats.map(emp => emp.sales), 1);
   // Top des assurances
   const insuranceCount: Record<string, number> = {};
   sales.forEach(sale => {
@@ -121,12 +129,15 @@ export const Dashboard = () => {
                   {/* 2ème place */}
                   {employeeStats[1] && (
                     <div className="flex flex-col items-center animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
-                      <div className="bg-gradient-to-t from-gray-400 to-gray-300 rounded-t-lg p-4 h-24 w-20 flex flex-col items-center justify-end shadow-lg transform hover:scale-105 transition-all duration-300">
+                      <div 
+                        className="bg-gradient-to-t from-gray-400 to-gray-300 rounded-t-lg p-4 w-20 flex flex-col items-center justify-end shadow-lg transform hover:scale-105 transition-all duration-300"
+                        style={{ height: `${calculatePodiumHeight(employeeStats[1].sales, maxSales, 64)}px` }}
+                      >
                         <div className="text-white font-bold text-lg">2</div>
                       </div>
                       <div className="mt-2 text-center">
                         <div className="font-semibold text-sm">{employeeStats[1].name}</div>
-                        <div className="text-xs text-muted-foreground">{employeeStats[1].totalInsurances} assurances</div>
+                        <div className="text-xs text-muted-foreground">{employeeStats[1].sales} ventes</div>
                         <div className="text-xs font-medium text-success">{formatCurrency(employeeStats[1].commission)}</div>
                       </div>
                     </div>
@@ -135,13 +146,16 @@ export const Dashboard = () => {
                   {/* 1ère place */}
                   {employeeStats[0] && (
                     <div className="flex flex-col items-center animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
-                      <div className="bg-gradient-to-t from-yellow-500 to-yellow-300 rounded-t-lg p-4 h-32 w-24 flex flex-col items-center justify-end shadow-xl transform hover:scale-105 transition-all duration-300 relative">
+                      <div 
+                        className="bg-gradient-to-t from-yellow-500 to-yellow-300 rounded-t-lg p-4 w-24 flex flex-col items-center justify-end shadow-xl transform hover:scale-105 transition-all duration-300 relative"
+                        style={{ height: `${calculatePodiumHeight(employeeStats[0].sales, maxSales, 96)}px` }}
+                      >
                         <div className="absolute -top-2 text-2xl">👑</div>
                         <div className="text-white font-bold text-xl">1</div>
                       </div>
                       <div className="mt-2 text-center">
                         <div className="font-bold text-base text-primary">{employeeStats[0].name}</div>
-                        <div className="text-sm text-muted-foreground">{employeeStats[0].totalInsurances} assurances</div>
+                        <div className="text-sm text-muted-foreground">{employeeStats[0].sales} ventes</div>
                         <div className="text-sm font-bold text-success">{formatCurrency(employeeStats[0].commission)}</div>
                       </div>
                     </div>
@@ -150,12 +164,15 @@ export const Dashboard = () => {
                   {/* 3ème place */}
                   {employeeStats[2] && (
                     <div className="flex flex-col items-center animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
-                      <div className="bg-gradient-to-t from-orange-600 to-orange-400 rounded-t-lg p-4 h-16 w-18 flex flex-col items-center justify-end shadow-lg transform hover:scale-105 transition-all duration-300">
+                      <div 
+                        className="bg-gradient-to-t from-orange-600 to-orange-400 rounded-t-lg p-4 w-18 flex flex-col items-center justify-end shadow-lg transform hover:scale-105 transition-all duration-300"
+                        style={{ height: `${calculatePodiumHeight(employeeStats[2].sales, maxSales, 48)}px` }}
+                      >
                         <div className="text-white font-bold">3</div>
                       </div>
                       <div className="mt-2 text-center">
                         <div className="font-semibold text-sm">{employeeStats[2].name}</div>
-                        <div className="text-xs text-muted-foreground">{employeeStats[2].totalInsurances} assurances</div>
+                        <div className="text-xs text-muted-foreground">{employeeStats[2].sales} ventes</div>
                         <div className="text-xs font-medium text-success">{formatCurrency(employeeStats[2].commission)}</div>
                       </div>
                     </div>
@@ -174,7 +191,7 @@ export const Dashboard = () => {
                           </div>
                           <div>
                             <div className="font-medium text-sm">{employee.name}</div>
-                            <div className="text-xs text-muted-foreground">{employee.totalInsurances} assurances</div>
+                            <div className="text-xs text-muted-foreground">{employee.sales} ventes</div>
                           </div>
                         </div>
                         <div className="text-sm font-medium text-success">{formatCurrency(employee.commission)}</div>
