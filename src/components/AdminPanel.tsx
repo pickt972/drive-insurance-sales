@@ -292,6 +292,9 @@ export const AdminPanel = () => {
         break;
     }
 
+    console.log('📅 Création objectif - Période:', newObjectivePeriod);
+    console.log('📅 Dates calculées:', startDate.toISOString(), 'à', endDate.toISOString());
+
     const result = await addObjective({
       employeeName: newObjectiveEmployee,
       objectiveType: newObjectiveType,
@@ -366,14 +369,29 @@ export const AdminPanel = () => {
 
   // Calculer les statistiques d'objectifs
   const getObjectiveProgress = (objective: any) => {
-    const employeeSales = sales.filter(sale => 
-      sale.employeeName === objective.employeeName &&
-      new Date(sale.createdAt) >= new Date(objective.startDate) &&
-      new Date(sale.createdAt) <= new Date(objective.endDate)
-    );
+    console.log('🔍 Calcul progression pour:', objective.employeeName);
+    console.log('📅 Période objectif:', objective.startDate, 'à', objective.endDate);
+    
+    const employeeSales = sales.filter(sale => {
+      const saleDate = new Date(sale.createdAt);
+      const startDate = new Date(objective.startDate);
+      const endDate = new Date(objective.endDate);
+      
+      console.log('🔍 Vente:', sale.employeeName, 'vs', objective.employeeName, '=', sale.employeeName === objective.employeeName);
+      console.log('📅 Date vente:', saleDate, 'dans période?', saleDate >= startDate && saleDate <= endDate);
+      
+      return sale.employeeName === objective.employeeName &&
+             saleDate >= startDate &&
+             saleDate <= endDate;
+    });
+    
+    console.log('📊 Ventes trouvées pour', objective.employeeName, ':', employeeSales.length);
     
     const achievedAmount = employeeSales.reduce((sum, sale) => sum + sale.commissionAmount, 0);
     const achievedSales = employeeSales.length;
+    
+    console.log('💰 Montant atteint:', achievedAmount, '/ Objectif:', objective.targetAmount);
+    console.log('📈 Ventes atteintes:', achievedSales, '/ Objectif:', objective.targetSalesCount);
     
     let progress = 0;
     if (objective.objectiveType === 'amount') {
@@ -381,6 +399,8 @@ export const AdminPanel = () => {
     } else {
       progress = Math.min((achievedSales / objective.targetSalesCount) * 100, 100);
     }
+    
+    console.log('📊 Progression calculée:', progress, '%');
     
     return {
       achievedAmount,
