@@ -29,7 +29,39 @@ export const AdminPanel = () => {
   const [showChangePassword, setShowChangePassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   
-  const { users, addUser, updateUserRole, removeUser, fetchUsers, updateUser, updatePassword } = useAuth();
+  // États pour la gestion des assurances
+  const [newInsuranceName, setNewInsuranceName] = useState("");
+  const [newInsuranceCommission, setNewInsuranceCommission] = useState("");
+  const [editingInsurance, setEditingInsurance] = useState<any>(null);
+  const [editInsuranceName, setEditInsuranceName] = useState("");
+  const [editInsuranceCommission, setEditInsuranceCommission] = useState("");
+  
+  // États pour la gestion des objectifs
+  const [newObjectiveEmployee, setNewObjectiveEmployee] = useState("");
+  const [newObjectiveAmount, setNewObjectiveAmount] = useState("");
+  const [newObjectiveSales, setNewObjectiveSales] = useState("");
+  const [newObjectivePeriod, setNewObjectivePeriod] = useState<'monthly' | 'quarterly' | 'yearly'>('monthly');
+  const [newObjectiveDescription, setNewObjectiveDescription] = useState("");
+  
+  const { 
+    users, 
+    addUser, 
+    updateUserRole, 
+    removeUser, 
+    fetchUsers, 
+    updateUser, 
+    updatePassword,
+    insuranceTypes,
+    addInsuranceType,
+    updateInsuranceType,
+    removeInsuranceType,
+    fetchInsuranceTypes,
+    sales,
+    objectives,
+    addObjective,
+    removeObjective,
+    fetchObjectives
+  } = useAuth();
 
   useEffect(() => {
     fetchUsers();
