@@ -37,6 +37,8 @@ interface AuthContextType {
   sales: Sale[];
   addSale: (sale: Omit<Sale, 'id' | 'createdAt'>) => Promise<{ success: boolean; error?: string }>;
   deleteSale: (id: string) => Promise<{ success: boolean; error?: string }>;
+  updateSale: (id: string, updates: Partial<Omit<Sale, 'id' | 'createdAt'>>) => Promise<{ success: boolean; error?: string }>;
+  updateSale: (id: string, updates: Partial<Omit<Sale, 'id' | 'createdAt'>>) => Promise<{ success: boolean; error?: string }>;
   fetchSales: () => void;
   // Gestion des objectifs
   objectives: Objective[];
@@ -614,6 +616,25 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
+  const updateSale = async (id: string, updates: Partial<Omit<Sale, 'id' | 'createdAt'>>): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const updatedSales = sales.map(sale => 
+        sale.id === id ? { ...sale, ...updates } : sale
+      );
+      localStorage.setItem('aloelocation_sales', JSON.stringify(updatedSales));
+      setSales(updatedSales);
+
+      toast({
+        title: "Vente modifiée",
+        description: "La vente a été mise à jour avec succès",
+      });
+
+      return { success: true };
+    } catch (error: any) {
+      return { success: false, error: error.message };
+    }
+  };
+
   const fetchSales = () => {
     try {
       const stored = localStorage.getItem('aloelocation_sales');
@@ -722,6 +743,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     sales,
     addSale,
     deleteSale,
+    updateSale,
     fetchSales,
     // Objectifs
     objectives,

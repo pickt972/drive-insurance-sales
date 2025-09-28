@@ -5,10 +5,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Clock, Trash2, User, FileText, TrendingUp, Euro, Target, Phone, Mail, Filter, Download, Calendar } from "lucide-react";
+import { Edit } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/contexts/AuthContext";
 
 export const SalesHistory = () => {
-  const { isAdmin, sales, users, objectives, deleteSale } = useAuth();
+  const { isAdmin, sales, users, objectives, deleteSale, updateSale, insuranceTypes } = useAuth();
   
   // États pour les filtres
   const [filterEmployee, setFilterEmployee] = useState("");
@@ -16,6 +20,14 @@ export const SalesHistory = () => {
   const [filterEndDate, setFilterEndDate] = useState("");
   const [filterInsurance, setFilterInsurance] = useState("");
   const [showFilters, setShowFilters] = useState(false);
+
+  // États pour l'édition de vente
+  const [editingSale, setEditingSale] = useState<any>(null);
+  const [editClientName, setEditClientName] = useState("");
+  const [editReservationNumber, setEditReservationNumber] = useState("");
+  const [editSelectedInsurances, setEditSelectedInsurances] = useState<string[]>([]);
+  const [editNotes, setEditNotes] = useState("");
+  const [editLoading, setEditLoading] = useState(false);
 
   // Fonction de filtrage
   const getFilteredSales = () => {
