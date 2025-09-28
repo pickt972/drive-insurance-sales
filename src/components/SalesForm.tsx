@@ -7,6 +7,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Plus } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
+import { CelebrationPopup } from "@/components/ui/celebration-popup";
 
 interface SalesFormProps {
   onSaleAdded: () => void;
@@ -18,6 +19,8 @@ export const SalesForm = ({ onSaleAdded }: SalesFormProps) => {
   const [selectedInsurances, setSelectedInsurances] = useState<string[]>([]);
   const [notes, setNotes] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showCelebration, setShowCelebration] = useState(false);
+  const [lastSaleAmount, setLastSaleAmount] = useState(0);
   
   const { profile, insuranceTypes, addSale } = useAuth();
 
@@ -51,11 +54,18 @@ export const SalesForm = ({ onSaleAdded }: SalesFormProps) => {
       });
 
       if (result.success) {
-        setClientName("");
-        setReservationNumber("");
-        setSelectedInsurances([]);
-        setNotes("");
-        onSaleAdded();
+        // Déclencher l'animation de célébration
+        setLastSaleAmount(totalCommission);
+        setShowCelebration(true);
+        
+        // Réinitialiser le formulaire après un délai
+        setTimeout(() => {
+          setClientName("");
+          setReservationNumber("");
+          setSelectedInsurances([]);
+          setNotes("");
+          onSaleAdded();
+        }, 3200); // Attendre que l'animation se termine
       }
 
     } catch (error) {
@@ -152,6 +162,13 @@ export const SalesForm = ({ onSaleAdded }: SalesFormProps) => {
           </Button>
         </form>
       </CardContent>
+      
+      {/* Animation de célébration */}
+      <CelebrationPopup
+        isOpen={showCelebration}
+        onClose={() => setShowCelebration(false)}
+        saleAmount={lastSaleAmount}
+      />
     </Card>
   );
 };
