@@ -5,12 +5,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Settings, Plus, Euro, Users, Trash2, CreditCard as Edit, Key, Eye, EyeOff, Target, Car, Shield, User, TrendingUp, GitBranch, Save, Download, Upload, History } from "lucide-react";
+import { Settings, Plus, Euro, Users, Trash2, CreditCard as Edit, Key, Eye, EyeOff, Target, Car, Shield, User, TrendingUp, GitBranch } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
 import { VersionManager } from "@/components/VersionManager";
-import { versioningSystem } from "@/lib/versioning";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export const AdminPanel = () => {
   const [newUsername, setNewUsername] = useState("");
@@ -56,11 +55,6 @@ export const AdminPanel = () => {
   const [editObjectiveSales, setEditObjectiveSales] = useState("");
   const [editObjectivePeriod, setEditObjectivePeriod] = useState<'monthly' | 'quarterly' | 'yearly'>('monthly');
   const [editObjectiveDescription, setEditObjectiveDescription] = useState("");
-  
-  // États pour le versioning
-  const [showVersionDialog, setShowVersionDialog] = useState(false);
-  const [versionDescription, setVersionDescription] = useState("");
-  const [versionChanges, setVersionChanges] = useState("");
   
   const { 
     users, 
@@ -432,323 +426,476 @@ export const AdminPanel = () => {
     return 'text-red-600 bg-red-100';
   };
 
-  // Fonction pour créer une version manuelle
-  const handleCreateVersion = async () => {
-    if (!versionDescription.trim()) {
-      toast({
-        title: "Erreur",
-        description: "Veuillez saisir une description",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      const changes = versionChanges.trim() 
-        ? versionChanges.split('\n').map(line => line.trim()).filter(line => line)
-        : [];
-      
-      versioningSystem.createVersion(
-        versionDescription.trim(),
-        changes,
-        `${users.find(u => u.username === 'admin')?.firstName || 'Admin'} ${users.find(u => u.username === 'admin')?.lastName || 'Système'}`
-      );
-
-      setVersionDescription("");
-      setVersionChanges("");
-      setShowVersionDialog(false);
-
-      toast({
-        title: "Version créée",
-        description: "Nouvelle version sauvegardée avec succès",
-      });
-    } catch (error) {
-      toast({
-        title: "Erreur",
-        description: "Impossible de créer la version",
-        variant: "destructive",
-      });
-    }
-  };
-
-  // Fonction pour exporter les données
-  const handleExportData = () => {
-    try {
-      const exportData = versioningSystem.exportVersions();
-      const blob = new Blob([exportData], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `aloelocation_backup_${new Date().toISOString().split('T')[0]}.json`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-
-      toast({
-        title: "Export réussi",
-        description: "Sauvegarde téléchargée avec succès",
-      });
-    } catch (error) {
-      toast({
-        title: "Erreur",
-        description: "Impossible d'exporter les données",
-        variant: "destructive",
-      });
-    }
-  };
-
   return (
-    <div className="space-y-6 lg:space-y-8">
-      {/* Actions de sauvegarde rapides */}
-      <div className="modern-card animate-gentle-fade-in max-w-7xl mx-auto">
-        <div className="p-4 lg:p-6">
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 lg:gap-0">
-            <div className="flex items-center gap-3">
-              <div className="icon-wrapper">
-                <GitBranch className="h-6 w-6 text-primary" />
-              </div>
-              <div>
-                <h2 className="text-lg lg:text-xl font-bold gradient-text">💾 Sauvegarde & Versioning</h2>
-                <p className="text-sm text-muted-foreground">Version actuelle: <span className="font-bold text-primary">{versioningSystem.getCurrentVersion()}</span></p>
-              </div>
-            </div>
-            
-            <div className="flex flex-wrap items-center gap-2 lg:gap-3">
-              <Dialog open={showVersionDialog} onOpenChange={setShowVersionDialog}>
-                <DialogTrigger asChild>
-                  <Button className="modern-button text-xs lg:text-sm">
-                    <Save className="h-4 w-4 mr-2" />
-                    💾 Sauvegarder
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-2xl modern-card border-0">
-                  <DialogHeader>
-                    <DialogTitle className="text-xl lg:text-2xl font-bold gradient-text">💾 Créer une Sauvegarde</DialogTitle>
-                  </DialogHeader>
-                  <div className="space-y-4 lg:space-y-6 mt-4 lg:mt-6">
-                    <div className="space-y-2">
-                      <Label htmlFor="versionDescription" className="text-sm font-semibold">📝 Description de la sauvegarde *</Label>
-                      <Input
-                        id="versionDescription"
-                        value={versionDescription}
-                        onChange={(e) => setVersionDescription(e.target.value)}
-                        placeholder="Ex: Sauvegarde après ajout nouveaux utilisateurs"
-                        className="friendly-input text-sm"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="versionChanges" className="text-sm font-semibold">🔄 Changements effectués (optionnel)</Label>
-                      <textarea
-                        id="versionChanges"
-                        value={versionChanges}
-                        onChange={(e) => setVersionChanges(e.target.value)}
-                        placeholder="Un changement par ligne&#10;Ex: Ajout utilisateur Julie&#10;Modification objectifs vendeur1"
-                        className="friendly-input text-sm min-h-[100px] w-full resize-none"
-                        rows={4}
-                      />
-                      <p className="text-xs text-muted-foreground">💡 Un changement par ligne</p>
-                    </div>
-
-                    <div className="flex flex-col sm:flex-row justify-end gap-3 pt-4">
-                      <Button 
-                        variant="outline" 
-                        onClick={() => setShowVersionDialog(false)}
-                        className="rounded-2xl hover:scale-105 transition-all duration-300 text-sm"
-                      >
-                        Annuler
-                      </Button>
-                      <Button 
-                        onClick={handleCreateVersion}
-                        className="modern-button text-sm"
-                      >
-                        💾 Créer Sauvegarde
-                      </Button>
-                    </div>
-                  </div>
-                </DialogContent>
-              </Dialog>
-              
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleExportData}
-                className="rounded-2xl hover:scale-105 transition-all duration-300 text-xs lg:text-sm"
-              >
-                <Download className="h-4 w-4 mr-2" />
-                📥 Exporter
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Onglets d'administration */}
-      <Tabs defaultValue="users" className="max-w-7xl mx-auto">
-        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4 mb-6 lg:mb-8">
-          <TabsTrigger value="users" className="text-xs lg:text-sm">👥 Utilisateurs</TabsTrigger>
-          <TabsTrigger value="insurances" className="text-xs lg:text-sm">🛡️ Assurances</TabsTrigger>
-          <TabsTrigger value="objectives" className="text-xs lg:text-sm">🎯 Objectifs</TabsTrigger>
-          <TabsTrigger value="versioning" className="text-xs lg:text-sm">🔄 Versions</TabsTrigger>
+    <div className="space-y-8">
+      <Tabs defaultValue="users" className="w-full">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="users" className="flex items-center gap-2">
+            <Users className="h-4 w-4" />
+            Utilisateurs
+          </TabsTrigger>
+          <TabsTrigger value="insurances" className="flex items-center gap-2">
+            <Shield className="h-4 w-4" />
+            Assurances
+          </TabsTrigger>
+          <TabsTrigger value="objectives" className="flex items-center gap-2">
+            <Target className="h-4 w-4" />
+            Objectifs
+          </TabsTrigger>
+          <TabsTrigger value="versions" className="flex items-center gap-2">
+            <GitBranch className="h-4 w-4" />
+            Versions
+          </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="users">
-      {/* Gestion des utilisateurs */}
-          <div className="modern-card animate-gentle-fade-in">
-        <div className="p-4 lg:p-8">
-          <div className="flex items-center gap-3 mb-6 lg:mb-8">
-            <div className="icon-wrapper">
-              <Users className="h-6 w-6 text-primary" />
-            </div>
-            <h2 className="text-lg lg:text-2xl font-bold gradient-text">👥 Gestion des Utilisateurs</h2>
-          </div>
-          
-          <form onSubmit={handleAddUser} className="space-y-4 lg:space-y-6 mb-6 lg:mb-8">
-            <div className="grid grid-cols-1 lg:grid-cols-7 gap-3 lg:gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="username" className="text-sm font-semibold">Nom d'utilisateur</Label>
-                <Input
-                  id="username"
-                  value={newUsername}
-                  onChange={(e) => setNewUsername(e.target.value)}
-                  placeholder="Ex: vendeur3"
-                  className="friendly-input text-sm"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="firstName" className="text-sm font-semibold">Prénom</Label>
-                <Input
-                  id="firstName"
-                  value={newFirstName}
-                  onChange={(e) => setNewFirstName(e.target.value)}
-                  placeholder="Ex: Pierre"
-                  className="friendly-input text-sm"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="lastName" className="text-sm font-semibold">Nom</Label>
-                <Input
-                  id="lastName"
-                  value={newLastName}
-                  onChange={(e) => setNewLastName(e.target.value)}
-                  placeholder="Ex: Durand"
-                  className="friendly-input text-sm"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="email" className="text-sm font-semibold">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={newEmail}
-                  onChange={(e) => setNewEmail(e.target.value)}
-                  placeholder="vendeur3@aloelocation.com"
-                  className="friendly-input text-sm"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="password" className="text-sm font-semibold">Mot de passe</Label>
-                <div className="relative">
-                  <Input
-                    id="password"
-                    type={showNewPassword ? "text" : "password"}
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                    placeholder="••••••••"
-                    className="friendly-input text-sm pr-12"
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="absolute right-2 top-1/2 transform -translate-y-1/2 h-8 w-8 rounded-xl hover:bg-muted/50"
-                    onClick={() => setShowNewPassword(!showNewPassword)}
-                  >
-                    {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </Button>
+        <TabsContent value="users" className="space-y-6 lg:space-y-8">
+          {/* Gestion des utilisateurs */}
+          <div className="modern-card animate-gentle-fade-in max-w-7xl mx-auto">
+            <div className="p-4 lg:p-8">
+              <div className="flex items-center gap-3 mb-6 lg:mb-8">
+                <div className="icon-wrapper">
+                  <Users className="h-6 w-6 text-primary" />
                 </div>
+                <h2 className="text-lg lg:text-2xl font-bold gradient-text">👥 Gestion des Utilisateurs</h2>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="role" className="text-sm font-semibold">Rôle</Label>
-                <select
-                  id="role"
-                  value={newRole}
-                  onChange={(e) => setNewRole(e.target.value as 'admin' | 'employee')}
-                  className="friendly-input text-sm"
-                >
-                  <option value="employee">Employé</option>
-                  <option value="admin">Administrateur</option>
-                </select>
-              </div>
-              <div className="flex items-end">
-                <Button type="submit" className="modern-button w-full" disabled={loading}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  {loading ? "🔄 Ajout..." : "➕ Ajouter"}
-                </Button>
-              </div>
-            </div>
-          </form>
-
-          <div className="space-y-4">
-            <h3 className="font-bold text-base lg:text-lg text-foreground">Utilisateurs existants</h3>
-            {users.map((user) => (
-              <div key={user.id} className="modern-card p-3 lg:p-4 animate-elegant-slide">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 lg:gap-4 flex-1 min-w-0">
-                    <div className="icon-wrapper">
-                      <User className="h-5 w-5 text-primary" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="font-bold text-sm lg:text-base truncate">{user.firstName} {user.lastName}</div>
-                      <div className="text-xs lg:text-sm text-muted-foreground truncate">@{user.username}</div>
-                      <div className="text-xs text-muted-foreground truncate lg:hidden">{user.email}</div>
-                    </div>
-                    <div className="hidden lg:block text-xs text-muted-foreground">{user.email}</div>
-                    <Badge variant={user.role === 'admin' ? 'default' : 'secondary'} className="rounded-full text-xs">
-                      {user.role === 'admin' ? 'Admin' : 'Employé'}
-                    </Badge>
+              
+              <form onSubmit={handleAddUser} className="space-y-4 lg:space-y-6 mb-6 lg:mb-8">
+                <div className="grid grid-cols-1 lg:grid-cols-7 gap-3 lg:gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="username" className="text-sm font-semibold">Nom d'utilisateur</Label>
+                    <Input
+                      id="username"
+                      value={newUsername}
+                      onChange={(e) => setNewUsername(e.target.value)}
+                      placeholder="Ex: vendeur3"
+                      className="friendly-input text-sm"
+                    />
                   </div>
-                  <div className="flex items-center gap-1 lg:gap-2 ml-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleEditUser(user)}
-                      className="rounded-2xl hover:scale-105 transition-all duration-300 h-8 w-8 lg:h-9 lg:w-auto lg:px-3"
-                    >
-                      <Edit className="h-4 w-4" />
-                      <span className="hidden lg:inline ml-2">Modifier</span>
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleChangePassword(user.username)}
-                      className="rounded-2xl hover:scale-105 transition-all duration-300 h-8 w-8 lg:h-9 lg:w-auto lg:px-3"
-                    >
-                      <Key className="h-4 w-4" />
-                      <span className="hidden lg:inline ml-2">MDP</span>
-                    </Button>
-                    {user.username !== 'admin' && (
+                  <div className="space-y-2">
+                    <Label htmlFor="firstName" className="text-sm font-semibold">Prénom</Label>
+                    <Input
+                      id="firstName"
+                      value={newFirstName}
+                      onChange={(e) => setNewFirstName(e.target.value)}
+                      placeholder="Ex: Pierre"
+                      className="friendly-input text-sm"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="lastName" className="text-sm font-semibold">Nom</Label>
+                    <Input
+                      id="lastName"
+                      value={newLastName}
+                      onChange={(e) => setNewLastName(e.target.value)}
+                      placeholder="Ex: Durand"
+                      className="friendly-input text-sm"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="email" className="text-sm font-semibold">Email</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={newEmail}
+                      onChange={(e) => setNewEmail(e.target.value)}
+                      placeholder="vendeur3@aloelocation.com"
+                      className="friendly-input text-sm"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="password" className="text-sm font-semibold">Mot de passe</Label>
+                    <div className="relative">
+                      <Input
+                        id="password"
+                        type={showNewPassword ? "text" : "password"}
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        placeholder="••••••••"
+                        className="friendly-input text-sm pr-12"
+                      />
                       <Button
-                        variant="outline"
+                        type="button"
+                        variant="ghost"
                         size="sm"
-                        onClick={() => handleRemoveUser(user.username)}
-                        className="rounded-2xl hover:scale-105 transition-all duration-300 text-destructive hover:text-destructive h-8 w-8 lg:h-9 lg:w-auto lg:px-3"
+                        className="absolute right-2 top-1/2 transform -translate-y-1/2 h-8 w-8 rounded-xl hover:bg-muted/50"
+                        onClick={() => setShowNewPassword(!showNewPassword)}
                       >
-                        <Trash2 className="h-4 w-4" />
-                        <span className="hidden lg:inline ml-2">Suppr</span>
+                        {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                       </Button>
-                    )}
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="role" className="text-sm font-semibold">Rôle</Label>
+                    <select
+                      id="role"
+                      value={newRole}
+                      onChange={(e) => setNewRole(e.target.value as 'admin' | 'employee')}
+                      className="friendly-input text-sm"
+                    >
+                      <option value="employee">Employé</option>
+                      <option value="admin">Administrateur</option>
+                    </select>
+                  </div>
+                  <div className="flex items-end">
+                    <Button type="submit" className="modern-button w-full" disabled={loading}>
+                      <Plus className="h-4 w-4 mr-2" />
+                      {loading ? "🔄 Ajout..." : "➕ Ajouter"}
+                    </Button>
                   </div>
                 </div>
+              </form>
+
+              <div className="space-y-4">
+                <h3 className="font-bold text-base lg:text-lg text-foreground">Utilisateurs existants</h3>
+                {users.map((user) => (
+                  <div key={user.id} className="modern-card p-3 lg:p-4 animate-elegant-slide">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 lg:gap-4 flex-1 min-w-0">
+                        <div className="icon-wrapper">
+                          <User className="h-5 w-5 text-primary" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="font-bold text-sm lg:text-base truncate">{user.firstName} {user.lastName}</div>
+                          <div className="text-xs lg:text-sm text-muted-foreground truncate">@{user.username}</div>
+                          <div className="text-xs text-muted-foreground truncate lg:hidden">{user.email}</div>
+                        </div>
+                        <div className="hidden lg:block text-xs text-muted-foreground">{user.email}</div>
+                        <Badge variant={user.role === 'admin' ? 'default' : 'secondary'} className="rounded-full text-xs">
+                          {user.role === 'admin' ? 'Admin' : 'Employé'}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center gap-1 lg:gap-2 ml-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleEditUser(user)}
+                          className="rounded-2xl hover:scale-105 transition-all duration-300 h-8 w-8 lg:h-9 lg:w-auto lg:px-3"
+                        >
+                          <Edit className="h-4 w-4" />
+                          <span className="hidden lg:inline ml-2">Modifier</span>
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleChangePassword(user.username)}
+                          className="rounded-2xl hover:scale-105 transition-all duration-300 h-8 w-8 lg:h-9 lg:w-auto lg:px-3"
+                        >
+                          <Key className="h-4 w-4" />
+                          <span className="hidden lg:inline ml-2">MDP</span>
+                        </Button>
+                        {user.username !== 'admin' && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleRemoveUser(user.username)}
+                            className="rounded-2xl hover:scale-105 transition-all duration-300 text-destructive hover:text-destructive h-8 w-8 lg:h-9 lg:w-auto lg:px-3"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                            <span className="hidden lg:inline ml-2">Suppr</span>
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))}
+            </div>
           </div>
-        </div>
-      </div>
         </TabsContent>
 
-        <TabsContent value="insurances">
+        <TabsContent value="insurances" className="space-y-6 lg:space-y-8">
+          {/* Gestion des assurances */}
+          <div className="modern-card animate-smooth-scale-in max-w-7xl mx-auto" style={{ animationDelay: '0.2s' }}>
+            <div className="p-4 lg:p-8">
+              <div className="flex items-center gap-3 mb-6 lg:mb-8">
+                <div className="icon-wrapper">
+                  <Shield className="h-6 w-6 text-primary" />
+                </div>
+                <h2 className="text-lg lg:text-2xl font-bold gradient-text">🛡️ Gestion des Assurances</h2>
+              </div>
+              
+              <form onSubmit={handleAddInsurance} className="space-y-4 lg:space-y-6 mb-6 lg:mb-8">
+                <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 lg:gap-4">
+                  <div className="lg:col-span-2 space-y-2">
+                    <Label htmlFor="insuranceName" className="text-sm font-semibold">Nom de l'assurance</Label>
+                    <Input
+                      id="insuranceName"
+                      value={newInsuranceName}
+                      onChange={(e) => setNewInsuranceName(e.target.value)}
+                      placeholder="Ex: Assurance Tous Risques"
+                      className="friendly-input text-sm"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="insuranceCommission" className="text-sm font-semibold">Commission (€)</Label>
+                    <Input
+                      id="insuranceCommission"
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={newInsuranceCommission}
+                      onChange={(e) => setNewInsuranceCommission(e.target.value)}
+                      placeholder="25.00"
+                      className="friendly-input text-sm"
+                    />
+                  </div>
+                  <div className="flex items-end">
+                    <Button type="submit" className="modern-button w-full">
+                      <Plus className="h-4 w-4 mr-2" />
+                      ➕ Ajouter
+                    </Button>
+                  </div>
+                </div>
+              </form>
+
+              <div className="space-y-4">
+                <h3 className="font-bold text-base lg:text-lg text-foreground">Assurances disponibles</h3>
+                {insuranceTypes.filter(ins => ins.isActive).map((insurance) => (
+                  <div key={insurance.id} className="modern-card p-3 lg:p-4 animate-elegant-slide">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 lg:gap-4 flex-1 min-w-0">
+                        <div className="icon-wrapper">
+                          <Car className="h-5 w-5 text-primary" />
+                        </div>
+                        <span className="font-semibold text-sm lg:text-base truncate">{insurance.name}</span>
+                      </div>
+                      <div className="flex items-center gap-2 lg:gap-3">
+                        <div className="success-indicator text-xs lg:text-sm">
+                          <Euro className="h-4 w-4" />
+                          <span className="font-bold">{insurance.commission.toFixed(2)} €</span>
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleEditInsurance(insurance)}
+                          className="rounded-2xl hover:scale-105 transition-all duration-300 h-8 w-8 lg:h-9 lg:w-auto lg:px-3"
+                        >
+                          <Edit className="h-4 w-4" />
+                          <span className="hidden lg:inline ml-2">Modifier</span>
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleRemoveInsurance(insurance.id, insurance.name)}
+                          className="rounded-2xl hover:scale-105 transition-all duration-300 text-destructive hover:text-destructive h-8 w-8 lg:h-9 lg:w-auto lg:px-3"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                          <span className="hidden lg:inline ml-2">Suppr</span>
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="objectives" className="space-y-6 lg:space-y-8">
+          {/* Gestion des objectifs */}
+          <div className="modern-card animate-smooth-scale-in max-w-7xl mx-auto" style={{ animationDelay: '0.3s' }}>
+            <div className="p-4 lg:p-8">
+              <div className="flex items-center gap-3 mb-6 lg:mb-8">
+                <div className="icon-wrapper">
+                  <Target className="h-6 w-6 text-primary" />
+                </div>
+                <h2 className="text-lg lg:text-2xl font-bold gradient-text">🎯 Gestion des Objectifs</h2>
+              </div>
+              
+              <form onSubmit={handleAddObjective} className="space-y-4 lg:space-y-6 mb-6 lg:mb-8">
+                <div className="grid grid-cols-1 lg:grid-cols-7 gap-3 lg:gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="objectiveEmployee" className="text-sm font-semibold">Employé</Label>
+                    <select
+                      id="objectiveEmployee"
+                      value={newObjectiveEmployee}
+                      onChange={(e) => setNewObjectiveEmployee(e.target.value)}
+                      className="friendly-input text-sm"
+                    >
+                      <option value="">Sélectionner</option>
+                      {users.filter(u => u.role === 'employee').map(user => (
+                        <option key={user.username} value={user.username}>
+                          {user.firstName} {user.lastName}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="objectiveType" className="text-sm font-semibold">Type</Label>
+                    <select
+                      id="objectiveType"
+                      value={newObjectiveType}
+                      onChange={(e) => setNewObjectiveType(e.target.value as 'amount' | 'sales_count')}
+                      className="friendly-input text-sm"
+                    >
+                      <option value="amount">Chiffre d'affaires</option>
+                      <option value="sales_count">Nombre de ventes</option>
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="objectiveAmount">
+                      CA (€)
+                    </Label>
+                    <Input
+                      id="objectiveAmount"
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={newObjectiveAmount}
+                      onChange={(e) => setNewObjectiveAmount(e.target.value)}
+                      placeholder="500.00"
+                      className="friendly-input text-sm"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="objectiveSales">
+                      Ventes
+                    </Label>
+                    <Input
+                      id="objectiveSales"
+                      type="number"
+                      min="0"
+                      value={newObjectiveSales}
+                      onChange={(e) => setNewObjectiveSales(e.target.value)}
+                      placeholder="20"
+                      className="friendly-input text-sm"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="objectivePeriod" className="text-sm font-semibold">Période</Label>
+                    <select
+                      id="objectivePeriod"
+                      value={newObjectivePeriod}
+                      onChange={(e) => setNewObjectivePeriod(e.target.value as 'monthly' | 'quarterly' | 'yearly')}
+                      className="friendly-input text-sm"
+                    >
+                      <option value="monthly">Mensuel</option>
+                      <option value="quarterly">Trimestriel</option>
+                      <option value="yearly">Annuel</option>
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="objectiveDescription" className="text-sm font-semibold">Description</Label>
+                    <Input
+                      id="objectiveDescription"
+                      value={newObjectiveDescription}
+                      onChange={(e) => setNewObjectiveDescription(e.target.value)}
+                      placeholder="Optionnel"
+                      className="friendly-input text-sm"
+                    />
+                  </div>
+                  <div className="flex items-end">
+                    <Button type="submit" className="modern-button w-full">
+                      <Plus className="h-4 w-4 mr-2" />
+                      🎯 Créer
+                    </Button>
+                  </div>
+                </div>
+              </form>
+
+              <div className="space-y-6">
+                <h3 className="font-bold text-base lg:text-lg text-foreground">Objectifs actifs avec progression</h3>
+                {objectives.map((objective) => {
+                  const progress = getObjectiveProgress(objective);
+                  const progressColor = getProgressColor(progress.progress);
+                  
+                  return (
+                    <div key={objective.id} className="modern-card p-4 lg:p-6 animate-elegant-slide">
+                      <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-4 gap-3 lg:gap-0">
+                        <div className="flex-1 min-w-0">
+                          <div className="font-bold text-base lg:text-lg truncate">
+                            {users.find(u => u.username === objective.employeeName)?.firstName} {users.find(u => u.username === objective.employeeName)?.lastName}
+                          </div>
+                          <div className="text-sm lg:text-base text-muted-foreground">
+                            {objective.description} • {objective.period === 'monthly' ? 'Mensuel' : objective.period === 'quarterly' ? 'Trimestriel' : 'Annuel'} • {objective.objectiveType === 'amount' ? 'CA' : 'Ventes'}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 lg:gap-3">
+                          <div className={`px-3 lg:px-4 py-1.5 lg:py-2 rounded-2xl text-sm lg:text-base font-bold ${progressColor}`}>
+                            {progress.progress.toFixed(0)}%
+                          </div>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleEditObjective(objective)}
+                            className="rounded-2xl hover:scale-105 transition-all duration-300 h-8 w-8 lg:h-9 lg:w-auto lg:px-3"
+                          >
+                            <Edit className="h-4 w-4" />
+                            <span className="hidden lg:inline ml-2">Modifier</span>
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleRemoveObjective(objective.id, objective.employeeName)}
+                            className="rounded-2xl hover:scale-105 transition-all duration-300 text-destructive hover:text-destructive h-8 w-8 lg:h-9 lg:w-auto lg:px-3"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                            <span className="hidden lg:inline ml-2">Suppr</span>
+                          </Button>
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-2 lg:space-y-3">
+                        {objective.objectiveType === 'amount' ? (
+                          <div>
+                            <div className="text-sm lg:text-base font-semibold text-muted-foreground mb-2">💰 Chiffre d'affaires</div>
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm lg:text-base font-medium">{progress.achievedAmount.toFixed(2)} € / {objective.targetAmount.toFixed(2)} €</span>
+                              <span className="text-sm lg:text-base font-bold">{progress.progress.toFixed(0)}%</span>
+                            </div>
+                            <div className="w-full bg-muted rounded-full h-3 lg:h-4 mt-2">
+                              <div 
+                                className={`h-3 lg:h-4 rounded-full transition-all duration-500 ${
+                                  progress.progress >= 100 ? 'bg-gradient-to-r from-success to-success-variant' :
+                                  progress.progress >= 75 ? 'bg-gradient-to-r from-warning to-orange' :
+                                  progress.progress >= 50 ? 'bg-gradient-to-r from-orange to-destructive' : 'bg-gradient-to-r from-destructive to-destructive/80'
+                                }`}
+                                style={{ width: `${Math.min(progress.progress, 100)}%` }}
+                              ></div>
+                            </div>
+                          </div>
+                        ) : (
+                          <div>
+                            <div className="text-sm lg:text-base font-semibold text-muted-foreground mb-2">📊 Nombre de ventes</div>
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm lg:text-base font-medium">{progress.achievedSales} / {objective.targetSalesCount}</span>
+                              <span className="text-sm lg:text-base font-bold">{progress.progress.toFixed(0)}%</span>
+                            </div>
+                            <div className="w-full bg-muted rounded-full h-3 lg:h-4 mt-2">
+                              <div 
+                                className={`h-3 lg:h-4 rounded-full transition-all duration-500 ${
+                                  progress.progress >= 100 ? 'bg-gradient-to-r from-success to-success-variant' :
+                                  progress.progress >= 75 ? 'bg-gradient-to-r from-warning to-orange' :
+                                  progress.progress >= 50 ? 'bg-gradient-to-r from-orange to-destructive' : 'bg-gradient-to-r from-destructive to-destructive/80'
+                                }`}
+                                style={{ width: `${Math.min(progress.progress, 100)}%` }}
+                              ></div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+                
+                {objectives.length === 0 && (
+                  <div className="text-center py-8 lg:py-16 text-muted-foreground">
+                    <div className="icon-wrapper mx-auto mb-6 opacity-50">
+                      <Target className="h-12 lg:h-16 w-12 lg:w-16" />
+                    </div>
+                    <p className="text-base lg:text-lg">Aucun objectif défini</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="versions" className="space-y-6 lg:space-y-8">
+          <VersionManager />
+        </TabsContent>
+      </Tabs>
+
       {/* Dialog d'édition utilisateur */}
       <Dialog open={!!editingUser} onOpenChange={(open) => !open && setEditingUser(null)}>
         <DialogContent>
@@ -817,94 +964,69 @@ export const AdminPanel = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Gestion des assurances */}
-          <div className="modern-card animate-smooth-scale-in">
-        <div className="p-4 lg:p-8">
-          <div className="flex items-center gap-3 mb-6 lg:mb-8">
-            <div className="icon-wrapper">
-              <Shield className="h-6 w-6 text-primary" />
-            </div>
-            <h2 className="text-lg lg:text-2xl font-bold gradient-text">🛡️ Gestion des Assurances</h2>
-          </div>
-          
-          <form onSubmit={handleAddInsurance} className="space-y-4 lg:space-y-6 mb-6 lg:mb-8">
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 lg:gap-4">
-              <div className="lg:col-span-2 space-y-2">
-                <Label htmlFor="insuranceName" className="text-sm font-semibold">Nom de l'assurance</Label>
+      {/* Dialog de changement de mot de passe */}
+      <Dialog open={!!changingPassword} onOpenChange={(open) => !open && setChangingPassword(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Changer le mot de passe de {changingPassword}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="newPassword">Nouveau mot de passe</Label>
+              <div className="relative">
                 <Input
-                  id="insuranceName"
-                  value={newInsuranceName}
-                  onChange={(e) => setNewInsuranceName(e.target.value)}
-                  placeholder="Ex: Assurance Tous Risques"
-                  className="friendly-input text-sm"
+                  id="newPassword"
+                  type={showChangePassword ? "text" : "password"}
+                  value={newPasswordValue}
+                  onChange={(e) => setNewPasswordValue(e.target.value)}
+                  placeholder="••••••••"
+                  className="pr-10"
                 />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="insuranceCommission" className="text-sm font-semibold">Commission (€)</Label>
-                <Input
-                  id="insuranceCommission"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  value={newInsuranceCommission}
-                  onChange={(e) => setNewInsuranceCommission(e.target.value)}
-                  placeholder="25.00"
-                  className="friendly-input text-sm"
-                />
-              </div>
-              <div className="flex items-end">
-                <Button type="submit" className="modern-button w-full">
-                  <Plus className="h-4 w-4 mr-2" />
-                  ➕ Ajouter
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="absolute right-0 top-0 h-full px-3"
+                  onClick={() => setShowChangePassword(!showChangePassword)}
+                >
+                  {showChangePassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </Button>
               </div>
             </div>
-          </form>
-
-          <div className="space-y-4">
-            <h3 className="font-bold text-base lg:text-lg text-foreground">Assurances disponibles</h3>
-            {insuranceTypes.filter(ins => ins.isActive).map((insurance) => (
-              <div key={insurance.id} className="modern-card p-3 lg:p-4 animate-elegant-slide">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 lg:gap-4 flex-1 min-w-0">
-                    <div className="icon-wrapper">
-                      <Car className="h-5 w-5 text-primary" />
-                    </div>
-                    <span className="font-semibold text-sm lg:text-base truncate">{insurance.name}</span>
-                  </div>
-                  <div className="flex items-center gap-2 lg:gap-3">
-                    <div className="success-indicator text-xs lg:text-sm">
-                      <Euro className="h-4 w-4" />
-                      <span className="font-bold">{insurance.commission.toFixed(2)} €</span>
-                    </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleEditInsurance(insurance)}
-                      className="rounded-2xl hover:scale-105 transition-all duration-300 h-8 w-8 lg:h-9 lg:w-auto lg:px-3"
-                    >
-                      <Edit className="h-4 w-4" />
-                      <span className="hidden lg:inline ml-2">Modifier</span>
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleRemoveInsurance(insurance.id, insurance.name)}
-                      className="rounded-2xl hover:scale-105 transition-all duration-300 text-destructive hover:text-destructive h-8 w-8 lg:h-9 lg:w-auto lg:px-3"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                      <span className="hidden lg:inline ml-2">Suppr</span>
-                    </Button>
-                  </div>
-                </div>
+            <div>
+              <Label htmlFor="confirmPassword">Confirmer le mot de passe</Label>
+              <div className="relative">
+                <Input
+                  id="confirmPassword"
+                  type={showConfirmPassword ? "text" : "password"}
+                  value={confirmPasswordValue}
+                  onChange={(e) => setConfirmPasswordValue(e.target.value)}
+                  placeholder="••••••••"
+                  className="pr-10"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="absolute right-0 top-0 h-full px-3"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                >
+                  {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </Button>
               </div>
-            ))}
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setChangingPassword(null)}>
+                Annuler
+              </Button>
+              <Button onClick={handleSavePassword}>
+                Changer le mot de passe
+              </Button>
+            </div>
           </div>
-        </div>
-      </div>
-        </TabsContent>
+        </DialogContent>
+      </Dialog>
 
-        <TabsContent value="objectives">
       {/* Dialog d'édition assurance */}
       <Dialog open={!!editingInsurance} onOpenChange={(open) => !open && setEditingInsurance(null)}>
         <DialogContent>
@@ -944,210 +1066,6 @@ export const AdminPanel = () => {
           </div>
         </DialogContent>
       </Dialog>
-
-      {/* Gestion des objectifs */}
-          <div className="modern-card animate-smooth-scale-in">
-        <div className="p-4 lg:p-8">
-          <div className="flex items-center gap-3 mb-6 lg:mb-8">
-            <div className="icon-wrapper">
-              <Target className="h-6 w-6 text-primary" />
-            </div>
-            <h2 className="text-lg lg:text-2xl font-bold gradient-text">🎯 Gestion des Objectifs</h2>
-          </div>
-          
-          <form onSubmit={handleAddObjective} className="space-y-4 lg:space-y-6 mb-6 lg:mb-8">
-            <div className="grid grid-cols-1 lg:grid-cols-7 gap-3 lg:gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="objectiveEmployee" className="text-sm font-semibold">Employé</Label>
-                <select
-                  id="objectiveEmployee"
-                  value={newObjectiveEmployee}
-                  onChange={(e) => setNewObjectiveEmployee(e.target.value)}
-                  className="friendly-input text-sm"
-                >
-                  <option value="">Sélectionner</option>
-                  {users.filter(u => u.role === 'employee').map(user => (
-                    <option key={user.username} value={user.username}>
-                      {user.firstName} {user.lastName}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="objectiveType" className="text-sm font-semibold">Type</Label>
-                <select
-                  id="objectiveType"
-                  value={newObjectiveType}
-                  onChange={(e) => setNewObjectiveType(e.target.value as 'amount' | 'sales_count')}
-                  className="friendly-input text-sm"
-                >
-                  <option value="amount">Chiffre d'affaires</option>
-                  <option value="sales_count">Nombre de ventes</option>
-                </select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="objectiveAmount">
-                  CA (€)
-                </Label>
-                <Input
-                  id="objectiveAmount"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  value={newObjectiveAmount}
-                  onChange={(e) => setNewObjectiveAmount(e.target.value)}
-                  placeholder="500.00"
-                  className="friendly-input text-sm"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="objectiveSales">
-                  Ventes
-                </Label>
-                <Input
-                  id="objectiveSales"
-                  type="number"
-                  min="0"
-                  value={newObjectiveSales}
-                  onChange={(e) => setNewObjectiveSales(e.target.value)}
-                  placeholder="20"
-                  className="friendly-input text-sm"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="objectivePeriod" className="text-sm font-semibold">Période</Label>
-                <select
-                  id="objectivePeriod"
-                  value={newObjectivePeriod}
-                  onChange={(e) => setNewObjectivePeriod(e.target.value as 'monthly' | 'quarterly' | 'yearly')}
-                  className="friendly-input text-sm"
-                >
-                  <option value="monthly">Mensuel</option>
-                  <option value="quarterly">Trimestriel</option>
-                  <option value="yearly">Annuel</option>
-                </select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="objectiveDescription" className="text-sm font-semibold">Description</Label>
-                <Input
-                  id="objectiveDescription"
-                  value={newObjectiveDescription}
-                  onChange={(e) => setNewObjectiveDescription(e.target.value)}
-                  placeholder="Optionnel"
-                  className="friendly-input text-sm"
-                />
-              </div>
-              <div className="flex items-end">
-                <Button type="submit" className="modern-button w-full">
-                  <Plus className="h-4 w-4 mr-2" />
-                  🎯 Créer
-                </Button>
-              </div>
-            </div>
-          </form>
-
-          <div className="space-y-6">
-            <h3 className="font-bold text-base lg:text-lg text-foreground">Objectifs actifs avec progression</h3>
-            {objectives.map((objective) => {
-              const progress = getObjectiveProgress(objective);
-              const progressColor = getProgressColor(progress.progress);
-              
-              return (
-                <div key={objective.id} className="modern-card p-4 lg:p-6 animate-elegant-slide">
-                  <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-4 gap-3 lg:gap-0">
-                    <div className="flex-1 min-w-0">
-                      <div className="font-bold text-base lg:text-lg truncate">
-                        {users.find(u => u.username === objective.employeeName)?.firstName} {users.find(u => u.username === objective.employeeName)?.lastName}
-                      </div>
-                      <div className="text-sm lg:text-base text-muted-foreground">
-                        {objective.description} • {objective.period === 'monthly' ? 'Mensuel' : objective.period === 'quarterly' ? 'Trimestriel' : 'Annuel'} • {objective.objectiveType === 'amount' ? 'CA' : 'Ventes'}
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2 lg:gap-3">
-                      <div className={`px-3 lg:px-4 py-1.5 lg:py-2 rounded-2xl text-sm lg:text-base font-bold ${progressColor}`}>
-                        {progress.progress.toFixed(0)}%
-                      </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleEditObjective(objective)}
-                        className="rounded-2xl hover:scale-105 transition-all duration-300 h-8 w-8 lg:h-9 lg:w-auto lg:px-3"
-                      >
-                        <Edit className="h-4 w-4" />
-                        <span className="hidden lg:inline ml-2">Modifier</span>
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleRemoveObjective(objective.id, objective.employeeName)}
-                        className="rounded-2xl hover:scale-105 transition-all duration-300 text-destructive hover:text-destructive h-8 w-8 lg:h-9 lg:w-auto lg:px-3"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                        <span className="hidden lg:inline ml-2">Suppr</span>
-                      </Button>
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-2 lg:space-y-3">
-                    {objective.objectiveType === 'amount' ? (
-                      <div>
-                        <div className="text-sm lg:text-base font-semibold text-muted-foreground mb-2">💰 Chiffre d'affaires</div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm lg:text-base font-medium">{progress.achievedAmount.toFixed(2)} € / {objective.targetAmount.toFixed(2)} €</span>
-                          <span className="text-sm lg:text-base font-bold">{progress.progress.toFixed(0)}%</span>
-                        </div>
-                        <div className="w-full bg-muted rounded-full h-3 lg:h-4 mt-2">
-                          <div 
-                            className={`h-3 lg:h-4 rounded-full transition-all duration-500 ${
-                              progress.progress >= 100 ? 'bg-gradient-to-r from-success to-success-variant' :
-                              progress.progress >= 75 ? 'bg-gradient-to-r from-warning to-orange' :
-                              progress.progress >= 50 ? 'bg-gradient-to-r from-orange to-destructive' : 'bg-gradient-to-r from-destructive to-destructive/80'
-                            }`}
-                            style={{ width: `${Math.min(progress.progress, 100)}%` }}
-                          ></div>
-                        </div>
-                      </div>
-                    ) : (
-                      <div>
-                        <div className="text-sm lg:text-base font-semibold text-muted-foreground mb-2">📊 Nombre de ventes</div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm lg:text-base font-medium">{progress.achievedSales} / {objective.targetSalesCount}</span>
-                          <span className="text-sm lg:text-base font-bold">{progress.progress.toFixed(0)}%</span>
-                        </div>
-                        <div className="w-full bg-muted rounded-full h-3 lg:h-4 mt-2">
-                          <div 
-                            className={`h-3 lg:h-4 rounded-full transition-all duration-500 ${
-                              progress.progress >= 100 ? 'bg-gradient-to-r from-success to-success-variant' :
-                              progress.progress >= 75 ? 'bg-gradient-to-r from-warning to-orange' :
-                              progress.progress >= 50 ? 'bg-gradient-to-r from-orange to-destructive' : 'bg-gradient-to-r from-destructive to-destructive/80'
-                            }`}
-                            style={{ width: `${Math.min(progress.progress, 100)}%` }}
-                          ></div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-            
-            {objectives.length === 0 && (
-              <div className="text-center py-8 lg:py-16 text-muted-foreground">
-                <div className="icon-wrapper mx-auto mb-6 opacity-50">
-                  <Target className="h-12 lg:h-16 w-12 lg:w-16" />
-                </div>
-                <p className="text-base lg:text-lg">Aucun objectif défini</p>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-        </TabsContent>
-
-        <TabsContent value="versioning">
-          <VersionManager />
-        </TabsContent>
-      </Tabs>
 
       {/* Dialog d'édition objectif */}
       <Dialog open={!!editingObjective} onOpenChange={(open) => !open && setEditingObjective(null)}>
@@ -1244,68 +1162,41 @@ export const AdminPanel = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Dialog de changement de mot de passe - déplacé ici pour éviter les conflits */}
-      <Dialog open={!!changingPassword} onOpenChange={(open) => !open && setChangingPassword(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Changer le mot de passe de {changingPassword}</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="newPassword">Nouveau mot de passe</Label>
-              <div className="relative">
-                <Input
-                  id="newPassword"
-                  type={showChangePassword ? "text" : "password"}
-                  value={newPasswordValue}
-                  onChange={(e) => setNewPasswordValue(e.target.value)}
-                  placeholder="••••••••"
-                  className="pr-10"
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="absolute right-0 top-0 h-full px-3"
-                  onClick={() => setShowChangePassword(!showChangePassword)}
-                >
-                  {showChangePassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </Button>
-              </div>
+      {/* Statistiques système */}
+      <div className="modern-card animate-gentle-fade-in max-w-7xl mx-auto" style={{ animationDelay: '0.4s' }}>
+        <div className="p-4 lg:p-8">
+          <div className="flex items-center gap-3 mb-6 lg:mb-8">
+            <div className="icon-wrapper">
+              <Settings className="h-6 w-6 text-primary" />
             </div>
-            <div>
-              <Label htmlFor="confirmPassword">Confirmer le mot de passe</Label>
-              <div className="relative">
-                <Input
-                  id="confirmPassword"
-                  type={showConfirmPassword ? "text" : "password"}
-                  value={confirmPasswordValue}
-                  onChange={(e) => setConfirmPasswordValue(e.target.value)}
-                  placeholder="••••••••"
-                  className="pr-10"
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="absolute right-0 top-0 h-full px-3"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                >
-                  {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </Button>
+            <h2 className="text-lg lg:text-2xl font-bold gradient-text">📊 Statistiques Système</h2>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6">
+            <div className="stat-card">
+              <div className="icon-wrapper mx-auto mb-4">
+                <Users className="h-8 w-8 text-primary" />
               </div>
+              <div className="text-2xl lg:text-4xl font-bold text-primary mb-2">{users.length}</div>
+              <div className="text-sm lg:text-base text-muted-foreground">Utilisateurs</div>
             </div>
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setChangingPassword(null)}>
-                Annuler
-              </Button>
-              <Button onClick={handleSavePassword}>
-                Changer le mot de passe
-              </Button>
+            <div className="stat-card">
+              <div className="icon-wrapper mx-auto mb-4">
+                <Shield className="h-8 w-8 text-success" />
+              </div>
+              <div className="text-2xl lg:text-4xl font-bold text-success">{insuranceTypes.filter(ins => ins.isActive).length}</div>
+              <div className="text-sm lg:text-base text-muted-foreground">Types d'assurances</div>
+            </div>
+            <div className="stat-card">
+              <div className="icon-wrapper mx-auto mb-4">
+                <TrendingUp className="h-8 w-8 text-warning" />
+              </div>
+              <div className="text-2xl lg:text-4xl font-bold text-warning">{sales.length}</div>
+              <div className="text-sm lg:text-base text-muted-foreground">Ventes totales</div>
             </div>
           </div>
-        </DialogContent>
-      </Dialog>
+        </div>
+      </div>
     </div>
   );
 };
