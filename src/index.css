@@ -326,7 +326,7 @@
 }
 
 .stat-card:hover {
-  animation: gentle-pulse 0.4s ease-in-out;
+  @apply transform scale-[1.02] shadow-elevated;
 }
 
 .modern-button {
