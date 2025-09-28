@@ -11,11 +11,15 @@ import { toast } from "@/hooks/use-toast";
 
 export const AdminPanel = () => {
   const [newUsername, setNewUsername] = useState("");
+  const [newFirstName, setNewFirstName] = useState("");
+  const [newLastName, setNewLastName] = useState("");
   const [newEmail, setNewEmail] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [newRole, setNewRole] = useState<'admin' | 'employee'>('employee');
   const [loading, setLoading] = useState(false);
   const [editingUser, setEditingUser] = useState<any>(null);
+  const [editFirstName, setEditFirstName] = useState("");
+  const [editLastName, setEditLastName] = useState("");
   const [editEmail, setEditEmail] = useState("");
   const [editRole, setEditRole] = useState<'admin' | 'employee'>('employee');
   const [changingPassword, setChangingPassword] = useState<string | null>(null);
@@ -30,7 +34,7 @@ export const AdminPanel = () => {
   const handleAddUser = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!newUsername || !newEmail || !newPassword) {
+    if (!newUsername || !newFirstName || !newLastName || !newEmail || !newPassword) {
       toast({
         title: "Erreur",
         description: "Veuillez remplir tous les champs",
@@ -40,10 +44,12 @@ export const AdminPanel = () => {
     }
 
     setLoading(true);
-    const result = await addUser(newUsername, newEmail, newPassword, newRole);
+    const result = await addUser(newUsername, newFirstName, newLastName, newEmail, newPassword, newRole);
     
     if (result.success) {
       setNewUsername("");
+      setNewFirstName("");
+      setNewLastName("");
       setNewEmail("");
       setNewPassword("");
       setNewRole('employee');
@@ -54,6 +60,8 @@ export const AdminPanel = () => {
 
   const handleEditUser = (user: any) => {
     setEditingUser(user);
+    setEditFirstName(user.firstName);
+    setEditLastName(user.lastName);
     setEditEmail(user.email);
     setEditRole(user.role);
   };
@@ -62,12 +70,16 @@ export const AdminPanel = () => {
     if (!editingUser) return;
 
     const result = await updateUser(editingUser.username, {
+      firstName: editFirstName,
+      lastName: editLastName,
       email: editEmail,
       role: editRole
     });
 
     if (result.success) {
       setEditingUser(null);
+      setEditFirstName("");
+      setEditLastName("");
       setEditEmail("");
       setEditRole('employee');
     }
@@ -114,7 +126,7 @@ export const AdminPanel = () => {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleAddUser} className="space-y-4 mb-6">
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-7 gap-4">
               <div>
                 <Label htmlFor="username">Nom d'utilisateur</Label>
                 <Input
@@ -122,6 +134,24 @@ export const AdminPanel = () => {
                   value={newUsername}
                   onChange={(e) => setNewUsername(e.target.value)}
                   placeholder="Ex: vendeur3"
+                />
+              </div>
+              <div>
+                <Label htmlFor="firstName">Prénom</Label>
+                <Input
+                  id="firstName"
+                  value={newFirstName}
+                  onChange={(e) => setNewFirstName(e.target.value)}
+                  placeholder="Ex: Pierre"
+                />
+              </div>
+              <div>
+                <Label htmlFor="lastName">Nom</Label>
+                <Input
+                  id="lastName"
+                  value={newLastName}
+                  onChange={(e) => setNewLastName(e.target.value)}
+                  placeholder="Ex: Durand"
                 />
               </div>
               <div>
@@ -171,7 +201,8 @@ export const AdminPanel = () => {
               <div key={user.id} className="flex items-center justify-between p-3 border rounded-lg">
                 <div className="flex items-center gap-3">
                   <div>
-                    <div className="font-medium">{user.username}</div>
+                    <div className="font-medium">{user.firstName} {user.lastName}</div>
+                    <div className="text-sm text-muted-foreground">@{user.username}</div>
                     <div className="text-sm text-muted-foreground">{user.email}</div>
                   </div>
                   <Badge variant={user.role === 'admin' ? 'default' : 'secondary'}>
@@ -214,9 +245,27 @@ export const AdminPanel = () => {
       <Dialog open={!!editingUser} onOpenChange={(open) => !open && setEditingUser(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Modifier l'utilisateur {editingUser?.username}</DialogTitle>
+            <DialogTitle>Modifier {editingUser?.firstName} {editingUser?.lastName}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
+            <div>
+              <Label htmlFor="editFirstName">Prénom</Label>
+              <Input
+                id="editFirstName"
+                value={editFirstName}
+                onChange={(e) => setEditFirstName(e.target.value)}
+                placeholder="Prénom"
+              />
+            </div>
+            <div>
+              <Label htmlFor="editLastName">Nom</Label>
+              <Input
+                id="editLastName"
+                value={editLastName}
+                onChange={(e) => setEditLastName(e.target.value)}
+                placeholder="Nom de famille"
+              />
+            </div>
             <div>
               <Label htmlFor="editEmail">Email</Label>
               <Input
