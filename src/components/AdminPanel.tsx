@@ -538,6 +538,15 @@ export const AdminPanel = () => {
           </DialogHeader>
           <div className="space-y-4">
             <div>
+              <Label htmlFor="editUsername">Nom d'utilisateur</Label>
+              <Input
+                id="editUsername"
+                value={editingUser?.username || ''}
+                disabled
+                className="bg-muted"
+              />
+            </div>
+            <div>
               <Label htmlFor="editFirstName">Prénom</Label>
               <Input
                 id="editFirstName"
