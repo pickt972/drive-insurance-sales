@@ -492,8 +492,7 @@ export const AdminPanel = () => {
                 <div className="flex items-center gap-3">
                   <div>
                     <div className="font-medium">{user.firstName} {user.lastName}</div>
-                    <div className="text-sm text-muted-foreground">@{user.username}</div>
-                    <div className="text-sm text-muted-foreground">{user.email}</div>
+                    <div className="text-sm text-muted-foreground">@{user.username} • {user.email}</div>
                   </div>
                   <Badge variant={user.role === 'admin' ? 'default' : 'secondary'}>
                     {user.role === 'admin' ? 'Admin' : 'Employé'}
