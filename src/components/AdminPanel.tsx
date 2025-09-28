@@ -377,15 +377,22 @@ export const AdminPanel = () => {
       const startDate = new Date(objective.startDate);
       const endDate = new Date(objective.endDate);
       
-      console.log('🔍 Vente:', sale.employeeName, 'vs', objective.employeeName, '=', sale.employeeName === objective.employeeName);
-      console.log('📅 Date vente:', saleDate, 'dans période?', saleDate >= startDate && saleDate <= endDate);
+      const employeeMatch = sale.employeeName.toLowerCase() === objective.employeeName.toLowerCase();
+      const dateMatch = saleDate >= startDate && saleDate <= endDate;
       
-      return sale.employeeName === objective.employeeName &&
-             saleDate >= startDate &&
-             saleDate <= endDate;
+      console.log('🔍 Vente:', sale.employeeName, 'vs', objective.employeeName, '=', employeeMatch);
+      console.log('📅 Date vente:', saleDate.toLocaleDateString(), 'dans période?', dateMatch);
+      console.log('📅 Période:', startDate.toLocaleDateString(), 'à', endDate.toLocaleDateString());
+      
+      return employeeMatch && dateMatch;
     });
     
     console.log('📊 Ventes trouvées pour', objective.employeeName, ':', employeeSales.length);
+    console.log('📊 Détail des ventes:', employeeSales.map(s => ({
+      client: s.clientName,
+      date: new Date(s.createdAt).toLocaleDateString(),
+      commission: s.commissionAmount
+    })));
     
     const achievedAmount = employeeSales.reduce((sum, sale) => sum + sale.commissionAmount, 0);
     const achievedSales = employeeSales.length;
