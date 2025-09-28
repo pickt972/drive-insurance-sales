@@ -19,13 +19,14 @@ export const Dashboard = () => {
   const sellerStats = users.filter(u => u.role === 'employee').map(user => {
     const userSales = sales.filter(sale => sale.employeeName === user.username);
     const userCommission = userSales.reduce((sum, sale) => sum + sale.commissionAmount, 0);
+    const totalInsurances = userSales.reduce((sum, sale) => sum + sale.insuranceTypes.length, 0);
     return {
       username: user.username,
       name: `${user.firstName} ${user.lastName}`,
       sales: userSales.length,
-      commission: userCommission
+      commission: userCommission,
+      totalInsurances
     };
-  }).sort((a, b) => b.commission - a.commission);
 
   // Top des assurances
   const insuranceCount: Record<string, number> = {};
@@ -101,76 +102,83 @@ export const Dashboard = () => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Trophy className="h-5 w-5 text-primary" />
-              Classement des Vendeurs
+              🏆 Podium des Champions
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {sellerStats.length === 0 ? (
-              <p className="text-center text-muted-foreground py-8">Aucune vente enregistrée</p>
+            {employeeStats.length === 0 ? (
+              <div className="text-center text-muted-foreground py-12">
+                <Trophy className="h-16 w-16 mx-auto mb-4 opacity-30" />
+                <p>Aucune vente enregistrée</p>
+              </div>
             ) : (
-              <div className="space-y-4">
-                {sellerStats.map((seller, index) => {
-                  const objective = objectives.find(obj => obj.employeeName === seller.username);
-                  let progressPercentage = 0;
+              <div className="relative">
+                {/* Podium avec animation */}
+                <div className="flex items-end justify-center gap-4 mb-8 h-48">
+                  {/* 2ème place */}
+                  {employeeStats[1] && (
+                    <div className="flex flex-col items-center animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+                      <div className="bg-gradient-to-t from-gray-400 to-gray-300 rounded-t-lg p-4 h-24 w-20 flex flex-col items-center justify-end shadow-lg transform hover:scale-105 transition-all duration-300">
+                        <div className="text-white font-bold text-lg">2</div>
+                      </div>
+                      <div className="mt-2 text-center">
+                        <div className="font-semibold text-sm">{employeeStats[1].name}</div>
+                        <div className="text-xs text-muted-foreground">{employeeStats[1].totalInsurances} assurances</div>
+                        <div className="text-xs font-medium text-success">{formatCurrency(employeeStats[1].commission)}</div>
+                      </div>
+                    </div>
+                  )}
                   
-                  if (objective) {
-                    const objectiveSales = sales.filter(sale => 
-                      sale.employeeName === seller.username &&
-                      new Date(sale.createdAt) >= new Date(objective.startDate) &&
-                      new Date(sale.createdAt) <= new Date(objective.endDate)
-                    );
-                    
-                    if (objective.objectiveType === 'amount') {
-                      const achievedAmount = objectiveSales.reduce((sum, sale) => sum + sale.commissionAmount, 0);
-                      progressPercentage = Math.min((achievedAmount / objective.targetAmount) * 100, 100);
-                    } else {
-                      progressPercentage = Math.min((objectiveSales.length / objective.targetSalesCount) * 100, 100);
-                    }
-                  }
+                  {/* 1ère place */}
+                  {employeeStats[0] && (
+                    <div className="flex flex-col items-center animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
+                      <div className="bg-gradient-to-t from-yellow-500 to-yellow-300 rounded-t-lg p-4 h-32 w-24 flex flex-col items-center justify-end shadow-xl transform hover:scale-105 transition-all duration-300 relative">
+                        <div className="absolute -top-2 text-2xl">👑</div>
+                        <div className="text-white font-bold text-xl">1</div>
+                      </div>
+                      <div className="mt-2 text-center">
+                        <div className="font-bold text-base text-primary">{employeeStats[0].name}</div>
+                        <div className="text-sm text-muted-foreground">{employeeStats[0].totalInsurances} assurances</div>
+                        <div className="text-sm font-bold text-success">{formatCurrency(employeeStats[0].commission)}</div>
+                      </div>
+                    </div>
+                  )}
                   
-                  return (
-                    <div key={seller.username} className="p-4 rounded-lg bg-accent/50">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-4">
-                          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
-                            index === 0 ? 'bg-primary text-white' : 'bg-muted'
-                          }`}>
-                            {index + 1}
+                  {/* 3ème place */}
+                  {employeeStats[2] && (
+                    <div className="flex flex-col items-center animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
+                      <div className="bg-gradient-to-t from-orange-600 to-orange-400 rounded-t-lg p-4 h-16 w-18 flex flex-col items-center justify-end shadow-lg transform hover:scale-105 transition-all duration-300">
+                        <div className="text-white font-bold">3</div>
+                      </div>
+                      <div className="mt-2 text-center">
+                        <div className="font-semibold text-sm">{employeeStats[2].name}</div>
+                        <div className="text-xs text-muted-foreground">{employeeStats[2].totalInsurances} assurances</div>
+                        <div className="text-xs font-medium text-success">{formatCurrency(employeeStats[2].commission)}</div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                
+                {/* Autres employés */}
+                {employeeStats.length > 3 && (
+                  <div className="space-y-2">
+                    <h4 className="font-medium text-center text-muted-foreground mb-3">Autres participants</h4>
+                    {employeeStats.slice(3).map((employee, index) => (
+                      <div key={employee.username} className="flex items-center justify-between p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors duration-200">
+                        <div className="flex items-center gap-3">
+                          <div className="w-6 h-6 rounded-full bg-muted-foreground/20 flex items-center justify-center text-xs font-medium">
+                            {index + 4}
                           </div>
                           <div>
-                            <div className="font-semibold">{seller.name}</div>
-                            <div className="text-sm text-muted-foreground">{seller.sales} ventes</div>
+                            <div className="font-medium text-sm">{employee.name}</div>
+                            <div className="text-xs text-muted-foreground">{employee.totalInsurances} assurances</div>
                           </div>
                         </div>
-                        <div className="font-bold text-success">{formatCurrency(seller.commission)}</div>
+                        <div className="text-sm font-medium text-success">{formatCurrency(employee.commission)}</div>
                       </div>
-                      
-                      {objective && (
-                        <div className="mt-2">
-                          <div className="flex justify-between text-xs text-muted-foreground mb-1">
-                            <span>
-                              Objectif: {objective.objectiveType === 'amount' 
-                                ? formatCurrency(objective.targetAmount)
-                                : `${objective.targetSalesCount} ventes`
-                              }
-                            </span>
-                            <span>{progressPercentage.toFixed(0)}%</span>
-                          </div>
-                          <div className="w-full bg-gray-200 rounded-full h-3">
-                            <div 
-                              className={`h-3 rounded-full transition-all duration-500 ${
-                                progressPercentage >= 100 ? 'bg-green-500' :
-                                progressPercentage >= 75 ? 'bg-yellow-500' :
-                                progressPercentage >= 50 ? 'bg-orange-500' : 'bg-red-500'
-                              }`}
-                              style={{ width: `${Math.min(progressPercentage, 100)}%` }}
-                            ></div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
+                    ))}
+                  </div>
+                )}
               </div>
             )}
           </CardContent>
