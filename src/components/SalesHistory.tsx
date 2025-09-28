@@ -454,7 +454,15 @@ export const SalesHistory = () => {
                     </div>
                   )}
                 </div>
-              ) : (
+                
+                {employee.objective ? (
+                  <div className="w-full bg-gray-200 rounded-full h-3">
+                    <div 
+                      className={`h-3 rounded-full transition-all duration-500 ${getProgressColor(employee.progressPercentage)}`}
+                      style={{ width: `${Math.min(employee.progressPercentage, 100)}%` }}
+                    ></div>
+                  </div>
+                ) : (
                 <div>
                   <div className="text-sm text-muted-foreground mb-1">Aucun objectif défini</div>
                   <div className="flex items-center justify-between">
@@ -464,15 +472,7 @@ export const SalesHistory = () => {
                     <div className="h-3 rounded-full bg-blue-500 transition-all duration-300" style={{ width: '0%' }}></div>
                   </div>
                 </div>
-              )}
-                
-                {employee.objective && (
-                  <div className="w-full bg-gray-200 rounded-full h-3">
-                    <div 
-                      className={`h-3 rounded-full transition-all duration-500 ${getProgressColor(employee.progressPercentage)}`}
-                      style={{ width: `${Math.min(employee.progressPercentage, 100)}%` }}
-                    ></div>
-                  </div>
+                )}
               </div>
             ))}
           </div>
