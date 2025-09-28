@@ -31,7 +31,7 @@ export const Dashboard = () => {
 
   // Calculer les hauteurs dynamiques du podium basées sur les ventes
   const calculatePodiumHeight = (salesCount: number, maxSales: number, baseHeight: number) => {
-    if (maxSales === 0 || sales === 0) return baseHeight;
+    if (maxSales === 0) return baseHeight;
     const ratio = salesCount / maxSales;
     return Math.max(baseHeight, baseHeight + (ratio * 60)); // 60px de variation max
   };
