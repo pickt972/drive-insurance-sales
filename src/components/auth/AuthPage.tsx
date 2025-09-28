@@ -47,19 +47,21 @@ export const AuthPage = () => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 to-secondary/10 p-4">
-      <Card className="w-full max-w-md shadow-lg">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold text-primary">
-            Aloe Location
-          </CardTitle>
-          <p className="text-muted-foreground">Gestion des ventes d'assurances</p>
-        </CardHeader>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 via-background to-success/5 p-6">
+      <div className="modern-form max-w-md w-full animate-smooth-scale-in">
+        <div className="text-center mb-8">
+          <div className="icon-wrapper mx-auto mb-6 w-20 h-20">
+            <div className="w-full h-full bg-gradient-to-br from-primary to-primary-variant rounded-3xl flex items-center justify-center animate-float-gentle">
+              <span className="text-2xl font-bold text-primary-foreground">AL</span>
+            </div>
+          </div>
+          <h1 className="gradient-text text-4xl mb-2">Aloe Location</h1>
+          <p className="text-muted-foreground text-lg">Gestion des ventes d'assurances</p>
+        </div>
         
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="username" className="flex items-center gap-2">
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="space-y-3">
+            <Label htmlFor="username" className="flex items-center gap-3 text-base font-semibold">
                 <User className="h-4 w-4" />
                 Nom d'utilisateur
               </Label>
@@ -68,12 +70,13 @@ export const AuthPage = () => {
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 placeholder="Votre nom d'utilisateur"
+                className="friendly-input text-base"
                 required
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="password" className="flex items-center gap-2">
+          <div className="space-y-3">
+            <Label htmlFor="password" className="flex items-center gap-3 text-base font-semibold">
                 <Lock className="h-4 w-4" />
                 Mot de passe
               </Label>
@@ -84,14 +87,14 @@ export const AuthPage = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="pr-10"
+                  className="friendly-input text-base pr-12"
                   required
                 />
                 <Button
                   type="button"
                   variant="ghost"
                   size="sm"
-                  className="absolute right-0 top-0 h-full px-3"
+                  className="absolute right-2 top-1/2 transform -translate-y-1/2 h-8 w-8 rounded-xl hover:bg-muted/50"
                   onClick={() => setShowPassword(!showPassword)}
                 >
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -99,19 +102,24 @@ export const AuthPage = () => {
               </div>
             </div>
 
-            {error && (
-              <Alert variant="destructive">
+          {error && (
+            <div className="modern-card p-4 bg-gradient-to-r from-destructive/10 to-destructive/5 border-destructive/30">
+              <Alert variant="destructive" className="border-0 bg-transparent">
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
-            )}
+            </div>
+          )}
 
-            <Button type="submit" className="w-full" disabled={loading}>
-              <LogIn className="h-4 w-4 mr-2" />
-              {loading ? "Connexion..." : "Se connecter"}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+          <Button 
+            type="submit" 
+            className="modern-button w-full py-4 text-lg font-bold" 
+            disabled={loading}
+          >
+            <LogIn className="h-5 w-5 mr-3" />
+            {loading ? "🔄 Connexion..." : "🚀 Se connecter"}
+          </Button>
+        </form>
+      </div>
     </div>
   );
 };

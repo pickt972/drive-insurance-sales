@@ -418,57 +418,62 @@ export const AdminPanel = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Gestion des utilisateurs */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Users className="h-5 w-5 text-primary" />
-            Gestion des Utilisateurs
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleAddUser} className="space-y-4 mb-6">
+      <div className="modern-card animate-gentle-fade-in">
+        <div className="p-8">
+          <div className="flex items-center gap-3 mb-8">
+            <div className="icon-wrapper">
+              <Users className="h-6 w-6 text-primary" />
+            </div>
+            <h2 className="text-2xl font-bold gradient-text">👥 Gestion des Utilisateurs</h2>
+          </div>
+          
+          <form onSubmit={handleAddUser} className="space-y-6 mb-8">
             <div className="grid grid-cols-1 md:grid-cols-7 gap-4">
-              <div>
-                <Label htmlFor="username">Nom d'utilisateur</Label>
+              <div className="space-y-2">
+                <Label htmlFor="username" className="font-semibold">Nom d'utilisateur</Label>
                 <Input
                   id="username"
                   value={newUsername}
                   onChange={(e) => setNewUsername(e.target.value)}
                   placeholder="Ex: vendeur3"
+                  className="friendly-input"
                 />
               </div>
-              <div>
-                <Label htmlFor="firstName">Prénom</Label>
+              <div className="space-y-2">
+                <Label htmlFor="firstName" className="font-semibold">Prénom</Label>
                 <Input
                   id="firstName"
                   value={newFirstName}
                   onChange={(e) => setNewFirstName(e.target.value)}
                   placeholder="Ex: Pierre"
+                  className="friendly-input"
                 />
               </div>
-              <div>
-                <Label htmlFor="lastName">Nom</Label>
+              <div className="space-y-2">
+                <Label htmlFor="lastName" className="font-semibold">Nom</Label>
                 <Input
                   id="lastName"
                   value={newLastName}
                   onChange={(e) => setNewLastName(e.target.value)}
                   placeholder="Ex: Durand"
+                  className="friendly-input"
                 />
               </div>
-              <div>
-                <Label htmlFor="email">Email</Label>
+              <div className="space-y-2">
+                <Label htmlFor="email" className="font-semibold">Email</Label>
                 <Input
                   id="email"
                   type="email"
                   value={newEmail}
                   onChange={(e) => setNewEmail(e.target.value)}
                   placeholder="vendeur3@aloelocation.com"
+                  className="friendly-input"
                 />
               </div>
-              <div>
-                <Label htmlFor="password">Mot de passe</Label>
+              <div className="space-y-2">
+                <Label htmlFor="password" className="font-semibold">Mot de passe</Label>
                 <div className="relative">
                   <Input
                     id="password"
@@ -476,44 +481,91 @@ export const AdminPanel = () => {
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
                     placeholder="••••••••"
-                    className="pr-10"
+                    className="friendly-input pr-12"
                   />
                   <Button
                     type="button"
                     variant="ghost"
                     size="sm"
-                    className="absolute right-0 top-0 h-full px-3"
+                    className="absolute right-2 top-1/2 transform -translate-y-1/2 h-8 w-8 rounded-xl hover:bg-muted/50"
                     onClick={() => setShowNewPassword(!showNewPassword)}
                   >
                     {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </Button>
                 </div>
               </div>
-              <div>
-                <Label htmlFor="role">Rôle</Label>
+              <div className="space-y-2">
+                <Label htmlFor="role" className="font-semibold">Rôle</Label>
                 <select
                   id="role"
                   value={newRole}
                   onChange={(e) => setNewRole(e.target.value as 'admin' | 'employee')}
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  className="friendly-input"
                 >
                   <option value="employee">Employé</option>
                   <option value="admin">Administrateur</option>
                 </select>
               </div>
               <div className="flex items-end">
-                <Button type="submit" className="w-full" disabled={loading}>
+                <Button type="submit" className="modern-button w-full" disabled={loading}>
                   <Plus className="h-4 w-4 mr-2" />
-                  {loading ? "Ajout..." : "Ajouter"}
+                  {loading ? "🔄 Ajout..." : "➕ Ajouter"}
                 </Button>
               </div>
             </div>
           </form>
 
-          <div className="space-y-3">
-            <h3 className="font-medium">Utilisateurs existants</h3>
+          <div className="space-y-4">
+            <h3 className="font-bold text-lg text-foreground">Utilisateurs existants</h3>
             {users.map((user) => (
-              <div key={user.id} className="flex items-center justify-between p-3 border rounded-lg">
+              <div key={user.id} className="modern-card p-4 animate-elegant-slide">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="icon-wrapper">
+                      <User className="h-5 w-5 text-primary" />
+                    </div>
+                    <div>
+                      <div className="font-bold text-base">{user.firstName} {user.lastName}</div>
+                      <div className="text-sm text-muted-foreground">@{user.username} • {user.email}</div>
+                    </div>
+                    <Badge variant={user.role === 'admin' ? 'default' : 'secondary'} className="rounded-full">
+                      {user.role === 'admin' ? 'Admin' : 'Employé'}
+                    </Badge>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleEditUser(user)}
+                      className="rounded-2xl hover:scale-105 transition-all duration-300"
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleChangePassword(user.username)}
+                      className="rounded-2xl hover:scale-105 transition-all duration-300"
+                    >
+                      <Key className="h-4 w-4" />
+                    </Button>
+                    {user.username !== 'admin' && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleRemoveUser(user.username)}
+                        className="rounded-2xl hover:scale-105 transition-all duration-300 text-destructive hover:text-destructive"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
                 <div className="flex items-center gap-3">
                   <div>
                     <div className="font-medium">{user.firstName} {user.lastName}</div>
@@ -687,27 +739,29 @@ export const AdminPanel = () => {
       </Dialog>
 
       {/* Gestion des assurances */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Shield className="h-5 w-5 text-primary" />
-            Gestion des Assurances Location
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleAddInsurance} className="space-y-4 mb-6">
+      <div className="modern-card animate-smooth-scale-in" style={{ animationDelay: '0.2s' }}>
+        <div className="p-8">
+          <div className="flex items-center gap-3 mb-8">
+            <div className="icon-wrapper">
+              <Shield className="h-6 w-6 text-primary" />
+            </div>
+            <h2 className="text-2xl font-bold gradient-text">🛡️ Gestion des Assurances</h2>
+          </div>
+          
+          <form onSubmit={handleAddInsurance} className="space-y-6 mb-8">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div className="md:col-span-2">
-                <Label htmlFor="insuranceName">Nom de l'assurance</Label>
+              <div className="md:col-span-2 space-y-2">
+                <Label htmlFor="insuranceName" className="font-semibold">Nom de l'assurance</Label>
                 <Input
                   id="insuranceName"
                   value={newInsuranceName}
                   onChange={(e) => setNewInsuranceName(e.target.value)}
                   placeholder="Ex: Assurance Tous Risques"
+                  className="friendly-input"
                 />
               </div>
-              <div>
-                <Label htmlFor="insuranceCommission">Commission (€)</Label>
+              <div className="space-y-2">
+                <Label htmlFor="insuranceCommission" className="font-semibold">Commission (€)</Label>
                 <Input
                   id="insuranceCommission"
                   type="number"
@@ -716,21 +770,57 @@ export const AdminPanel = () => {
                   value={newInsuranceCommission}
                   onChange={(e) => setNewInsuranceCommission(e.target.value)}
                   placeholder="25.00"
+                  className="friendly-input"
                 />
               </div>
               <div className="flex items-end">
-                <Button type="submit" className="w-full">
+                <Button type="submit" className="modern-button w-full">
                   <Plus className="h-4 w-4 mr-2" />
-                  Ajouter
+                  ➕ Ajouter
                 </Button>
               </div>
             </div>
           </form>
 
-          <div className="space-y-3">
-            <h3 className="font-medium">Assurances disponibles</h3>
+          <div className="space-y-4">
+            <h3 className="font-bold text-lg text-foreground">Assurances disponibles</h3>
             {insuranceTypes.filter(ins => ins.isActive).map((insurance) => (
-              <div key={insurance.id} className="flex items-center justify-between p-3 border rounded-lg">
+              <div key={insurance.id} className="modern-card p-4 animate-elegant-slide">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="icon-wrapper">
+                      <Car className="h-5 w-5 text-primary" />
+                    </div>
+                    <span className="font-semibold text-base">{insurance.name}</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="success-indicator">
+                      <Euro className="h-4 w-4" />
+                      <span className="font-bold">{insurance.commission.toFixed(2)} €</span>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleEditInsurance(insurance)}
+                      className="rounded-2xl hover:scale-105 transition-all duration-300"
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleRemoveInsurance(insurance.id, insurance.name)}
+                      className="rounded-2xl hover:scale-105 transition-all duration-300 text-destructive hover:text-destructive"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
                 <div className="flex items-center gap-3">
                   <Car className="h-4 w-4 text-primary" />
                   <span className="font-medium">{insurance.name}</span>
@@ -803,23 +893,24 @@ export const AdminPanel = () => {
       </Dialog>
 
       {/* Gestion des objectifs */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Target className="h-5 w-5 text-primary" />
-            Gestion des Objectifs Commerciaux
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleAddObjective} className="space-y-4 mb-6">
+      <div className="modern-card animate-smooth-scale-in" style={{ animationDelay: '0.3s' }}>
+        <div className="p-8">
+          <div className="flex items-center gap-3 mb-8">
+            <div className="icon-wrapper">
+              <Target className="h-6 w-6 text-primary" />
+            </div>
+            <h2 className="text-2xl font-bold gradient-text">🎯 Gestion des Objectifs</h2>
+          </div>
+          
+          <form onSubmit={handleAddObjective} className="space-y-6 mb-8">
             <div className="grid grid-cols-1 md:grid-cols-7 gap-4">
-              <div>
-                <Label htmlFor="objectiveEmployee">Employé</Label>
+              <div className="space-y-2">
+                <Label htmlFor="objectiveEmployee" className="font-semibold">Employé</Label>
                 <select
                   id="objectiveEmployee"
                   value={newObjectiveEmployee}
                   onChange={(e) => setNewObjectiveEmployee(e.target.value)}
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  className="friendly-input"
                 >
                   <option value="">Sélectionner</option>
                   {users.filter(u => u.role === 'employee').map(user => (
@@ -829,21 +920,21 @@ export const AdminPanel = () => {
                   ))}
                 </select>
               </div>
-              <div>
-                <Label htmlFor="objectiveType">Type d'objectif</Label>
+              <div className="space-y-2">
+                <Label htmlFor="objectiveType" className="font-semibold">Type</Label>
                 <select
                   id="objectiveType"
                   value={newObjectiveType}
                   onChange={(e) => setNewObjectiveType(e.target.value as 'amount' | 'sales_count')}
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  className="friendly-input"
                 >
                   <option value="amount">Chiffre d'affaires</option>
                   <option value="sales_count">Nombre de ventes</option>
                 </select>
               </div>
-              <div>
+              <div className="space-y-2">
                 <Label htmlFor="objectiveAmount">
-                  {newObjectiveType === 'amount' ? 'Objectif CA (€)' : 'Objectif CA (€)'}
+                  CA (€)
                 </Label>
                 <Input
                   id="objectiveAmount"
@@ -853,11 +944,12 @@ export const AdminPanel = () => {
                   value={newObjectiveAmount}
                   onChange={(e) => setNewObjectiveAmount(e.target.value)}
                   placeholder="500.00"
+                  className="friendly-input"
                 />
               </div>
-              <div>
+              <div className="space-y-2">
                 <Label htmlFor="objectiveSales">
-                  {newObjectiveType === 'sales_count' ? 'Objectif Ventes' : 'Nb Ventes'}
+                  Ventes
                 </Label>
                 <Input
                   id="objectiveSales"
@@ -866,64 +958,67 @@ export const AdminPanel = () => {
                   value={newObjectiveSales}
                   onChange={(e) => setNewObjectiveSales(e.target.value)}
                   placeholder="20"
+                  className="friendly-input"
                 />
               </div>
-              <div>
-                <Label htmlFor="objectivePeriod">Période</Label>
+              <div className="space-y-2">
+                <Label htmlFor="objectivePeriod" className="font-semibold">Période</Label>
                 <select
                   id="objectivePeriod"
                   value={newObjectivePeriod}
                   onChange={(e) => setNewObjectivePeriod(e.target.value as 'monthly' | 'quarterly' | 'yearly')}
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  className="friendly-input"
                 >
                   <option value="monthly">Mensuel</option>
                   <option value="quarterly">Trimestriel</option>
                   <option value="yearly">Annuel</option>
                 </select>
               </div>
-              <div>
-                <Label htmlFor="objectiveDescription">Description</Label>
+              <div className="space-y-2">
+                <Label htmlFor="objectiveDescription" className="font-semibold">Description</Label>
                 <Input
                   id="objectiveDescription"
                   value={newObjectiveDescription}
                   onChange={(e) => setNewObjectiveDescription(e.target.value)}
                   placeholder="Optionnel"
+                  className="friendly-input"
                 />
               </div>
               <div className="flex items-end">
-                <Button type="submit" className="w-full">
+                <Button type="submit" className="modern-button w-full">
                   <Plus className="h-4 w-4 mr-2" />
-                  Créer
+                  🎯 Créer
                 </Button>
               </div>
             </div>
           </form>
 
-          <div className="space-y-4">
-            <h3 className="font-medium">Objectifs actifs avec progression</h3>
+          <div className="space-y-6">
+            <h3 className="font-bold text-lg text-foreground">Objectifs actifs avec progression</h3>
             {objectives.map((objective) => {
               const progress = getObjectiveProgress(objective);
              const progressColor = getProgressColor(progress.progress);
               
               return (
-                <div key={objective.id} className="p-4 border rounded-lg">
-                  <div className="flex items-center justify-between mb-3">
+                <div key={objective.id} className="modern-card p-6 animate-elegant-slide">
+                  <div className="flex items-center justify-between mb-4">
                     <div>
-                      <div className="font-medium">
+                      <div className="font-bold text-lg">
                         {users.find(u => u.username === objective.employeeName)?.firstName} {users.find(u => u.username === objective.employeeName)?.lastName}
                       </div>
-                      <div className="text-sm text-muted-foreground">
+                      <div className="text-base text-muted-foreground">
                        {objective.description} • {objective.period === 'monthly' ? 'Mensuel' : objective.period === 'quarterly' ? 'Trimestriel' : 'Annuel'} • {objective.objectiveType === 'amount' ? 'CA' : 'Ventes'}
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <div className={`px-3 py-1 rounded-full text-sm font-medium ${progressColor}`}>
+                    <div className="flex items-center gap-3">
+                      <div className={`px-4 py-2 rounded-2xl text-base font-bold ${progressColor}`}>
                        {progress.progress.toFixed(0)}%
                       </div>
                      <Button
                        variant="outline"
                        size="sm"
                        onClick={() => handleEditObjective(objective)}
+                       className="rounded-2xl hover:scale-105 transition-all duration-300"
                      >
                        <Edit className="h-4 w-4" />
                      </Button>
@@ -931,27 +1026,27 @@ export const AdminPanel = () => {
                         variant="outline"
                         size="sm"
                         onClick={() => handleRemoveObjective(objective.id, objective.employeeName)}
-                        className="text-destructive hover:text-destructive"
+                        className="rounded-2xl hover:scale-105 transition-all duration-300 text-destructive hover:text-destructive"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
                   </div>
                   
-                 <div>
+                 <div className="space-y-3">
                    {objective.objectiveType === 'amount' ? (
                      <div>
-                       <div className="text-sm text-muted-foreground mb-1">Chiffre d'affaires</div>
+                       <div className="text-base font-semibold text-muted-foreground mb-2">💰 Chiffre d'affaires</div>
                        <div className="flex items-center justify-between">
-                         <span className="text-sm">{progress.achievedAmount.toFixed(2)} € / {objective.targetAmount.toFixed(2)} €</span>
-                         <span className="text-sm font-medium">{progress.progress.toFixed(0)}%</span>
+                         <span className="text-base font-medium">{progress.achievedAmount.toFixed(2)} € / {objective.targetAmount.toFixed(2)} €</span>
+                         <span className="text-base font-bold">{progress.progress.toFixed(0)}%</span>
                        </div>
-                       <div className="w-full bg-gray-200 rounded-full h-3 mt-1">
+                       <div className="w-full bg-muted rounded-full h-4 mt-2">
                          <div 
-                           className={`h-3 rounded-full transition-all duration-300 ${
-                             progress.progress >= 100 ? 'bg-green-500' :
-                             progress.progress >= 75 ? 'bg-yellow-500' :
-                             progress.progress >= 50 ? 'bg-orange-500' : 'bg-red-500'
+                           className={`h-4 rounded-full transition-all duration-500 ${
+                             progress.progress >= 100 ? 'bg-gradient-to-r from-success to-success-variant' :
+                             progress.progress >= 75 ? 'bg-gradient-to-r from-warning to-orange' :
+                             progress.progress >= 50 ? 'bg-gradient-to-r from-orange to-destructive' : 'bg-gradient-to-r from-destructive to-destructive/80'
                            }`}
                            style={{ width: `${Math.min(progress.progress, 100)}%` }}
                          ></div>
@@ -959,17 +1054,17 @@ export const AdminPanel = () => {
                      </div>
                    ) : (
                      <div>
-                       <div className="text-sm text-muted-foreground mb-1">Nombre de ventes</div>
+                       <div className="text-base font-semibold text-muted-foreground mb-2">📊 Nombre de ventes</div>
                        <div className="flex items-center justify-between">
-                         <span className="text-sm">{progress.achievedSales} / {objective.targetSalesCount}</span>
-                         <span className="text-sm font-medium">{progress.progress.toFixed(0)}%</span>
+                         <span className="text-base font-medium">{progress.achievedSales} / {objective.targetSalesCount}</span>
+                         <span className="text-base font-bold">{progress.progress.toFixed(0)}%</span>
                        </div>
-                       <div className="w-full bg-gray-200 rounded-full h-3 mt-1">
+                       <div className="w-full bg-muted rounded-full h-4 mt-2">
                          <div 
-                           className={`h-3 rounded-full transition-all duration-300 ${
-                             progress.progress >= 100 ? 'bg-green-500' :
-                             progress.progress >= 75 ? 'bg-yellow-500' :
-                             progress.progress >= 50 ? 'bg-orange-500' : 'bg-red-500'
+                           className={`h-4 rounded-full transition-all duration-500 ${
+                             progress.progress >= 100 ? 'bg-gradient-to-r from-success to-success-variant' :
+                             progress.progress >= 75 ? 'bg-gradient-to-r from-warning to-orange' :
+                             progress.progress >= 50 ? 'bg-gradient-to-r from-orange to-destructive' : 'bg-gradient-to-r from-destructive to-destructive/80'
                            }`}
                            style={{ width: `${Math.min(progress.progress, 100)}%` }}
                          ></div>
@@ -982,14 +1077,16 @@ export const AdminPanel = () => {
             })}
             
             {objectives.length === 0 && (
-              <div className="text-center py-8 text-muted-foreground">
-                <Target className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>Aucun objectif défini</p>
+              <div className="text-center py-16 text-muted-foreground">
+                <div className="icon-wrapper mx-auto mb-6 opacity-50">
+                  <Target className="h-16 w-16" />
+                </div>
+                <p className="text-lg">Aucun objectif défini</p>
               </div>
             )}
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* Dialog d'édition objectif */}
       <Dialog open={!!editingObjective} onOpenChange={(open) => !open && setEditingObjective(null)}>
@@ -1087,30 +1184,40 @@ export const AdminPanel = () => {
       </Dialog>
 
       {/* Statistiques système */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Settings className="h-5 w-5 text-primary" />
-            Statistiques Système
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="p-4 border rounded-lg text-center">
-              <div className="text-2xl font-bold text-primary">{users.length}</div>
-              <div className="text-sm text-muted-foreground">Utilisateurs</div>
+      <div className="modern-card animate-gentle-fade-in" style={{ animationDelay: '0.4s' }}>
+        <div className="p-8">
+          <div className="flex items-center gap-3 mb-8">
+            <div className="icon-wrapper">
+              <Settings className="h-6 w-6 text-primary" />
             </div>
-            <div className="p-4 border rounded-lg text-center">
-              <div className="text-2xl font-bold text-success">{insuranceTypes.filter(ins => ins.isActive).length}</div>
-              <div className="text-sm text-muted-foreground">Types d'assurances</div>
+            <h2 className="text-2xl font-bold gradient-text">📊 Statistiques Système</h2>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="stat-card">
+              <div className="icon-wrapper mx-auto mb-4">
+                <Users className="h-8 w-8 text-primary" />
+              </div>
+              <div className="text-4xl font-bold text-primary mb-2">{users.length}</div>
+              <div className="text-base text-muted-foreground">Utilisateurs</div>
             </div>
-            <div className="p-4 border rounded-lg text-center">
-              <div className="text-2xl font-bold text-warning">{sales.length}</div>
-              <div className="text-sm text-muted-foreground">Ventes totales</div>
+            <div className="stat-card">
+              <div className="icon-wrapper mx-auto mb-4">
+                <Shield className="h-8 w-8 text-success" />
+              </div>
+              <div className="text-4xl font-bold text-success">{insuranceTypes.filter(ins => ins.isActive).length}</div>
+              <div className="text-base text-muted-foreground">Types d'assurances</div>
+            </div>
+            <div className="stat-card">
+              <div className="icon-wrapper mx-auto mb-4">
+                <TrendingUp className="h-8 w-8 text-warning" />
+              </div>
+              <div className="text-4xl font-bold text-warning">{sales.length}</div>
+              <div className="text-base text-muted-foreground">Ventes totales</div>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 };

@@ -261,20 +261,23 @@ export const SalesHistory = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Filtres et Export */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <Filter className="h-5 w-5 text-primary" />
-              Filtres et Export
-            </CardTitle>
-            <div className="flex items-center gap-2">
+      <div className="modern-card animate-gentle-fade-in">
+        <div className="p-8">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <div className="icon-wrapper">
+                <Filter className="h-6 w-6 text-primary" />
+              </div>
+              <h2 className="text-2xl font-bold gradient-text">🔍 Filtres et Export</h2>
+            </div>
+            <div className="flex items-center gap-3">
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => setShowFilters(!showFilters)}
+                className="rounded-2xl hover:scale-105 transition-all duration-300"
               >
                 <Filter className="h-4 w-4 mr-2" />
                 {showFilters ? 'Masquer' : 'Afficher'} Filtres
@@ -283,6 +286,7 @@ export const SalesHistory = () => {
                 variant="outline"
                 size="sm"
                 onClick={exportToCSV}
+                className="rounded-2xl hover:scale-105 transition-all duration-300"
               >
                 <Download className="h-4 w-4 mr-2" />
                 Export CSV
@@ -291,219 +295,239 @@ export const SalesHistory = () => {
                 variant="outline"
                 size="sm"
                 onClick={exportToPDF}
+                className="rounded-2xl hover:scale-105 transition-all duration-300"
               >
                 <FileText className="h-4 w-4 mr-2" />
                 Export PDF
               </Button>
             </div>
           </div>
-        </CardHeader>
-        {showFilters && (
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-              <div>
-                <Label htmlFor="filterEmployee">Employé</Label>
-                <select
-                  id="filterEmployee"
-                  value={filterEmployee}
-                  onChange={(e) => setFilterEmployee(e.target.value)}
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                >
-                  <option value="">Tous les employés</option>
-                  {users.filter(u => u.role === 'employee').map(user => (
-                    <option key={user.username} value={user.username}>
-                      {user.firstName} {user.lastName}
-                    </option>
-                  ))}
-                </select>
+          
+          {showFilters && (
+            <div className="space-y-6 animate-smooth-scale-in">
+              <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="filterEmployee" className="font-semibold">Employé</Label>
+                  <select
+                    id="filterEmployee"
+                    value={filterEmployee}
+                    onChange={(e) => setFilterEmployee(e.target.value)}
+                    className="friendly-input"
+                  >
+                    <option value="">Tous les employés</option>
+                    {users.filter(u => u.role === 'employee').map(user => (
+                      <option key={user.username} value={user.username}>
+                        {user.firstName} {user.lastName}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="filterStartDate" className="font-semibold">Date de début</Label>
+                  <Input
+                    id="filterStartDate"
+                    type="date"
+                    value={filterStartDate}
+                    onChange={(e) => setFilterStartDate(e.target.value)}
+                    className="friendly-input"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="filterEndDate" className="font-semibold">Date de fin</Label>
+                  <Input
+                    id="filterEndDate"
+                    type="date"
+                    value={filterEndDate}
+                    onChange={(e) => setFilterEndDate(e.target.value)}
+                    className="friendly-input"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="filterInsurance" className="font-semibold">Assurance</Label>
+                  <select
+                    id="filterInsurance"
+                    value={filterInsurance}
+                    onChange={(e) => setFilterInsurance(e.target.value)}
+                    className="friendly-input"
+                  >
+                    <option value="">Toutes les assurances</option>
+                    {allInsurances.map(insurance => (
+                      <option key={insurance} value={insurance}>
+                        {insurance}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex items-end">
+                  <Button
+                    variant="outline"
+                    onClick={resetFilters}
+                    className="w-full rounded-2xl hover:scale-105 transition-all duration-300"
+                  >
+                    Réinitialiser
+                  </Button>
+                </div>
               </div>
-              <div>
-                <Label htmlFor="filterStartDate">Date de début</Label>
-                <Input
-                  id="filterStartDate"
-                  type="date"
-                  value={filterStartDate}
-                  onChange={(e) => setFilterStartDate(e.target.value)}
-                />
-              </div>
-              <div>
-                <Label htmlFor="filterEndDate">Date de fin</Label>
-                <Input
-                  id="filterEndDate"
-                  type="date"
-                  value={filterEndDate}
-                  onChange={(e) => setFilterEndDate(e.target.value)}
-                />
-              </div>
-              <div>
-                <Label htmlFor="filterInsurance">Assurance</Label>
-                <select
-                  id="filterInsurance"
-                  value={filterInsurance}
-                  onChange={(e) => setFilterInsurance(e.target.value)}
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                >
-                  <option value="">Toutes les assurances</option>
-                  {allInsurances.map(insurance => (
-                    <option key={insurance} value={insurance}>
-                      {insurance}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="flex items-end">
-                <Button
-                  variant="outline"
-                  onClick={resetFilters}
-                  className="w-full"
-                >
-                  Réinitialiser
-                </Button>
+              <div className="modern-card p-4 bg-gradient-to-r from-info/10 to-info/5 border-info/30">
+                <div className="text-base text-info font-semibold">
+                  📊 <strong>Résultats filtrés:</strong> {filteredSales.length} vente(s) • 
+                  <strong> Commission totale:</strong> {totalCommission.toFixed(2)} €
+                </div>
               </div>
             </div>
-            <div className="mt-4 p-3 bg-muted rounded-lg">
-              <div className="text-sm text-muted-foreground">
-                <strong>Résultats filtrés:</strong> {filteredSales.length} vente(s) • 
-                <strong> Commission totale:</strong> {totalCommission.toFixed(2)} €
-              </div>
-            </div>
-          </CardContent>
-        )}
-      </Card>
+          )}
+        </div>
+      </div>
 
       {/* Statistiques globales */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Total Ventes</p>
-                <p className="text-2xl font-bold">{totalSales}</p>
-              </div>
-              <TrendingUp className="h-8 w-8 text-primary" />
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="stat-card animate-gentle-fade-in" style={{ animationDelay: '0.1s' }}>
+          <div className="flex items-center justify-between mb-4">
+            <div className="icon-wrapper">
+              <TrendingUp className="h-6 w-6 text-primary" />
             </div>
-          </CardContent>
-        </Card>
+            <div className="text-right">
+              <p className="text-3xl font-bold text-primary">{totalSales}</p>
+              <p className="text-sm text-muted-foreground">Total Ventes</p>
+            </div>
+          </div>
+          <div className="h-2 bg-muted rounded-full overflow-hidden">
+            <div className="h-full bg-gradient-to-r from-primary to-primary-variant rounded-full animate-gentle-pulse" style={{ width: '75%' }}></div>
+          </div>
+        </div>
         
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">CA Total</p>
-                <p className="text-2xl font-bold">{totalCommission.toFixed(2)} €</p>
-              </div>
-              <Euro className="h-8 w-8 text-success" />
+        <div className="stat-card animate-gentle-fade-in" style={{ animationDelay: '0.2s' }}>
+          <div className="flex items-center justify-between mb-4">
+            <div className="icon-wrapper">
+              <Euro className="h-6 w-6 text-success" />
             </div>
-          </CardContent>
-        </Card>
+            <div className="text-right">
+              <p className="text-3xl font-bold text-success">{totalCommission.toFixed(2)} €</p>
+              <p className="text-sm text-muted-foreground">CA Total</p>
+            </div>
+          </div>
+          <div className="h-2 bg-muted rounded-full overflow-hidden">
+            <div className="h-full bg-gradient-to-r from-success to-success-variant rounded-full animate-gentle-pulse" style={{ width: '85%' }}></div>
+          </div>
+        </div>
         
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Ventes ce mois</p>
-                <p className="text-2xl font-bold">{salesThisMonth.length}</p>
-              </div>
-              <Clock className="h-8 w-8 text-warning" />
+        <div className="stat-card animate-gentle-fade-in" style={{ animationDelay: '0.3s' }}>
+          <div className="flex items-center justify-between mb-4">
+            <div className="icon-wrapper">
+              <Clock className="h-6 w-6 text-warning" />
             </div>
-          </CardContent>
-        </Card>
+            <div className="text-right">
+              <p className="text-3xl font-bold text-warning">{salesThisMonth.length}</p>
+              <p className="text-sm text-muted-foreground">Ventes ce mois</p>
+            </div>
+          </div>
+          <div className="h-2 bg-muted rounded-full overflow-hidden">
+            <div className="h-full bg-gradient-to-r from-warning to-orange rounded-full animate-gentle-pulse" style={{ width: '60%' }}></div>
+          </div>
+        </div>
         
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">CA Mensuel</p>
-                <p className="text-2xl font-bold">
-                  {salesThisMonth.reduce((sum, sale) => sum + sale.commissionAmount, 0).toFixed(2)} €
-                </p>
-              </div>
-              <Target className="h-8 w-8 text-info" />
+        <div className="stat-card animate-gentle-fade-in" style={{ animationDelay: '0.4s' }}>
+          <div className="flex items-center justify-between mb-4">
+            <div className="icon-wrapper">
+              <Target className="h-6 w-6 text-info" />
             </div>
-          </CardContent>
-        </Card>
+            <div className="text-right">
+              <p className="text-3xl font-bold text-info">
+                {salesThisMonth.reduce((sum, sale) => sum + sale.commissionAmount, 0).toFixed(2)} €
+              </p>
+              <p className="text-sm text-muted-foreground">CA Mensuel</p>
+            </div>
+          </div>
+          <div className="h-2 bg-muted rounded-full overflow-hidden">
+            <div className="h-full bg-gradient-to-r from-info to-purple rounded-full animate-gentle-pulse" style={{ width: '70%' }}></div>
+          </div>
+        </div>
       </div>
 
       {/* Historique détaillé */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Clock className="h-5 w-5 text-primary" />
-            Historique Détaillé des Ventes ({filteredSales.length})
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
+      <div className="modern-card animate-smooth-scale-in" style={{ animationDelay: '0.5s' }}>
+        <div className="p-8">
+          <div className="flex items-center gap-3 mb-8">
+            <div className="icon-wrapper">
+              <Clock className="h-6 w-6 text-primary" />
+            </div>
+            <h2 className="text-2xl font-bold gradient-text">📋 Historique Détaillé ({filteredSales.length})</h2>
+          </div>
+          
           {filteredSales.length === 0 ? (
-            <div className="text-center py-8">
-              <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <p className="text-muted-foreground">
+            <div className="text-center py-16">
+              <div className="icon-wrapper mx-auto mb-6 opacity-50">
+                <FileText className="h-16 w-16" />
+              </div>
+              <p className="text-lg text-muted-foreground">
                 {sales.length === 0 ? 'Aucune vente enregistrée' : 'Aucune vente ne correspond aux filtres'}
               </p>
             </div>
           ) : (
             <div className="space-y-4">
-              {filteredSales.map((sale) => (
-                <div key={sale.id} className="p-4 border rounded-lg hover:bg-muted/50">
+              {filteredSales.map((sale, index) => (
+                <div key={sale.id} className="modern-card p-6 animate-elegant-slide" style={{ animationDelay: `${0.6 + index * 0.05}s` }}>
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <h3 className="font-medium">{sale.clientName}</h3>
-                        <Badge variant="outline">{sale.reservationNumber}</Badge>
+                      <div className="flex items-center gap-4 mb-4">
+                        <h3 className="font-bold text-xl text-foreground">{sale.clientName}</h3>
+                        <Badge variant="outline" className="rounded-full px-3 py-1">{sale.reservationNumber}</Badge>
                       </div>
                       
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-muted-foreground mb-2">
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-1">
-                            <User className="h-3 w-3" />
-                            {users.find(u => u.username === sale.employeeName)?.firstName} {users.find(u => u.username === sale.employeeName)?.lastName}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm text-muted-foreground mb-4">
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2">
+                            <User className="h-4 w-4" />
+                            <span className="font-medium">{users.find(u => u.username === sale.employeeName)?.firstName} {users.find(u => u.username === sale.employeeName)?.lastName}</span>
                           </div>
-                          <div className="flex items-center gap-1">
-                            <Clock className="h-3 w-3" />
-                            {formatDate(sale.createdAt)}
+                          <div className="flex items-center gap-2">
+                            <Clock className="h-4 w-4" />
+                            <span>{formatDate(sale.createdAt)}</span>
                           </div>
                         </div>
-                        <div className="space-y-1">
+                        <div className="space-y-2">
                           {sale.clientEmail && (
-                            <div className="flex items-center gap-1">
-                              <Mail className="h-3 w-3" />
-                              {sale.clientEmail}
+                            <div className="flex items-center gap-2">
+                              <Mail className="h-4 w-4" />
+                              <span>{sale.clientEmail}</span>
                             </div>
                           )}
                           {sale.clientPhone && (
-                            <div className="flex items-center gap-1">
-                              <Phone className="h-3 w-3" />
-                              {sale.clientPhone}
+                            <div className="flex items-center gap-2">
+                              <Phone className="h-4 w-4" />
+                              <span>{sale.clientPhone}</span>
                             </div>
                           )}
                         </div>
                       </div>
 
                       <div className="flex items-center justify-between">
-                        <div className="flex flex-wrap gap-1">
+                        <div className="flex flex-wrap gap-2">
                           {sale.insuranceTypes.map((insurance) => (
-                            <Badge key={insurance} variant="secondary" className="text-xs">
+                            <Badge key={insurance} variant="secondary" className="rounded-full px-3 py-1 text-xs font-medium">
                               {insurance}
                             </Badge>
                           ))}
                         </div>
-                        <div className="font-medium text-success text-lg">
+                        <div className="success-indicator text-lg font-bold">
                           {sale.commissionAmount.toFixed(2)} €
                         </div>
                       </div>
                       
                       {sale.notes && (
-                        <div className="mt-2 text-sm text-muted-foreground italic">
-                          "{sale.notes}"
+                        <div className="mt-4 p-3 bg-muted/50 rounded-2xl">
+                          <p className="text-sm text-muted-foreground italic">"{sale.notes}"</p>
                         </div>
                       )}
                     </div>
 
                     {isAdmin && (
-                      <div className="flex gap-2">
+                      <div className="flex gap-2 ml-4">
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={() => handleEditSale(sale)}
+                          className="rounded-2xl hover:scale-105 transition-all duration-300"
                         >
                           <Edit className="h-4 w-4" />
                         </Button>
@@ -511,7 +535,7 @@ export const SalesHistory = () => {
                           variant="outline"
                           size="sm"
                           onClick={() => handleDelete(sale.id)}
-                          className="text-destructive hover:text-destructive"
+                          className="rounded-2xl hover:scale-105 transition-all duration-300 text-destructive hover:text-destructive"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -522,88 +546,108 @@ export const SalesHistory = () => {
               ))}
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* Dialog d'édition de vente */}
       <Dialog open={!!editingSale} onOpenChange={(open) => !open && setEditingSale(null)}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl modern-card border-0">
           <DialogHeader>
-            <DialogTitle>Modifier la vente</DialogTitle>
+            <DialogTitle className="text-2xl font-bold gradient-text">✏️ Modifier la vente</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="editClientName">Nom du client *</Label>
+          <div className="space-y-6 mt-6">
+            <div className="space-y-2">
+              <Label htmlFor="editClientName" className="font-semibold">👤 Nom du client *</Label>
               <Input
                 id="editClientName"
                 value={editClientName}
                 onChange={(e) => setEditClientName(e.target.value)}
                 placeholder="Nom du client"
+                className="friendly-input"
               />
             </div>
 
-            <div>
-              <Label htmlFor="editReservationNumber">N° de réservation *</Label>
+            <div className="space-y-2">
+              <Label htmlFor="editReservationNumber" className="font-semibold">🎫 N° de réservation *</Label>
               <Input
                 id="editReservationNumber"
                 value={editReservationNumber}
                 onChange={(e) => setEditReservationNumber(e.target.value)}
                 placeholder="Ex: LOC-2024-001"
+                className="friendly-input"
               />
             </div>
 
-            <div className="space-y-3">
-              <Label>Assurances souscrites *</Label>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-60 overflow-y-auto">
+            <div className="space-y-4">
+              <Label className="font-semibold">🛡️ Assurances souscrites *</Label>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-60 overflow-y-auto">
                 {insuranceTypes.filter(ins => ins.isActive).map((insurance) => (
-                  <div key={insurance.id} className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-muted/50">
-                    <Checkbox
-                      checked={editSelectedInsurances.includes(insurance.name)}
-                      onCheckedChange={(checked) => {
-                        if (checked) {
-                          setEditSelectedInsurances([...editSelectedInsurances, insurance.name]);
-                        } else {
-                          setEditSelectedInsurances(editSelectedInsurances.filter(name => name !== insurance.name));
-                        }
-                      }}
-                    />
-                    <div className="flex-1">
-                      <Label className="font-medium">{insurance.name}</Label>
-                      <p className="text-sm text-success">{insurance.commission.toFixed(2)} €</p>
+                  <div key={insurance.id} className="modern-card p-4 cursor-pointer hover:scale-105 transition-all duration-300 group">
+                    <div className="flex items-center space-x-4">
+                      <Checkbox
+                        checked={editSelectedInsurances.includes(insurance.name)}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            setEditSelectedInsurances([...editSelectedInsurances, insurance.name]);
+                          } else {
+                            setEditSelectedInsurances(editSelectedInsurances.filter(name => name !== insurance.name));
+                          }
+                        }}
+                        className="scale-125"
+                      />
+                      <div className="flex-1">
+                        <Label className="font-semibold group-hover:text-primary transition-colors duration-300">{insurance.name}</Label>
+                        <div className="success-indicator mt-2">
+                          <span className="font-bold">+{insurance.commission.toFixed(2)} €</span>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 ))}
               </div>
             </div>
 
-            <div>
-              <Label htmlFor="editNotes">Notes (optionnel)</Label>
+            <div className="space-y-2">
+              <Label htmlFor="editNotes" className="font-semibold">📝 Notes (optionnel)</Label>
               <Textarea
                 id="editNotes"
                 value={editNotes}
                 onChange={(e) => setEditNotes(e.target.value)}
                 placeholder="Informations complémentaires..."
+                className="friendly-input min-h-[100px]"
                 rows={3}
               />
             </div>
 
             {editSelectedInsurances.length > 0 && (
-              <div className="p-3 bg-success/10 border border-success/20 rounded-lg">
-                <div className="text-sm font-medium text-success">
-                  Commission totale: {editSelectedInsurances.reduce((sum, insuranceName) => {
-                    const insurance = insuranceTypes.find(ins => ins.name === insuranceName);
-                    return sum + (insurance?.commission || 0);
-                  }, 0).toFixed(2)} €
+              <div className="modern-card p-4 bg-gradient-to-r from-success/10 to-success/5 border-success/30">
+                <div className="flex items-center justify-between">
+                  <span className="text-lg font-semibold text-success">💰 Commission totale</span>
+                  <span className="text-xl font-bold text-success">
+                    {editSelectedInsurances.reduce((sum, insuranceName) => {
+                      const insurance = insuranceTypes.find(ins => ins.name === insuranceName);
+                      return sum + (insurance?.commission || 0);
+                    }, 0).toFixed(2)} €
+                  </span>
                 </div>
               </div>
             )}
 
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setEditingSale(null)} disabled={editLoading}>
+            <div className="flex justify-end gap-3 pt-4">
+              <Button 
+                variant="outline" 
+                onClick={() => setEditingSale(null)} 
+                disabled={editLoading}
+                className="rounded-2xl hover:scale-105 transition-all duration-300"
+              >
                 Annuler
               </Button>
-              <Button onClick={handleSaveEdit} disabled={editLoading}>
-                {editLoading ? "Modification..." : "Sauvegarder"}
+              <Button 
+                onClick={handleSaveEdit} 
+                disabled={editLoading}
+                className="modern-button"
+              >
+                {editLoading ? "🔄 Modification..." : "💾 Sauvegarder"}
               </Button>
             </div>
           </div>

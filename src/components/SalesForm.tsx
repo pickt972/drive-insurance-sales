@@ -80,43 +80,47 @@ export const SalesForm = ({ onSaleAdded }: SalesFormProps) => {
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Plus className="h-5 w-5 text-primary" />
-          Nouvelle Vente
-        </CardTitle>
-      </CardHeader>
+    <div className="modern-form animate-gentle-fade-in">
+      <div className="flex items-center gap-4 mb-8">
+        <div className="icon-wrapper">
+          <Plus className="h-6 w-6 text-primary" />
+        </div>
+        <h2 className="text-3xl font-bold gradient-text">✨ Nouvelle Vente</h2>
+      </div>
       
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <Label htmlFor="clientName">Nom du client *</Label>
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-2">
+            <Label htmlFor="clientName" className="text-base font-semibold text-foreground">👤 Nom du client *</Label>
             <Input
               id="clientName"
               value={clientName}
               onChange={(e) => setClientName(e.target.value)}
               placeholder="Nom du client"
+              className="friendly-input text-base"
               required
             />
           </div>
 
-          <div>
-            <Label htmlFor="reservationNumber">N° de réservation *</Label>
+          <div className="space-y-2">
+            <Label htmlFor="reservationNumber" className="text-base font-semibold text-foreground">🎫 N° de réservation *</Label>
             <Input
               id="reservationNumber"
               value={reservationNumber}
               onChange={(e) => setReservationNumber(e.target.value)}
               placeholder="Ex: LOC-2024-001"
+              className="friendly-input text-base"
               required
             />
           </div>
+        </div>
 
-          <div className="space-y-3">
-            <Label>Assurances souscrites *</Label>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div className="space-y-4">
+          <Label className="text-base font-semibold text-foreground">🛡️ Assurances souscrites *</Label>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {insuranceTypes.filter(ins => ins.isActive).map((insurance) => (
-                <div key={insurance.id} className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-muted/50">
+              <div key={insurance.id} className="modern-card p-4 cursor-pointer hover:scale-105 transition-all duration-300 group">
+                <div className="flex items-center space-x-4">
                   <Checkbox
                     checked={selectedInsurances.includes(insurance.name)}
                     onCheckedChange={(checked) => {
@@ -126,42 +130,53 @@ export const SalesForm = ({ onSaleAdded }: SalesFormProps) => {
                         setSelectedInsurances(selectedInsurances.filter(name => name !== insurance.name));
                       }
                     }}
+                    className="scale-125"
                   />
                   <div className="flex-1">
-                    <Label className="font-medium">{insurance.name}</Label>
-                    <p className="text-sm text-success">{insurance.commission.toFixed(2)} €</p>
+                    <Label className="font-semibold text-base group-hover:text-primary transition-colors duration-300">{insurance.name}</Label>
+                    <div className="success-indicator mt-2">
+                      <span className="font-bold">+{insurance.commission.toFixed(2)} €</span>
+                    </div>
                   </div>
                 </div>
+              </div>
               ))}
-            </div>
           </div>
+        </div>
 
-          <div>
-            <Label htmlFor="notes">Notes (optionnel)</Label>
+        <div className="space-y-2">
+          <Label htmlFor="notes" className="text-base font-semibold text-foreground">📝 Notes (optionnel)</Label>
             <Input
               id="notes"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Informations complémentaires..."
+              className="friendly-input text-base"
             />
-          </div>
+        </div>
 
-          {selectedInsurances.length > 0 && (
-            <div className="p-3 bg-success/10 border border-success/20 rounded-lg">
-              <div className="text-sm font-medium text-success">
-                Commission totale: {selectedInsurances.reduce((sum, insuranceName) => {
+        {selectedInsurances.length > 0 && (
+          <div className="modern-card p-6 bg-gradient-to-r from-success/10 to-success/5 border-success/30 animate-gentle-bounce">
+            <div className="flex items-center justify-between">
+              <span className="text-lg font-semibold text-success">💰 Commission totale</span>
+              <span className="text-2xl font-bold text-success">
+                {selectedInsurances.reduce((sum, insuranceName) => {
                   const insurance = insuranceTypes.find(ins => ins.name === insuranceName);
                   return sum + (insurance?.commission || 0);
                 }, 0).toFixed(2)} €
-              </div>
+              </span>
             </div>
-          )}
+          </div>
+        )}
 
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "Enregistrement..." : "Enregistrer la vente"}
-          </Button>
-        </form>
-      </CardContent>
+        <Button 
+          type="submit" 
+          className="modern-button w-full py-4 text-lg font-bold" 
+          disabled={loading}
+        >
+          {loading ? "🔄 Enregistrement..." : "🚀 Enregistrer la vente"}
+        </Button>
+      </form>
       
       {/* Animation de célébration */}
       <CelebrationPopup
@@ -169,6 +184,6 @@ export const SalesForm = ({ onSaleAdded }: SalesFormProps) => {
         onClose={() => setShowCelebration(false)}
         saleAmount={lastSaleAmount}
       />
-    </Card>
+    </div>
   );
 };
