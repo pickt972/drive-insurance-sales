@@ -69,6 +69,7 @@ export const AdminPanel = () => {
     sales,
     objectives,
     addObjective,
+    updateObjective,
     removeObjective,
     fetchObjectives
   } = useAuth();
