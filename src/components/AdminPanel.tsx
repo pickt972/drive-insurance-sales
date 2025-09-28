@@ -5,11 +5,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Settings, Plus, Euro, Users, Trash2, CreditCard as Edit, Key, Eye, EyeOff, Target, Car, Shield, User, TrendingUp, GitBranch } from "lucide-react";
+import { Settings, Plus, Euro, Users, Trash2, CreditCard as Edit, Key, Eye, EyeOff, Target, Car, Shield, User, TrendingUp, GitBranch, Save, Download, Upload } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
 import { VersionManager } from "@/components/VersionManager";
+import { versioningSystem } from "@/lib/versioning";
 
 export const AdminPanel = () => {
   const [newUsername, setNewUsername] = useState("");
@@ -56,6 +59,12 @@ export const AdminPanel = () => {
   const [editObjectivePeriod, setEditObjectivePeriod] = useState<'monthly' | 'quarterly' | 'yearly'>('monthly');
   const [editObjectiveDescription, setEditObjectiveDescription] = useState("");
   
+  // États pour la sauvegarde manuelle
+  const [showSaveDialog, setShowSaveDialog] = useState(false);
+  const [saveDescription, setSaveDescription] = useState("");
+  const [saveChanges, setSaveChanges] = useState("");
+  const [saveLoading, setSaveLoading] = useState(false);
+  
   const { 
     users, 
     addUser, 
@@ -74,7 +83,8 @@ export const AdminPanel = () => {
     addObjective,
     updateObjective,
     removeObjective,
-    fetchObjectives
+    fetchObjectives,
+    profile
   } = useAuth();
 
   useEffect(() => {
@@ -369,6 +379,73 @@ export const AdminPanel = () => {
     }
   };
 
+  const handleManualSave = async () => {
+    if (!saveDescription.trim()) {
+      toast({
+        title: "Erreur",
+        description: "Veuillez saisir une description",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setSaveLoading(true);
+    try {
+      const changes = saveChanges.trim() 
+        ? saveChanges.split('\n').map(line => line.trim()).filter(line => line)
+        : [];
+      
+      versioningSystem.createVersion(
+        saveDescription.trim(),
+        changes,
+        `${profile?.firstName} ${profile?.lastName}` || 'Administrateur'
+      );
+
+      setSaveDescription("");
+      setSaveChanges("");
+      setShowSaveDialog(false);
+
+      toast({
+        title: "Version sauvegardée",
+        description: "Nouvelle version créée avec succès",
+      });
+    } catch (error) {
+      toast({
+        title: "Erreur",
+        description: "Impossible de créer la version",
+        variant: "destructive",
+      });
+    } finally {
+      setSaveLoading(false);
+    }
+  };
+
+  const handleExportData = () => {
+    try {
+      const exportData = versioningSystem.exportVersions();
+      const blob = new Blob([exportData], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `aloelocation_backup_${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      toast({
+        title: "Export réussi",
+        description: "Sauvegarde téléchargée avec succès",
+      });
+    } catch (error) {
+      toast({
+        title: "Erreur",
+        description: "Impossible d'exporter les données",
+        variant: "destructive",
+      });
+    }
+  };
+
   // Calculer les statistiques d'objectifs
   const getObjectiveProgress = (objective: any) => {
     console.log('🔍 Calcul progression pour:', objective.employeeName);
@@ -428,6 +505,134 @@ export const AdminPanel = () => {
 
   return (
     <div className="space-y-8">
+      {/* Section Sauvegarde Rapide */}
+      <div className="modern-card animate-gentle-fade-in max-w-7xl mx-auto">
+        <div className="p-4 lg:p-8">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 lg:gap-0 mb-6">
+            <div className="flex items-center gap-3">
+              <div className="icon-wrapper">
+                <Save className="h-6 w-6 text-primary" />
+              </div>
+              <div>
+                <h2 className="text-lg lg:text-2xl font-bold gradient-text">💾 Sauvegarde Rapide</h2>
+                <p className="text-sm text-muted-foreground">Créez une sauvegarde instantanée de l'état actuel</p>
+              </div>
+            </div>
+            
+            <div className="flex flex-wrap items-center gap-2 lg:gap-3">
+              <Dialog open={showSaveDialog} onOpenChange={setShowSaveDialog}>
+                <DialogTrigger asChild>
+                  <Button className="modern-button text-sm lg:text-base">
+                    <Save className="h-4 w-4 mr-2" />
+                    💾 Sauvegarder Maintenant
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl modern-card border-0">
+                  <DialogHeader>
+                    <DialogTitle className="text-xl lg:text-2xl font-bold gradient-text">💾 Créer une Sauvegarde</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4 lg:space-y-6 mt-4 lg:mt-6">
+                    <div className="space-y-2">
+                      <Label htmlFor="saveDescription" className="text-sm font-semibold">📝 Description de la sauvegarde *</Label>
+                      <Input
+                        id="saveDescription"
+                        value={saveDescription}
+                        onChange={(e) => setSaveDescription(e.target.value)}
+                        placeholder="Ex: Sauvegarde avant modifications importantes"
+                        className="friendly-input text-sm"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="saveChanges" className="text-sm font-semibold">🔄 Changements effectués (optionnel)</Label>
+                      <Textarea
+                        id="saveChanges"
+                        value={saveChanges}
+                        onChange={(e) => setSaveChanges(e.target.value)}
+                        placeholder="Un changement par ligne&#10;Ex: Ajout de 3 nouveaux utilisateurs&#10;Modification des commissions&#10;Création d'objectifs trimestriels"
+                        className="friendly-input text-sm min-h-[100px]"
+                        rows={4}
+                      />
+                      <p className="text-xs text-muted-foreground">💡 Décrivez les modifications apportées</p>
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row justify-end gap-3 pt-4">
+                      <Button 
+                        variant="outline" 
+                        onClick={() => setShowSaveDialog(false)}
+                        disabled={saveLoading}
+                        className="rounded-2xl hover:scale-105 transition-all duration-300 text-sm"
+                      >
+                        Annuler
+                      </Button>
+                      <Button 
+                        onClick={handleManualSave} 
+                        disabled={saveLoading}
+                        className="modern-button text-sm"
+                      >
+                        {saveLoading ? "🔄 Sauvegarde..." : "💾 Créer Sauvegarde"}
+                      </Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
+              
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleExportData}
+                className="rounded-2xl hover:scale-105 transition-all duration-300 text-xs lg:text-sm"
+              >
+                <Download className="h-4 w-4 mr-2" />
+                📥 Export Complet
+              </Button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
+            <div className="stat-card">
+              <div className="flex items-center justify-between mb-4">
+                <div className="icon-wrapper p-2">
+                  <GitBranch className="h-5 w-5 text-primary" />
+                </div>
+                <div className="text-right">
+                  <p className="text-lg lg:text-2xl font-bold text-primary">{versioningSystem.getStats().totalVersions}</p>
+                  <p className="text-xs lg:text-sm text-muted-foreground">Versions</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="stat-card">
+              <div className="flex items-center justify-between mb-4">
+                <div className="icon-wrapper p-2">
+                  <Shield className="h-5 w-5 text-success" />
+                </div>
+                <div className="text-right">
+                  <p className="text-lg lg:text-2xl font-bold text-success">
+                    {versioningSystem.checkIntegrity().valid ? '✅' : '❌'}
+                  </p>
+                  <p className="text-xs lg:text-sm text-muted-foreground">Intégrité</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="stat-card">
+              <div className="flex items-center justify-between mb-4">
+                <div className="icon-wrapper p-2">
+                  <Save className="h-5 w-5 text-info" />
+                </div>
+                <div className="text-right">
+                  <p className="text-sm lg:text-lg font-bold text-info">
+                    {versioningSystem.getStats().metadata?.autoBackupEnabled ? 'ON' : 'OFF'}
+                  </p>
+                  <p className="text-xs lg:text-sm text-muted-foreground">Auto-Save</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <Tabs defaultValue="users" className="w-full">
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="users" className="flex items-center gap-2">
