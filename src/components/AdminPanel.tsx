@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Settings, Plus, Euro, Users, Trash2, CreditCard as Edit, Key } from "lucide-react";
+import { Settings, Plus, Euro, Users, Trash2, CreditCard as Edit, Key, Eye, EyeOff } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
 
@@ -16,6 +16,7 @@ export const AdminPanel = () => {
   const [newEmail, setNewEmail] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [newRole, setNewRole] = useState<'admin' | 'employee'>('employee');
+  const [showNewPassword, setShowNewPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [editingUser, setEditingUser] = useState<any>(null);
   const [editFirstName, setEditFirstName] = useState("");
@@ -24,6 +25,9 @@ export const AdminPanel = () => {
   const [editRole, setEditRole] = useState<'admin' | 'employee'>('employee');
   const [changingPassword, setChangingPassword] = useState<string | null>(null);
   const [newPasswordValue, setNewPasswordValue] = useState("");
+  const [confirmPasswordValue, setConfirmPasswordValue] = useState("");
+  const [showChangePassword, setShowChangePassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   
   const { users, addUser, updateUserRole, removeUser, fetchUsers, updateUser, updatePassword } = useAuth();
 
@@ -88,13 +92,25 @@ export const AdminPanel = () => {
   const handleChangePassword = (username: string) => {
     setChangingPassword(username);
     setNewPasswordValue("");
+    setConfirmPasswordValue("");
+    setShowChangePassword(false);
+    setShowConfirmPassword(false);
   };
 
   const handleSavePassword = async () => {
-    if (!changingPassword || !newPasswordValue) {
+    if (!changingPassword || !newPasswordValue || !confirmPasswordValue) {
       toast({
         title: "Erreur",
-        description: "Veuillez saisir un nouveau mot de passe",
+        description: "Veuillez saisir et confirmer le nouveau mot de passe",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (newPasswordValue !== confirmPasswordValue) {
+      toast({
+        title: "Erreur",
+        description: "Les mots de passe ne correspondent pas",
         variant: "destructive",
       });
       return;
@@ -105,6 +121,9 @@ export const AdminPanel = () => {
     if (result.success) {
       setChangingPassword(null);
       setNewPasswordValue("");
+      setConfirmPasswordValue("");
+      setShowChangePassword(false);
+      setShowConfirmPassword(false);
     }
   };
 
@@ -166,13 +185,25 @@ export const AdminPanel = () => {
               </div>
               <div>
                 <Label htmlFor="password">Mot de passe</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  placeholder="••••••••"
-                />
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showNewPassword ? "text" : "password"}
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder="••••••••"
+                    className="pr-10"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-0 top-0 h-full px-3"
+                    onClick={() => setShowNewPassword(!showNewPassword)}
+                  >
+                    {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </Button>
+                </div>
               </div>
               <div>
                 <Label htmlFor="role">Rôle</Label>
@@ -309,13 +340,47 @@ export const AdminPanel = () => {
           <div className="space-y-4">
             <div>
               <Label htmlFor="newPassword">Nouveau mot de passe</Label>
-              <Input
-                id="newPassword"
-                type="password"
-                value={newPasswordValue}
-                onChange={(e) => setNewPasswordValue(e.target.value)}
-                placeholder="••••••••"
-              />
+              <div className="relative">
+                <Input
+                  id="newPassword"
+                  type={showChangePassword ? "text" : "password"}
+                  value={newPasswordValue}
+                  onChange={(e) => setNewPasswordValue(e.target.value)}
+                  placeholder="••••••••"
+                  className="pr-10"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="absolute right-0 top-0 h-full px-3"
+                  onClick={() => setShowChangePassword(!showChangePassword)}
+                >
+                  {showChangePassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </Button>
+              </div>
+            </div>
+            <div>
+              <Label htmlFor="confirmPassword">Confirmer le mot de passe</Label>
+              <div className="relative">
+                <Input
+                  id="confirmPassword"
+                  type={showConfirmPassword ? "text" : "password"}
+                  value={confirmPasswordValue}
+                  onChange={(e) => setConfirmPasswordValue(e.target.value)}
+                  placeholder="••••••••"
+                  className="pr-10"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="absolute right-0 top-0 h-full px-3"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                >
+                  {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </Button>
+              </div>
             </div>
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setChangingPassword(null)}>
