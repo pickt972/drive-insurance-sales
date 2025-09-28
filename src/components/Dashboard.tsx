@@ -16,7 +16,9 @@ export const Dashboard = () => {
   const salesThisWeek = sales.filter(sale => new Date(sale.createdAt) >= oneWeekAgo).length;
 
   // Statistiques par vendeur
-  const sellerStats = users.filter(u => u.role === 'employee').map(user => {
+  // Statistiques par vendeur - seulement les employés actifs avec des ventes
+  const activeEmployees = users.filter(u => u.role === 'employee' && u.isActive);
+  const sellerStats = activeEmployees.map(user => {
     const userSales = sales.filter(sale => sale.employeeName === user.username);
     const userCommission = userSales.reduce((sum, sale) => sum + sale.commissionAmount, 0);
     return {
@@ -25,7 +27,7 @@ export const Dashboard = () => {
       sales: userSales.length,
       commission: userCommission
     };
-  });
+  }).filter(stat => stat.sales > 0 || activeEmployees.length <= 3); // Afficher même sans ventes si peu d'employés
 
   const employeeStats = sellerStats.sort((a, b) => b.commission - a.commission);
 
@@ -115,7 +117,12 @@ export const Dashboard = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {employeeStats.length === 0 ? (
+            {activeEmployees.length === 0 ? (
+              <div className="text-center text-muted-foreground py-12">
+                <Trophy className="h-16 w-16 mx-auto mb-4 opacity-30" />
+                <p>Aucun employé actif</p>
+              </div>
+            ) : employeeStats.length === 0 ? (
               <div className="text-center text-muted-foreground py-12">
                 <Trophy className="h-16 w-16 mx-auto mb-4 opacity-30" />
                 <p>Aucune vente enregistrée</p>
