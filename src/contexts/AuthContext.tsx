@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { toast } from '@/hooks/use-toast';
+import { versioningSystem } from '@/lib/versioning';
 
 interface User {
   id: string;
@@ -335,6 +336,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const addUser = async (username: string, firstName: string, lastName: string, email: string, password: string, role: 'admin' | 'employee' = 'employee'): Promise<{ success: boolean; error?: string }> => {
     try {
+      // Créer une sauvegarde avant modification importante
+      versioningSystem.createVersion(
+        `Ajout utilisateur: ${firstName} ${lastName}`,
+        [`Nouvel utilisateur: ${username} (${role})`],
+        user?.firstName + ' ' + user?.lastName || 'Système'
+      );
+      
       const storedUsers = localStorage.getItem('aloelocation_users');
       const storedPasswords = localStorage.getItem('aloelocation_passwords');
       
@@ -631,6 +639,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   // Gestion des ventes
   const addSale = async (sale: Omit<Sale, 'id' | 'createdAt'>): Promise<{ success: boolean; error?: string }> => {
     try {
+      // Sauvegarde automatique pour les ventes importantes
+      if (sale.commissionAmount > 50) {
+        versioningSystem.createVersion(
+          `Vente importante: ${sale.clientName}`,
+          [`Nouvelle vente: ${sale.commissionAmount}€ par ${sale.employeeName}`],
+          sale.employeeName
+        );
+      }
+      
       const newSale: Sale = {
         ...sale,
         id: Date.now().toString(),

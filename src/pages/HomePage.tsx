@@ -6,6 +6,7 @@ import { Dashboard } from "@/components/Dashboard";
 import { SalesForm } from "@/components/SalesForm";
 import { SalesHistory } from "@/components/SalesHistory";
 import { AdminPanel } from "@/components/AdminPanel";
+import { VersionBadge } from "@/components/ui/version-badge";
 
 const HomePage: React.FC = () => {
   const { profile, isAdmin, signOut } = useAuth();
@@ -78,6 +79,7 @@ const HomePage: React.FC = () => {
                 <span className="font-medium sm:hidden">{profile?.firstName?.charAt(0)}{profile?.lastName?.charAt(0)}</span>
                 <span className="text-xs opacity-80 hidden lg:inline">({profile?.role})</span>
               </div>
+              <VersionBadge />
               <Button variant="outline" size="sm" onClick={signOut} className="rounded-2xl hover:scale-105 transition-all duration-300">
                 <LogOut className="h-4 w-4 lg:mr-2" />
                 <span className="hidden lg:inline">Déconnexion</span>

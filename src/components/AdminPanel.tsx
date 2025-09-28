@@ -5,11 +5,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Settings, Plus, Euro, Users, Trash2, CreditCard as Edit, Key, Eye, EyeOff, Target, Car, Shield, User, TrendingUp, GitBranch } from "lucide-react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Settings, Plus, Euro, Users, Trash2, CreditCard as Edit, Key, Eye, EyeOff, Target, Car, Shield, User, TrendingUp, GitBranch, Save, Download, Upload, History } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
 import { VersionManager } from "@/components/VersionManager";
+import { versioningSystem } from "@/lib/versioning";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export const AdminPanel = () => {
   const [newUsername, setNewUsername] = useState("");
@@ -55,6 +56,11 @@ export const AdminPanel = () => {
   const [editObjectiveSales, setEditObjectiveSales] = useState("");
   const [editObjectivePeriod, setEditObjectivePeriod] = useState<'monthly' | 'quarterly' | 'yearly'>('monthly');
   const [editObjectiveDescription, setEditObjectiveDescription] = useState("");
+  
+  // États pour le versioning
+  const [showVersionDialog, setShowVersionDialog] = useState(false);
+  const [versionDescription, setVersionDescription] = useState("");
+  const [versionChanges, setVersionChanges] = useState("");
   
   const { 
     users, 
@@ -426,10 +432,170 @@ export const AdminPanel = () => {
     return 'text-red-600 bg-red-100';
   };
 
+  // Fonction pour créer une version manuelle
+  const handleCreateVersion = async () => {
+    if (!versionDescription.trim()) {
+      toast({
+        title: "Erreur",
+        description: "Veuillez saisir une description",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const changes = versionChanges.trim() 
+        ? versionChanges.split('\n').map(line => line.trim()).filter(line => line)
+        : [];
+      
+      versioningSystem.createVersion(
+        versionDescription.trim(),
+        changes,
+        `${users.find(u => u.username === 'admin')?.firstName || 'Admin'} ${users.find(u => u.username === 'admin')?.lastName || 'Système'}`
+      );
+
+      setVersionDescription("");
+      setVersionChanges("");
+      setShowVersionDialog(false);
+
+      toast({
+        title: "Version créée",
+        description: "Nouvelle version sauvegardée avec succès",
+      });
+    } catch (error) {
+      toast({
+        title: "Erreur",
+        description: "Impossible de créer la version",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Fonction pour exporter les données
+  const handleExportData = () => {
+    try {
+      const exportData = versioningSystem.exportVersions();
+      const blob = new Blob([exportData], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `aloelocation_backup_${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      toast({
+        title: "Export réussi",
+        description: "Sauvegarde téléchargée avec succès",
+      });
+    } catch (error) {
+      toast({
+        title: "Erreur",
+        description: "Impossible d'exporter les données",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
-    <div className="space-y-8">
-      {/* Gestion des utilisateurs */}
+    <div className="space-y-6 lg:space-y-8">
+      {/* Actions de sauvegarde rapides */}
       <div className="modern-card animate-gentle-fade-in max-w-7xl mx-auto">
+        <div className="p-4 lg:p-6">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 lg:gap-0">
+            <div className="flex items-center gap-3">
+              <div className="icon-wrapper">
+                <GitBranch className="h-6 w-6 text-primary" />
+              </div>
+              <div>
+                <h2 className="text-lg lg:text-xl font-bold gradient-text">💾 Sauvegarde & Versioning</h2>
+                <p className="text-sm text-muted-foreground">Version actuelle: <span className="font-bold text-primary">{versioningSystem.getCurrentVersion()}</span></p>
+              </div>
+            </div>
+            
+            <div className="flex flex-wrap items-center gap-2 lg:gap-3">
+              <Dialog open={showVersionDialog} onOpenChange={setShowVersionDialog}>
+                <DialogTrigger asChild>
+                  <Button className="modern-button text-xs lg:text-sm">
+                    <Save className="h-4 w-4 mr-2" />
+                    💾 Sauvegarder
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl modern-card border-0">
+                  <DialogHeader>
+                    <DialogTitle className="text-xl lg:text-2xl font-bold gradient-text">💾 Créer une Sauvegarde</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4 lg:space-y-6 mt-4 lg:mt-6">
+                    <div className="space-y-2">
+                      <Label htmlFor="versionDescription" className="text-sm font-semibold">📝 Description de la sauvegarde *</Label>
+                      <Input
+                        id="versionDescription"
+                        value={versionDescription}
+                        onChange={(e) => setVersionDescription(e.target.value)}
+                        placeholder="Ex: Sauvegarde après ajout nouveaux utilisateurs"
+                        className="friendly-input text-sm"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="versionChanges" className="text-sm font-semibold">🔄 Changements effectués (optionnel)</Label>
+                      <textarea
+                        id="versionChanges"
+                        value={versionChanges}
+                        onChange={(e) => setVersionChanges(e.target.value)}
+                        placeholder="Un changement par ligne&#10;Ex: Ajout utilisateur Julie&#10;Modification objectifs vendeur1"
+                        className="friendly-input text-sm min-h-[100px] w-full resize-none"
+                        rows={4}
+                      />
+                      <p className="text-xs text-muted-foreground">💡 Un changement par ligne</p>
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row justify-end gap-3 pt-4">
+                      <Button 
+                        variant="outline" 
+                        onClick={() => setShowVersionDialog(false)}
+                        className="rounded-2xl hover:scale-105 transition-all duration-300 text-sm"
+                      >
+                        Annuler
+                      </Button>
+                      <Button 
+                        onClick={handleCreateVersion}
+                        className="modern-button text-sm"
+                      >
+                        💾 Créer Sauvegarde
+                      </Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
+              
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleExportData}
+                className="rounded-2xl hover:scale-105 transition-all duration-300 text-xs lg:text-sm"
+              >
+                <Download className="h-4 w-4 mr-2" />
+                📥 Exporter
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Onglets d'administration */}
+      <Tabs defaultValue="users" className="max-w-7xl mx-auto">
+        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4 mb-6 lg:mb-8">
+          <TabsTrigger value="users" className="text-xs lg:text-sm">👥 Utilisateurs</TabsTrigger>
+          <TabsTrigger value="insurances" className="text-xs lg:text-sm">🛡️ Assurances</TabsTrigger>
+          <TabsTrigger value="objectives" className="text-xs lg:text-sm">🎯 Objectifs</TabsTrigger>
+          <TabsTrigger value="versioning" className="text-xs lg:text-sm">🔄 Versions</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="users">
+      {/* Gestion des utilisateurs */}
+          <div className="modern-card animate-gentle-fade-in">
         <div className="p-4 lg:p-8">
           <div className="flex items-center gap-3 mb-6 lg:mb-8">
             <div className="icon-wrapper">
@@ -580,7 +746,9 @@ export const AdminPanel = () => {
           </div>
         </div>
       </div>
+        </TabsContent>
 
+        <TabsContent value="insurances">
       {/* Dialog d'édition utilisateur */}
       <Dialog open={!!editingUser} onOpenChange={(open) => !open && setEditingUser(null)}>
         <DialogContent>
@@ -649,71 +817,8 @@ export const AdminPanel = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Dialog de changement de mot de passe */}
-      <Dialog open={!!changingPassword} onOpenChange={(open) => !open && setChangingPassword(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Changer le mot de passe de {changingPassword}</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="newPassword">Nouveau mot de passe</Label>
-              <div className="relative">
-                <Input
-                  id="newPassword"
-                  type={showChangePassword ? "text" : "password"}
-                  value={newPasswordValue}
-                  onChange={(e) => setNewPasswordValue(e.target.value)}
-                  placeholder="••••••••"
-                  className="pr-10"
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="absolute right-0 top-0 h-full px-3"
-                  onClick={() => setShowChangePassword(!showChangePassword)}
-                >
-                  {showChangePassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </Button>
-              </div>
-            </div>
-            <div>
-              <Label htmlFor="confirmPassword">Confirmer le mot de passe</Label>
-              <div className="relative">
-                <Input
-                  id="confirmPassword"
-                  type={showConfirmPassword ? "text" : "password"}
-                  value={confirmPasswordValue}
-                  onChange={(e) => setConfirmPasswordValue(e.target.value)}
-                  placeholder="••••••••"
-                  className="pr-10"
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="absolute right-0 top-0 h-full px-3"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                >
-                  {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </Button>
-              </div>
-            </div>
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setChangingPassword(null)}>
-                Annuler
-              </Button>
-              <Button onClick={handleSavePassword}>
-                Changer le mot de passe
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
       {/* Gestion des assurances */}
-      <div className="modern-card animate-smooth-scale-in max-w-7xl mx-auto" style={{ animationDelay: '0.2s' }}>
+          <div className="modern-card animate-smooth-scale-in">
         <div className="p-4 lg:p-8">
           <div className="flex items-center gap-3 mb-6 lg:mb-8">
             <div className="icon-wrapper">
@@ -797,7 +902,9 @@ export const AdminPanel = () => {
           </div>
         </div>
       </div>
+        </TabsContent>
 
+        <TabsContent value="objectives">
       {/* Dialog d'édition assurance */}
       <Dialog open={!!editingInsurance} onOpenChange={(open) => !open && setEditingInsurance(null)}>
         <DialogContent>
@@ -839,7 +946,7 @@ export const AdminPanel = () => {
       </Dialog>
 
       {/* Gestion des objectifs */}
-      <div className="modern-card animate-smooth-scale-in max-w-7xl mx-auto" style={{ animationDelay: '0.3s' }}>
+          <div className="modern-card animate-smooth-scale-in">
         <div className="p-4 lg:p-8">
           <div className="flex items-center gap-3 mb-6 lg:mb-8">
             <div className="icon-wrapper">
@@ -1035,6 +1142,12 @@ export const AdminPanel = () => {
           </div>
         </div>
       </div>
+        </TabsContent>
+
+        <TabsContent value="versioning">
+          <VersionManager />
+        </TabsContent>
+      </Tabs>
 
       {/* Dialog d'édition objectif */}
       <Dialog open={!!editingObjective} onOpenChange={(open) => !open && setEditingObjective(null)}>
@@ -1131,41 +1244,68 @@ export const AdminPanel = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Statistiques système */}
-      <div className="modern-card animate-gentle-fade-in max-w-7xl mx-auto" style={{ animationDelay: '0.4s' }}>
-        <div className="p-4 lg:p-8">
-          <div className="flex items-center gap-3 mb-6 lg:mb-8">
-            <div className="icon-wrapper">
-              <Settings className="h-6 w-6 text-primary" />
+      {/* Dialog de changement de mot de passe - déplacé ici pour éviter les conflits */}
+      <Dialog open={!!changingPassword} onOpenChange={(open) => !open && setChangingPassword(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Changer le mot de passe de {changingPassword}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="newPassword">Nouveau mot de passe</Label>
+              <div className="relative">
+                <Input
+                  id="newPassword"
+                  type={showChangePassword ? "text" : "password"}
+                  value={newPasswordValue}
+                  onChange={(e) => setNewPasswordValue(e.target.value)}
+                  placeholder="••••••••"
+                  className="pr-10"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="absolute right-0 top-0 h-full px-3"
+                  onClick={() => setShowChangePassword(!showChangePassword)}
+                >
+                  {showChangePassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </Button>
+              </div>
             </div>
-            <h2 className="text-lg lg:text-2xl font-bold gradient-text">📊 Statistiques Système</h2>
+            <div>
+              <Label htmlFor="confirmPassword">Confirmer le mot de passe</Label>
+              <div className="relative">
+                <Input
+                  id="confirmPassword"
+                  type={showConfirmPassword ? "text" : "password"}
+                  value={confirmPasswordValue}
+                  onChange={(e) => setConfirmPasswordValue(e.target.value)}
+                  placeholder="••••••••"
+                  className="pr-10"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="absolute right-0 top-0 h-full px-3"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                >
+                  {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </Button>
+              </div>
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setChangingPassword(null)}>
+                Annuler
+              </Button>
+              <Button onClick={handleSavePassword}>
+                Changer le mot de passe
+              </Button>
+            </div>
           </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6">
-            <div className="stat-card">
-              <div className="icon-wrapper mx-auto mb-4">
-                <Users className="h-8 w-8 text-primary" />
-              </div>
-              <div className="text-2xl lg:text-4xl font-bold text-primary mb-2">{users.length}</div>
-              <div className="text-sm lg:text-base text-muted-foreground">Utilisateurs</div>
-            </div>
-            <div className="stat-card">
-              <div className="icon-wrapper mx-auto mb-4">
-                <Shield className="h-8 w-8 text-success" />
-              </div>
-              <div className="text-2xl lg:text-4xl font-bold text-success">{insuranceTypes.filter(ins => ins.isActive).length}</div>
-              <div className="text-sm lg:text-base text-muted-foreground">Types d'assurances</div>
-            </div>
-            <div className="stat-card">
-              <div className="icon-wrapper mx-auto mb-4">
-                <TrendingUp className="h-8 w-8 text-warning" />
-              </div>
-              <div className="text-2xl lg:text-4xl font-bold text-warning">{sales.length}</div>
-              <div className="text-sm lg:text-base text-muted-foreground">Ventes totales</div>
-            </div>
-          </div>
-        </div>
-      </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
