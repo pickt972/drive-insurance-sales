@@ -303,7 +303,7 @@
 }
 
 .stat-card {
-  @apply modern-card p-6 text-center group cursor-pointer;
+  @apply modern-card p-6 text-center cursor-pointer;
   background: linear-gradient(135deg, hsl(var(--card)) 0%, hsl(var(--card) / 0.9) 100%);
 }
 
