@@ -114,7 +114,7 @@ export const Dashboard = () => {
                   let progressPercentage = 0;
                   
                   if (objective) {
-                    const objectiveSales = filteredSales.filter(sale => 
+                    const objectiveSales = sales.filter(sale => 
                       sale.employeeName === seller.username &&
                       new Date(sale.createdAt) >= new Date(objective.startDate) &&
                       new Date(sale.createdAt) <= new Date(objective.endDate)
