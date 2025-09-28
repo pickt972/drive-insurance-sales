@@ -4,8 +4,7 @@ import { TrendingUp, Users, DollarSign, Trophy, Car, Target, Calendar } from "lu
 import { useAuth } from "@/contexts/AuthContext";
 
 export const Dashboard = () => {
-  const { sales, users, insuranceTypes, objectives, profile } = useAuth();
-  const { profile, isAdmin } = useAuth();
+  const { sales, users, insuranceTypes, objectives, profile, isAdmin } = useAuth();
 
   // Filtrer les ventes selon le rôle
   const userSales = isAdmin ? sales : sales.filter(sale => sale.employeeName === profile?.username);
