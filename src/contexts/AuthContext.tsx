@@ -211,20 +211,60 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const initializeData = () => {
     try {
-      // Forcer la réinitialisation des données par défaut
-      localStorage.setItem('aloelocation_users', JSON.stringify(DEFAULT_USERS));
-      localStorage.setItem('aloelocation_passwords', JSON.stringify(DEFAULT_PASSWORDS));
-      localStorage.setItem('aloelocation_insurance_types', JSON.stringify(DEFAULT_INSURANCE_TYPES));
-      localStorage.setItem('aloelocation_sales', JSON.stringify(DEFAULT_SALES));
-      localStorage.setItem('aloelocation_objectives', JSON.stringify(DEFAULT_OBJECTIVES));
-      
-      setUsers(DEFAULT_USERS);
-      setInsuranceTypes(DEFAULT_INSURANCE_TYPES);
-      setSales(DEFAULT_SALES);
-      setObjectives(DEFAULT_OBJECTIVES);
-      
-      // Initialiser les utilisateurs s'ils n'existent pas
-      console.log('✅ Données par défaut restaurées');
+      // Récupérer les données existantes ou utiliser les valeurs par défaut
+      const existingUsers = localStorage.getItem('aloelocation_users');
+      const existingPasswords = localStorage.getItem('aloelocation_passwords');
+      const existingInsuranceTypes = localStorage.getItem('aloelocation_insurance_types');
+      const existingSales = localStorage.getItem('aloelocation_sales');
+      const existingObjectives = localStorage.getItem('aloelocation_objectives');
+
+      // Initialiser seulement si les données n'existent pas
+      if (!existingUsers) {
+        localStorage.setItem('aloelocation_users', JSON.stringify(DEFAULT_USERS));
+        setUsers(DEFAULT_USERS);
+        console.log('✅ Utilisateurs par défaut initialisés');
+      } else {
+        const users = JSON.parse(existingUsers);
+        setUsers(users);
+        console.log('✅ Utilisateurs existants préservés:', users.length);
+      }
+
+      if (!existingPasswords) {
+        localStorage.setItem('aloelocation_passwords', JSON.stringify(DEFAULT_PASSWORDS));
+        console.log('✅ Mots de passe par défaut initialisés');
+      } else {
+        console.log('✅ Mots de passe existants préservés');
+      }
+
+      if (!existingInsuranceTypes) {
+        localStorage.setItem('aloelocation_insurance_types', JSON.stringify(DEFAULT_INSURANCE_TYPES));
+        setInsuranceTypes(DEFAULT_INSURANCE_TYPES);
+        console.log('✅ Types d\'assurance par défaut initialisés');
+      } else {
+        const insurances = JSON.parse(existingInsuranceTypes);
+        setInsuranceTypes(insurances);
+        console.log('✅ Types d\'assurance existants préservés:', insurances.length);
+      }
+
+      if (!existingSales) {
+        localStorage.setItem('aloelocation_sales', JSON.stringify(DEFAULT_SALES));
+        setSales(DEFAULT_SALES);
+        console.log('✅ Ventes par défaut initialisées');
+      } else {
+        const salesData = JSON.parse(existingSales);
+        setSales(salesData);
+        console.log('✅ Ventes existantes préservées:', salesData.length);
+      }
+
+      if (!existingObjectives) {
+        localStorage.setItem('aloelocation_objectives', JSON.stringify(DEFAULT_OBJECTIVES));
+        setObjectives(DEFAULT_OBJECTIVES);
+        console.log('✅ Objectifs par défaut initialisés');
+      } else {
+        const objectivesData = JSON.parse(existingObjectives);
+        setObjectives(objectivesData);
+        console.log('✅ Objectifs existants préservés:', objectivesData.length);
+      }
 
       // Vérifier si un utilisateur est connecté
       const storedUser = localStorage.getItem('aloelocation_current_user');
@@ -234,22 +274,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
     } catch (error) {
       console.error('Erreur initialisation données:', error);
-      // En cas d'erreur, réinitialiser
-      localStorage.removeItem('aloelocation_users');
-      localStorage.removeItem('aloelocation_passwords');
-      localStorage.removeItem('aloelocation_insurance_types');
-      localStorage.removeItem('aloelocation_sales');
-      localStorage.removeItem('aloelocation_objectives');
-      localStorage.removeItem('aloelocation_current_user');
+      // En cas d'erreur, utiliser les valeurs par défaut sans écraser
+      console.warn('⚠️ Erreur lors de l\'initialisation, utilisation des valeurs par défaut');
       setUsers(DEFAULT_USERS);
       setInsuranceTypes(DEFAULT_INSURANCE_TYPES);
       setSales(DEFAULT_SALES);
       setObjectives(DEFAULT_OBJECTIVES);
-      localStorage.setItem('aloelocation_users', JSON.stringify(DEFAULT_USERS));
-      localStorage.setItem('aloelocation_passwords', JSON.stringify(DEFAULT_PASSWORDS));
-      localStorage.setItem('aloelocation_insurance_types', JSON.stringify(DEFAULT_INSURANCE_TYPES));
-      localStorage.setItem('aloelocation_sales', JSON.stringify(DEFAULT_SALES));
-      localStorage.setItem('aloelocation_objectives', JSON.stringify(DEFAULT_OBJECTIVES));
     } finally {
       setLoading(false);
     }
