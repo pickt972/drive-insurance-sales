@@ -1,19 +1,44 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { TrendingUp, Users, DollarSign, Trophy } from "lucide-react";
+import { TrendingUp, Users, DollarSign, Trophy, Car } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 export const Dashboard = () => {
-  // Données de démonstration
-  const stats = {
-    totalSales: 15,
-    totalCommission: 450.00,
-    salesThisWeek: 8,
-    topSellers: [
-      { name: 'admin', sales: 8, commission: 240.00 },
-      { name: 'vendeur1', sales: 5, commission: 150.00 },
-      { name: 'vendeur2', sales: 2, commission: 60.00 }
-    ]
-  };
+  const { sales, users, insuranceTypes, objectives } = useAuth();
+
+  // Calculer les statistiques
+  const totalSales = sales.length;
+  const totalCommission = sales.reduce((sum, sale) => sum + sale.commissionAmount, 0);
+  
+  // Ventes de la semaine dernière
+  const oneWeekAgo = new Date();
+  oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+  const salesThisWeek = sales.filter(sale => new Date(sale.createdAt) >= oneWeekAgo).length;
+
+  // Statistiques par vendeur
+  const sellerStats = users.filter(u => u.role === 'employee').map(user => {
+    const userSales = sales.filter(sale => sale.employeeName === user.username);
+    const userCommission = userSales.reduce((sum, sale) => sum + sale.commissionAmount, 0);
+    return {
+      username: user.username,
+      name: `${user.firstName} ${user.lastName}`,
+      sales: userSales.length,
+      commission: userCommission
+    };
+  }).sort((a, b) => b.commission - a.commission);
+
+  // Top des assurances
+  const insuranceCount: Record<string, number> = {};
+  sales.forEach(sale => {
+    sale.insuranceTypes.forEach(insurance => {
+      insuranceCount[insurance] = (insuranceCount[insurance] || 0) + 1;
+    });
+  });
+  
+  const topInsurances = Object.entries(insuranceCount)
+    .map(([name, count]) => ({ name, count }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 5);
 
   const formatCurrency = (amount: number) => `${amount.toFixed(2)} €`;
 
