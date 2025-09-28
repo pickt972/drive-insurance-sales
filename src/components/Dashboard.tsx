@@ -114,13 +114,18 @@ export const Dashboard = () => {
                   let progressPercentage = 0;
                   
                   if (objective) {
-                    const objectiveSales = sales.filter(sale => 
+                    const objectiveSales = filteredSales.filter(sale => 
                       sale.employeeName === seller.username &&
                       new Date(sale.createdAt) >= new Date(objective.startDate) &&
                       new Date(sale.createdAt) <= new Date(objective.endDate)
                     );
-                    const achievedAmount = objectiveSales.reduce((sum, sale) => sum + sale.commissionAmount, 0);
-                    progressPercentage = Math.min((achievedAmount / objective.targetAmount) * 100, 100);
+                    
+                    if (objective.objectiveType === 'amount') {
+                      const achievedAmount = objectiveSales.reduce((sum, sale) => sum + sale.commissionAmount, 0);
+                      progressPercentage = Math.min((achievedAmount / objective.targetAmount) * 100, 100);
+                    } else {
+                      progressPercentage = Math.min((objectiveSales.length / objective.targetSalesCount) * 100, 100);
+                    }
                   }
                   
                   return (
@@ -143,12 +148,17 @@ export const Dashboard = () => {
                       {objective && (
                         <div className="mt-2">
                           <div className="flex justify-between text-xs text-muted-foreground mb-1">
-                            <span>Objectif: {formatCurrency(objective.targetAmount)}</span>
+                            <span>
+                              Objectif: {objective.objectiveType === 'amount' 
+                                ? formatCurrency(objective.targetAmount)
+                                : `${objective.targetSalesCount} ventes`
+                              }
+                            </span>
                             <span>{progressPercentage.toFixed(0)}%</span>
                           </div>
-                          <div className="w-full bg-gray-200 rounded-full h-2">
+                          <div className="w-full bg-gray-200 rounded-full h-3">
                             <div 
-                              className={`h-2 rounded-full transition-all duration-300 ${
+                              className={`h-3 rounded-full transition-all duration-500 ${
                                 progressPercentage >= 100 ? 'bg-green-500' :
                                 progressPercentage >= 75 ? 'bg-yellow-500' :
                                 progressPercentage >= 50 ? 'bg-orange-500' : 'bg-red-500'

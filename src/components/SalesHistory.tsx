@@ -1,12 +1,146 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Clock, Trash2, User, FileText, TrendingUp, Euro, Target, Phone, Mail } from "lucide-react";
+import { Clock, Trash2, User, FileText, TrendingUp, Euro, Target, Phone, Mail, Filter, Download, Calendar } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
 export const SalesHistory = () => {
   const { isAdmin, sales, users, objectives, deleteSale } = useAuth();
+  
+  // États pour les filtres
+  const [filterEmployee, setFilterEmployee] = useState("");
+  const [filterStartDate, setFilterStartDate] = useState("");
+  const [filterEndDate, setFilterEndDate] = useState("");
+  const [filterInsurance, setFilterInsurance] = useState("");
+  const [showFilters, setShowFilters] = useState(false);
+
+  // Fonction de filtrage
+  const getFilteredSales = () => {
+    return sales.filter(sale => {
+      const matchEmployee = !filterEmployee || sale.employeeName === filterEmployee;
+      const matchStartDate = !filterStartDate || new Date(sale.createdAt) >= new Date(filterStartDate);
+      const matchEndDate = !filterEndDate || new Date(sale.createdAt) <= new Date(filterEndDate + 'T23:59:59');
+      const matchInsurance = !filterInsurance || sale.insuranceTypes.includes(filterInsurance);
+      
+      return matchEmployee && matchStartDate && matchEndDate && matchInsurance;
+    });
+  };
+
+  const filteredSales = getFilteredSales();
+
+  // Fonction d'export CSV
+  const exportToCSV = () => {
+    const headers = [
+      'Date',
+      'Employé',
+      'Client',
+      'Email',
+      'Téléphone',
+      'N° Réservation',
+      'Assurances',
+      'Commission (€)',
+      'Notes'
+    ];
+    
+    const csvData = filteredSales.map(sale => [
+      new Date(sale.createdAt).toLocaleDateString('fr-FR'),
+      `${users.find(u => u.username === sale.employeeName)?.firstName || ''} ${users.find(u => u.username === sale.employeeName)?.lastName || ''}`,
+      sale.clientName,
+      sale.clientEmail || '',
+      sale.clientPhone || '',
+      sale.reservationNumber,
+      sale.insuranceTypes.join('; '),
+      sale.commissionAmount.toFixed(2),
+      sale.notes || ''
+    ]);
+    
+    const csvContent = [headers, ...csvData]
+      .map(row => row.map(cell => `"${cell}"`).join(','))
+      .join('\n');
+    
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `ventes_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  // Fonction d'export PDF (simulation)
+  const exportToPDF = () => {
+    const printContent = `
+      <html>
+        <head>
+          <title>Rapport de Ventes - Aloe Location</title>
+          <style>
+            body { font-family: Arial, sans-serif; margin: 20px; }
+            h1 { color: #2563eb; text-align: center; }
+            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+            th { background-color: #f2f2f2; }
+            .summary { background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
+          </style>
+        </head>
+        <body>
+          <h1>Rapport de Ventes - Aloe Location</h1>
+          <div class="summary">
+            <h3>Résumé</h3>
+            <p><strong>Nombre de ventes:</strong> ${filteredSales.length}</p>
+            <p><strong>Commission totale:</strong> ${filteredSales.reduce((sum, sale) => sum + sale.commissionAmount, 0).toFixed(2)} €</p>
+            <p><strong>Date d'export:</strong> ${new Date().toLocaleDateString('fr-FR')}</p>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Employé</th>
+                <th>Client</th>
+                <th>N° Réservation</th>
+                <th>Assurances</th>
+                <th>Commission</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${filteredSales.map(sale => `
+                <tr>
+                  <td>${new Date(sale.createdAt).toLocaleDateString('fr-FR')}</td>
+                  <td>${users.find(u => u.username === sale.employeeName)?.firstName || ''} ${users.find(u => u.username === sale.employeeName)?.lastName || ''}</td>
+                  <td>${sale.clientName}</td>
+                  <td>${sale.reservationNumber}</td>
+                  <td>${sale.insuranceTypes.join(', ')}</td>
+                  <td>${sale.commissionAmount.toFixed(2)} €</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </body>
+      </html>
+    `;
+    
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(printContent);
+      printWindow.document.close();
+      printWindow.print();
+    }
+  };
+
+  // Réinitialiser les filtres
+  const resetFilters = () => {
+    setFilterEmployee("");
+    setFilterStartDate("");
+    setFilterEndDate("");
+    setFilterInsurance("");
+  };
+
+  // Obtenir toutes les assurances uniques
+  const allInsurances = [...new Set(sales.flatMap(sale => sale.insuranceTypes))];
 
 
   const formatDate = (dateString: string) => {
@@ -26,27 +160,32 @@ export const SalesHistory = () => {
   };
 
   // Calculer les statistiques
-  const totalSales = sales.length;
-  const totalCommission = sales.reduce((sum, sale) => sum + sale.commissionAmount, 0);
+  const totalSales = filteredSales.length;
+  const totalCommission = filteredSales.reduce((sum, sale) => sum + sale.commissionAmount, 0);
   const thisMonth = new Date();
   const monthStart = new Date(thisMonth.getFullYear(), thisMonth.getMonth(), 1);
-  const salesThisMonth = sales.filter(sale => new Date(sale.createdAt) >= monthStart);
+  const salesThisMonth = filteredSales.filter(sale => new Date(sale.createdAt) >= monthStart);
   
   // Statistiques par employé
   const employeeStats = users.filter(u => u.role === 'employee').map(user => {
-    const userSales = sales.filter(sale => sale.employeeName === user.username);
+    const userSales = filteredSales.filter(sale => sale.employeeName === user.username);
     const userCommission = userSales.reduce((sum, sale) => sum + sale.commissionAmount, 0);
     const userObjective = objectives.find(obj => obj.employeeName === user.username);
     
     let progressPercentage = 0;
     if (userObjective) {
-      const objectiveSales = sales.filter(sale => 
+      const objectiveSales = filteredSales.filter(sale => 
         sale.employeeName === user.username &&
         new Date(sale.createdAt) >= new Date(userObjective.startDate) &&
         new Date(sale.createdAt) <= new Date(userObjective.endDate)
       );
-      const achievedAmount = objectiveSales.reduce((sum, sale) => sum + sale.commissionAmount, 0);
-      progressPercentage = Math.min((achievedAmount / userObjective.targetAmount) * 100, 100);
+      
+      if (userObjective.objectiveType === 'amount') {
+        const achievedAmount = objectiveSales.reduce((sum, sale) => sum + sale.commissionAmount, 0);
+        progressPercentage = Math.min((achievedAmount / userObjective.targetAmount) * 100, 100);
+      } else {
+        progressPercentage = Math.min((objectiveSales.length / userObjective.targetSalesCount) * 100, 100);
+      }
     }
     
     return {
@@ -67,6 +206,115 @@ export const SalesHistory = () => {
 
   return (
     <div className="space-y-6">
+      {/* Filtres et Export */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <Filter className="h-5 w-5 text-primary" />
+              Filtres et Export
+            </CardTitle>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowFilters(!showFilters)}
+              >
+                <Filter className="h-4 w-4 mr-2" />
+                {showFilters ? 'Masquer' : 'Afficher'} Filtres
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={exportToCSV}
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Export CSV
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={exportToPDF}
+              >
+                <FileText className="h-4 w-4 mr-2" />
+                Export PDF
+              </Button>
+            </div>
+          </div>
+        </CardHeader>
+        {showFilters && (
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+              <div>
+                <Label htmlFor="filterEmployee">Employé</Label>
+                <select
+                  id="filterEmployee"
+                  value={filterEmployee}
+                  onChange={(e) => setFilterEmployee(e.target.value)}
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                >
+                  <option value="">Tous les employés</option>
+                  {users.filter(u => u.role === 'employee').map(user => (
+                    <option key={user.username} value={user.username}>
+                      {user.firstName} {user.lastName}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <Label htmlFor="filterStartDate">Date de début</Label>
+                <Input
+                  id="filterStartDate"
+                  type="date"
+                  value={filterStartDate}
+                  onChange={(e) => setFilterStartDate(e.target.value)}
+                />
+              </div>
+              <div>
+                <Label htmlFor="filterEndDate">Date de fin</Label>
+                <Input
+                  id="filterEndDate"
+                  type="date"
+                  value={filterEndDate}
+                  onChange={(e) => setFilterEndDate(e.target.value)}
+                />
+              </div>
+              <div>
+                <Label htmlFor="filterInsurance">Assurance</Label>
+                <select
+                  id="filterInsurance"
+                  value={filterInsurance}
+                  onChange={(e) => setFilterInsurance(e.target.value)}
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                >
+                  <option value="">Toutes les assurances</option>
+                  {allInsurances.map(insurance => (
+                    <option key={insurance} value={insurance}>
+                      {insurance}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex items-end">
+                <Button
+                  variant="outline"
+                  onClick={resetFilters}
+                  className="w-full"
+                >
+                  Réinitialiser
+                </Button>
+              </div>
+            </div>
+            <div className="mt-4 p-3 bg-muted rounded-lg">
+              <div className="text-sm text-muted-foreground">
+                <strong>Résultats filtrés:</strong> {filteredSales.length} vente(s) • 
+                <strong> Commission totale:</strong> {totalCommission.toFixed(2)} €
+              </div>
+            </div>
+          </CardContent>
+        )}
+      </Card>
+
       {/* Statistiques globales */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
@@ -170,18 +418,20 @@ export const SalesHistory = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Clock className="h-5 w-5 text-primary" />
-            Historique Détaillé des Ventes ({sales.length})
+            Historique Détaillé des Ventes ({filteredSales.length})
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {sales.length === 0 ? (
+          {filteredSales.length === 0 ? (
             <div className="text-center py-8">
               <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <p className="text-muted-foreground">Aucune vente enregistrée</p>
+              <p className="text-muted-foreground">
+                {sales.length === 0 ? 'Aucune vente enregistrée' : 'Aucune vente ne correspond aux filtres'}
+              </p>
             </div>
           ) : (
             <div className="space-y-4">
-              {sales.map((sale) => (
+              {filteredSales.map((sale) => (
                 <div key={sale.id} className="p-4 border rounded-lg hover:bg-muted/50">
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
