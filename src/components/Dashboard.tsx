@@ -27,6 +27,9 @@ export const Dashboard = () => {
       commission: userCommission,
       totalInsurances
     };
+  });
+
+  const employeeStats = sellerStats.sort((a, b) => b.commission - a.commission);
 
   // Top des assurances
   const insuranceCount: Record<string, number> = {};
