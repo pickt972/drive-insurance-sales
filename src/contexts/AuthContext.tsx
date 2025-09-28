@@ -354,7 +354,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       toast({
         title: "Utilisateur créé",
-        description: `${username} a été créé avec succès`,
+        description: `${firstName} ${lastName} (${username}) créé avec succès`,
       });
 
       return { success: true };
@@ -431,7 +431,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       toast({
         title: "Utilisateur modifié",
-        description: `Les informations de ${username} ont été mises à jour`,
+        description: `${updates.firstName || ''} ${updates.lastName || ''} mis à jour`,
       });
 
       return { success: true };

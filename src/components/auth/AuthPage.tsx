@@ -64,7 +64,8 @@ export const AuthPage = () => {
                 <strong>Admin :</strong> admin / admin123<br />
                 <strong>Vendeur 1 :</strong> vendeur1 / vendeur123<br />
                 <strong>Vendeur 2 :</strong> vendeur2 / vendeur123<br />
-                <strong>Julie :</strong> JULIE / julie123
+                <strong>Julie :</strong> JULIE / julie123<br />
+                <em className="text-info">+ Tous les utilisateurs créés en administration</em>
               </span>
             </p>
           </div>
