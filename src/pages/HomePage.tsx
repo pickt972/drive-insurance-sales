@@ -108,48 +108,4 @@ const HomePage: React.FC = () => {
   );
 };
 
-          <div>
-            <h1 className="text-2xl font-bold text-primary">Aloe Location</h1>
-            <p className="text-sm text-muted-foreground">Gestion des ventes d'assurances</p>
-          </div>
-          <div className="flex items-center gap-4">
-            <span className="text-sm">{profile?.username} ({profile?.role})</span>
-            <Button variant="outline" size="sm" onClick={signOut}>
-              <LogOut className="h-4 w-4 mr-2" />
-              Déconnexion
-            </Button>
-          </div>
-        </div>
-      </header>
-
-      <div className="flex">
-        {/* Sidebar */}
-        <nav className="w-64 border-r bg-card p-4">
-          <div className="space-y-2">
-            {tabs.map((tab) => {
-              const Icon = tab.icon;
-              return (
-                <Button
-                  key={tab.id}
-                  variant={currentTab === tab.id ? "default" : "ghost"}
-                  className="w-full justify-start"
-                  onClick={() => handleTabChange(tab.id)}
-                >
-                  <Icon className="h-4 w-4 mr-2" />
-                  {tab.label}
-                </Button>
-              );
-            })}
-          </div>
-        </nav>
-
-        {/* Main content */}
-        <main className="flex-1 p-6">
-          {renderContent()}
-        </main>
-      </div>
-    </div>
-  );
-};
-
 export default HomePage;
