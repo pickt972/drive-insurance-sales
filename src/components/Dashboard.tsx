@@ -1,10 +1,10 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { TrendingUp, Users, DollarSign, Trophy, Car } from "lucide-react";
+import { TrendingUp, Users, DollarSign, Trophy, Car, Target, Calendar } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
 export const Dashboard = () => {
-  const { sales, users, insuranceTypes, objectives } = useAuth();
+  const { sales, users, insuranceTypes, objectives, profile } = useAuth();
   const { profile, isAdmin } = useAuth();
 
   // Filtrer les ventes selon le rôle
@@ -33,6 +33,57 @@ export const Dashboard = () => {
   }).filter(stat => stat.sales > 0 || activeEmployees.length <= 3); // Afficher même sans ventes si peu d'employés
 
   const employeeStats = sellerStats.sort((a, b) => b.commission - a.commission);
+
+  // Calculer la progression des objectifs pour chaque employé
+  const getEmployeeObjectiveProgress = (username: string) => {
+    const employeeObjectives = objectives.filter(obj => obj.employeeName === username);
+    if (employeeObjectives.length === 0) return null;
+
+    // Prendre l'objectif le plus récent
+    const currentObjective = employeeObjectives.sort((a, b) => 
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    )[0];
+
+    const employeeSales = sales.filter(sale => {
+      const saleDate = new Date(sale.createdAt);
+      const startDate = new Date(currentObjective.startDate);
+      const endDate = new Date(currentObjective.endDate);
+      
+      return sale.employeeName === username && 
+             saleDate >= startDate && 
+             saleDate <= endDate;
+    });
+
+    const achievedAmount = employeeSales.reduce((sum, sale) => sum + sale.commissionAmount, 0);
+    const achievedSales = employeeSales.length;
+    
+    let progress = 0;
+    let progressText = '';
+    
+    if (currentObjective.objectiveType === 'amount') {
+      progress = Math.min((achievedAmount / currentObjective.targetAmount) * 100, 100);
+      progressText = `${achievedAmount.toFixed(0)}€ / ${currentObjective.targetAmount.toFixed(0)}€`;
+    } else {
+      progress = Math.min((achievedSales / currentObjective.targetSalesCount) * 100, 100);
+      progressText = `${achievedSales} / ${currentObjective.targetSalesCount} ventes`;
+    }
+
+    return {
+      progress,
+      progressText,
+      objective: currentObjective,
+      achievedAmount,
+      achievedSales
+    };
+  };
+
+  // Fonction pour obtenir la couleur de progression
+  const getProgressColor = (progress: number) => {
+    if (progress >= 100) return 'from-green-500 to-green-600';
+    if (progress >= 75) return 'from-blue-500 to-blue-600';
+    if (progress >= 50) return 'from-yellow-500 to-yellow-600';
+    return 'from-red-500 to-red-600';
+  };
 
   // Calculer les hauteurs dynamiques du podium basées sur les ventes
   const calculatePodiumHeight = (salesCount: number, maxSales: number, baseHeight: number) => {
@@ -132,8 +183,105 @@ export const Dashboard = () => {
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 lg:gap-8">
+        {/* Section Mes Objectifs (pour les employés) */}
+        {!isAdmin && (
+          <div className="xl:col-span-2 modern-card animate-smooth-scale-in" style={{ animationDelay: '0.4s' }}>
+            <div className="p-4 lg:p-8">
+              <div className="flex items-center gap-3 mb-6 lg:mb-8">
+                <div className="icon-wrapper">
+                  <Target className="h-6 w-6 text-primary" />
+                </div>
+                <h2 className="text-lg lg:text-2xl font-bold gradient-text">🎯 Mes Objectifs</h2>
+              </div>
+              
+              {(() => {
+                const myObjectives = objectives.filter(obj => obj.employeeName === profile?.username);
+                
+                if (myObjectives.length === 0) {
+                  return (
+                    <div className="text-center text-muted-foreground py-8 lg:py-12">
+                      <div className="icon-wrapper mx-auto mb-4 opacity-50">
+                        <Target className="h-12 lg:h-16 w-12 lg:w-16" />
+                      </div>
+                      <p className="text-base lg:text-lg">Aucun objectif défini</p>
+                      <p className="text-sm text-muted-foreground mt-2">Contactez votre administrateur pour définir vos objectifs</p>
+                    </div>
+                  );
+                }
+                
+                return (
+                  <div className="space-y-4 lg:space-y-6">
+                    {myObjectives.map((objective, index) => {
+                      const progressData = getEmployeeObjectiveProgress(profile?.username || '');
+                      if (!progressData) return null;
+                      
+                      return (
+                        <div key={objective.id} className="modern-card p-4 lg:p-6 animate-elegant-slide" style={{ animationDelay: `${0.6 + index * 0.1}s` }}>
+                          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 lg:gap-6 mb-4">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-2">
+                                <Calendar className="h-4 w-4 text-primary" />
+                                <span className="font-bold text-base lg:text-lg">
+                                  Objectif {objective.period === 'monthly' ? 'Mensuel' : objective.period === 'quarterly' ? 'Trimestriel' : 'Annuel'}
+                                </span>
+                              </div>
+                              <p className="text-sm text-muted-foreground">{objective.description}</p>
+                            </div>
+                            <div className={`px-4 py-2 rounded-2xl text-sm font-bold ${
+                              progressData.progress >= 100 ? 'bg-green-100 text-green-700' :
+                              progressData.progress >= 75 ? 'bg-blue-100 text-blue-700' :
+                              progressData.progress >= 50 ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'
+                            }`}>
+                              {progressData.progress.toFixed(0)}% atteint
+                            </div>
+                          </div>
+                          
+                          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
+                            {/* Progression CA */}
+                            <div className="space-y-2">
+                              <div className="flex items-center justify-between text-sm">
+                                <span className="font-medium">💰 Chiffre d'affaires</span>
+                                <span className="font-bold">{progressData.achievedAmount.toFixed(0)}€ / {objective.targetAmount.toFixed(0)}€</span>
+                              </div>
+                              <div className="w-full bg-muted rounded-full h-3">
+                                <div 
+                                  className={`h-3 rounded-full bg-gradient-to-r ${getProgressColor((progressData.achievedAmount / objective.targetAmount) * 100)} transition-all duration-500`}
+                                  style={{ width: `${Math.min((progressData.achievedAmount / objective.targetAmount) * 100, 100)}%` }}
+                                ></div>
+                              </div>
+                            </div>
+                            
+                            {/* Progression Ventes */}
+                            <div className="space-y-2">
+                              <div className="flex items-center justify-between text-sm">
+                                <span className="font-medium">📊 Nombre de ventes</span>
+                                <span className="font-bold">{progressData.achievedSales} / {objective.targetSalesCount}</span>
+                              </div>
+                              <div className="w-full bg-muted rounded-full h-3">
+                                <div 
+                                  className={`h-3 rounded-full bg-gradient-to-r ${getProgressColor((progressData.achievedSales / objective.targetSalesCount) * 100)} transition-all duration-500`}
+                                  style={{ width: `${Math.min((progressData.achievedSales / objective.targetSalesCount) * 100, 100)}%` }}
+                                ></div>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          {/* Période de l'objectif */}
+                          <div className="mt-4 pt-4 border-t border-border/50 text-xs text-muted-foreground text-center">
+                            📅 Période: {new Date(objective.startDate).toLocaleDateString('fr-FR')} → {new Date(objective.endDate).toLocaleDateString('fr-FR')}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })()}
+            </div>
+          </div>
+        )}
+
         {/* Podium des Champions */}
-        <div className="modern-card animate-smooth-scale-in" style={{ animationDelay: '0.5s' }}>
+        <div className={`modern-card animate-smooth-scale-in ${!isAdmin ? 'xl:col-span-1' : ''}`} style={{ animationDelay: '0.5s' }}>
           <div className="p-4 lg:p-8">
             <div className="flex items-center gap-3 mb-6 lg:mb-8">
               <div className="icon-wrapper">
@@ -178,6 +326,26 @@ export const Dashboard = () => {
                         <div className="font-bold text-xs lg:text-base">{employeeStats[1].name.split(' ')[0]}</div>
                         <div className="text-xs lg:text-sm text-muted-foreground">{employeeStats[1].sales} ventes</div>
                         <div className="text-xs lg:text-sm font-bold text-success">{formatCurrency(employeeStats[1].commission)}</div>
+                        
+                        {/* Barre de progression pour le 2ème */}
+                        {(() => {
+                          const progressData = getEmployeeObjectiveProgress(employeeStats[1].username);
+                          if (!progressData) return null;
+                          
+                          return (
+                            <div className="mt-2 w-full max-w-16 lg:max-w-24">
+                              <div className="w-full bg-white/30 rounded-full h-1.5">
+                                <div 
+                                  className={`h-1.5 rounded-full bg-gradient-to-r ${getProgressColor(progressData.progress)} transition-all duration-500`}
+                                  style={{ width: `${Math.min(progressData.progress, 100)}%` }}
+                                ></div>
+                              </div>
+                              <div className="text-xs text-center mt-1 font-bold">
+                                {progressData.progress.toFixed(0)}%
+                              </div>
+                            </div>
+                          );
+                        })()}
                       </div>
                     </div>
                   )}
@@ -201,6 +369,26 @@ export const Dashboard = () => {
                         <div className="font-bold text-sm lg:text-lg text-primary">{employeeStats[0].name.split(' ')[0]}</div>
                         <div className="text-xs lg:text-sm text-muted-foreground">{employeeStats[0].sales} ventes</div>
                         <div className="text-sm lg:text-base font-bold text-success">{formatCurrency(employeeStats[0].commission)}</div>
+                        
+                        {/* Barre de progression pour le 1er */}
+                        {(() => {
+                          const progressData = getEmployeeObjectiveProgress(employeeStats[0].username);
+                          if (!progressData) return null;
+                          
+                          return (
+                            <div className="mt-2 w-full max-w-20 lg:max-w-28">
+                              <div className="w-full bg-white/30 rounded-full h-1.5">
+                                <div 
+                                  className={`h-1.5 rounded-full bg-gradient-to-r ${getProgressColor(progressData.progress)} transition-all duration-500`}
+                                  style={{ width: `${Math.min(progressData.progress, 100)}%` }}
+                                ></div>
+                              </div>
+                              <div className="text-xs text-center mt-1 font-bold text-primary">
+                                {progressData.progress.toFixed(0)}%
+                              </div>
+                            </div>
+                          );
+                        })()}
                       </div>
                     </div>
                   )}
@@ -223,6 +411,26 @@ export const Dashboard = () => {
                         <div className="font-bold text-xs lg:text-sm">{employeeStats[2].name.split(' ')[0]}</div>
                         <div className="text-xs text-muted-foreground">{employeeStats[2].sales} ventes</div>
                         <div className="text-xs lg:text-sm font-bold text-success">{formatCurrency(employeeStats[2].commission)}</div>
+                        
+                        {/* Barre de progression pour le 3ème */}
+                        {(() => {
+                          const progressData = getEmployeeObjectiveProgress(employeeStats[2].username);
+                          if (!progressData) return null;
+                          
+                          return (
+                            <div className="mt-2 w-full max-w-14 lg:max-w-20">
+                              <div className="w-full bg-white/30 rounded-full h-1.5">
+                                <div 
+                                  className={`h-1.5 rounded-full bg-gradient-to-r ${getProgressColor(progressData.progress)} transition-all duration-500`}
+                                  style={{ width: `${Math.min(progressData.progress, 100)}%` }}
+                                ></div>
+                              </div>
+                              <div className="text-xs text-center mt-1 font-bold">
+                                {progressData.progress.toFixed(0)}%
+                              </div>
+                            </div>
+                          );
+                        })()}
                       </div>
                     </div>
                   )}
@@ -233,7 +441,7 @@ export const Dashboard = () => {
                   <div className="space-y-3">
                     <h4 className="font-semibold text-center text-muted-foreground mb-4 lg:mb-6 text-base lg:text-lg">Autres participants</h4>
                     {employeeStats.slice(3).map((employee, index) => (
-                      <div key={employee.username} className="modern-card p-3 lg:p-4 animate-elegant-slide" style={{ animationDelay: `${1 + index * 0.1}s` }}>
+                      <div key={employee.username} className="modern-card p-3 lg:p-4 animate-elegant-slide space-y-3" style={{ animationDelay: `${1 + index * 0.1}s` }}>
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2 lg:gap-4">
                             <div className="w-8 lg:w-10 h-8 lg:h-10 rounded-2xl bg-gradient-to-br from-muted to-muted-foreground/20 flex items-center justify-center text-xs lg:text-sm font-bold text-muted-foreground">
@@ -246,6 +454,33 @@ export const Dashboard = () => {
                           </div>
                           <div className="text-sm lg:text-lg font-bold text-success">{formatCurrency(employee.commission)}</div>
                         </div>
+                        
+                        {/* Barre de progression de l'objectif */}
+                        {(() => {
+                          const progressData = getEmployeeObjectiveProgress(employee.username);
+                          if (!progressData) return null;
+                          
+                          return (
+                            <div className="space-y-2">
+                              <div className="flex items-center justify-between text-xs">
+                                <div className="flex items-center gap-1">
+                                  <Target className="h-3 w-3 text-primary" />
+                                  <span className="font-medium">Objectif {progressData.objective.period === 'monthly' ? 'mensuel' : progressData.objective.period === 'quarterly' ? 'trimestriel' : 'annuel'}</span>
+                                </div>
+                                <span className="font-bold text-primary">{progressData.progress.toFixed(0)}%</span>
+                              </div>
+                              <div className="w-full bg-muted rounded-full h-2">
+                                <div 
+                                  className={`h-2 rounded-full bg-gradient-to-r ${getProgressColor(progressData.progress)} transition-all duration-500`}
+                                  style={{ width: `${Math.min(progressData.progress, 100)}%` }}
+                                ></div>
+                              </div>
+                              <div className="text-xs text-muted-foreground text-center">
+                                {progressData.progressText}
+                              </div>
+                            </div>
+                          );
+                        })()}
                       </div>
                     ))}
                   </div>
