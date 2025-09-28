@@ -12,22 +12,16 @@ interface SalesFormProps {
   onSaleAdded: () => void;
 }
 
-const INSURANCE_TYPES = [
-  { id: '1', name: 'Assurance Annulation', commission: 15.00 },
-  { id: '2', name: 'Assurance Bagages', commission: 12.50 },
-  { id: '3', name: 'Assurance Médicale', commission: 20.00 },
-  { id: '4', name: 'Assurance Responsabilité Civile', commission: 8.00 },
-  { id: '5', name: 'Assurance Vol/Perte', commission: 10.00 },
-  { id: '6', name: 'Assurance Rapatriement', commission: 18.00 }
-];
-
 export const SalesForm = ({ onSaleAdded }: SalesFormProps) => {
   const [clientName, setClientName] = useState("");
+  const [clientEmail, setClientEmail] = useState("");
+  const [clientPhone, setClientPhone] = useState("");
   const [reservationNumber, setReservationNumber] = useState("");
   const [selectedInsurances, setSelectedInsurances] = useState<string[]>([]);
+  const [notes, setNotes] = useState("");
   const [loading, setLoading] = useState(false);
   
-  const { profile } = useAuth();
+  const { profile, insuranceTypes, addSale } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,22 +39,31 @@ export const SalesForm = ({ onSaleAdded }: SalesFormProps) => {
 
     try {
       const totalCommission = selectedInsurances.reduce((sum, insuranceName) => {
-        const insurance = INSURANCE_TYPES.find(ins => ins.name === insuranceName);
+        const insurance = insuranceTypes.find(ins => ins.name === insuranceName);
         return sum + (insurance?.commission || 0);
       }, 0);
 
-      // Simuler l'enregistrement
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      toast({
-        title: "Vente enregistrée",
-        description: `Commission totale: ${totalCommission.toFixed(2)} €`,
+      const result = await addSale({
+        employeeName: profile?.username || '',
+        clientName,
+        clientEmail: clientEmail || undefined,
+        clientPhone: clientPhone || undefined,
+        reservationNumber,
+        insuranceTypes: selectedInsurances,
+        commissionAmount: totalCommission,
+        notes: notes || undefined
       });
 
-      setClientName("");
-      setReservationNumber("");
-      setSelectedInsurances([]);
-      onSaleAdded();
+      if (result.success) {
+        setClientName("");
+        setClientEmail("");
+        setClientPhone("");
+        setReservationNumber("");
+        setSelectedInsurances([]);
+        setNotes("");
+        onSaleAdded();
+      }
+
     } catch (error) {
       toast({
         title: "Erreur",
@@ -94,13 +97,35 @@ export const SalesForm = ({ onSaleAdded }: SalesFormProps) => {
             />
           </div>
 
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="clientEmail">Email du client</Label>
+              <Input
+                id="clientEmail"
+                type="email"
+                value={clientEmail}
+                onChange={(e) => setClientEmail(e.target.value)}
+                placeholder="client@email.com"
+              />
+            </div>
+            <div>
+              <Label htmlFor="clientPhone">Téléphone du client</Label>
+              <Input
+                id="clientPhone"
+                value={clientPhone}
+                onChange={(e) => setClientPhone(e.target.value)}
+                placeholder="06.12.34.56.78"
+              />
+            </div>
+          </div>
+
           <div>
             <Label htmlFor="reservationNumber">N° de réservation *</Label>
             <Input
               id="reservationNumber"
               value={reservationNumber}
               onChange={(e) => setReservationNumber(e.target.value)}
-              placeholder="Ex: RES-2024-001"
+              placeholder="Ex: LOC-2024-001"
               required
             />
           </div>
@@ -108,8 +133,8 @@ export const SalesForm = ({ onSaleAdded }: SalesFormProps) => {
           <div className="space-y-3">
             <Label>Assurances souscrites *</Label>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {INSURANCE_TYPES.map((insurance) => (
-                <div key={insurance.id} className="flex items-center space-x-3 p-3 border rounded-lg">
+              {insuranceTypes.filter(ins => ins.isActive).map((insurance) => (
+                <div key={insurance.id} className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-muted/50">
                   <Checkbox
                     checked={selectedInsurances.includes(insurance.name)}
                     onCheckedChange={(checked) => {
@@ -128,6 +153,27 @@ export const SalesForm = ({ onSaleAdded }: SalesFormProps) => {
               ))}
             </div>
           </div>
+
+          <div>
+            <Label htmlFor="notes">Notes (optionnel)</Label>
+            <Input
+              id="notes"
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="Informations complémentaires..."
+            />
+          </div>
+
+          {selectedInsurances.length > 0 && (
+            <div className="p-3 bg-success/10 border border-success/20 rounded-lg">
+              <div className="text-sm font-medium text-success">
+                Commission totale: {selectedInsurances.reduce((sum, insuranceName) => {
+                  const insurance = insuranceTypes.find(ins => ins.name === insuranceName);
+                  return sum + (insurance?.commission || 0);
+                }, 0).toFixed(2)} €
+              </div>
+            </div>
+          )}
 
           <Button type="submit" className="w-full" disabled={loading}>
             {loading ? "Enregistrement..." : "Enregistrer la vente"}

@@ -27,6 +27,56 @@ interface AuthContextType {
   fetchUsers: () => void;
   updateUser: (username: string, updates: { firstName?: string; lastName?: string; email?: string; role?: 'admin' | 'employee' }) => Promise<{ success: boolean; error?: string }>;
   updatePassword: (username: string, newPassword: string) => Promise<{ success: boolean; error?: string }>;
+  // Gestion des assurances
+  insuranceTypes: InsuranceType[];
+  addInsuranceType: (name: string, commission: number) => Promise<{ success: boolean; error?: string }>;
+  updateInsuranceType: (id: string, name: string, commission: number) => Promise<{ success: boolean; error?: string }>;
+  removeInsuranceType: (id: string) => Promise<{ success: boolean; error?: string }>;
+  fetchInsuranceTypes: () => void;
+  // Gestion des ventes
+  sales: Sale[];
+  addSale: (sale: Omit<Sale, 'id' | 'createdAt'>) => Promise<{ success: boolean; error?: string }>;
+  deleteSale: (id: string) => Promise<{ success: boolean; error?: string }>;
+  fetchSales: () => void;
+  // Gestion des objectifs
+  objectives: Objective[];
+  addObjective: (objective: Omit<Objective, 'id' | 'createdAt'>) => Promise<{ success: boolean; error?: string }>;
+  updateObjective: (id: string, updates: Partial<Objective>) => Promise<{ success: boolean; error?: string }>;
+  removeObjective: (id: string) => Promise<{ success: boolean; error?: string }>;
+  fetchObjectives: () => void;
+}
+
+interface InsuranceType {
+  id: string;
+  name: string;
+  commission: number;
+  isActive: boolean;
+  createdAt: string;
+}
+
+interface Sale {
+  id: string;
+  employeeName: string;
+  clientName: string;
+  clientEmail?: string;
+  clientPhone?: string;
+  reservationNumber: string;
+  insuranceTypes: string[];
+  commissionAmount: number;
+  notes?: string;
+  createdAt: string;
+}
+
+interface Objective {
+  id: string;
+  employeeName: string;
+  targetAmount: number;
+  targetSalesCount: number;
+  period: 'monthly' | 'quarterly' | 'yearly';
+  startDate: string;
+  endDate: string;
+  description?: string;
+  createdAt: string;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -65,6 +115,65 @@ const DEFAULT_USERS: User[] = [
   }
 ];
 
+const DEFAULT_INSURANCE_TYPES: InsuranceType[] = [
+  { id: '1', name: 'Assurance Tous Risques', commission: 25.00, isActive: true, createdAt: new Date().toISOString() },
+  { id: '2', name: 'Assurance Vol/Incendie', commission: 18.00, isActive: true, createdAt: new Date().toISOString() },
+  { id: '3', name: 'Assurance Bris de Glace', commission: 12.00, isActive: true, createdAt: new Date().toISOString() },
+  { id: '4', name: 'Assurance Conducteur Additionnel', commission: 8.00, isActive: true, createdAt: new Date().toISOString() },
+  { id: '5', name: 'Assurance Annulation', commission: 15.00, isActive: true, createdAt: new Date().toISOString() },
+  { id: '6', name: 'Assurance Assistance Panne', commission: 10.00, isActive: true, createdAt: new Date().toISOString() }
+];
+
+const DEFAULT_SALES: Sale[] = [
+  {
+    id: '1',
+    employeeName: 'vendeur1',
+    clientName: 'Pierre Durand',
+    clientEmail: 'pierre.durand@email.com',
+    clientPhone: '06.12.34.56.78',
+    reservationNumber: 'LOC-2024-001',
+    insuranceTypes: ['Assurance Tous Risques', 'Assurance Vol/Incendie'],
+    commissionAmount: 43.00,
+    notes: 'Client fidèle',
+    createdAt: new Date(Date.now() - 86400000).toISOString()
+  },
+  {
+    id: '2',
+    employeeName: 'vendeur2',
+    clientName: 'Sophie Martin',
+    clientEmail: 'sophie.martin@email.com',
+    reservationNumber: 'LOC-2024-002',
+    insuranceTypes: ['Assurance Tous Risques'],
+    commissionAmount: 25.00,
+    createdAt: new Date(Date.now() - 172800000).toISOString()
+  }
+];
+
+const DEFAULT_OBJECTIVES: Objective[] = [
+  {
+    id: '1',
+    employeeName: 'vendeur1',
+    targetAmount: 500.00,
+    targetSalesCount: 20,
+    period: 'monthly',
+    startDate: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString(),
+    endDate: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).toISOString(),
+    description: 'Objectif mensuel Jean Dupont',
+    createdAt: new Date().toISOString()
+  },
+  {
+    id: '2',
+    employeeName: 'vendeur2',
+    targetAmount: 400.00,
+    targetSalesCount: 15,
+    period: 'monthly',
+    startDate: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString(),
+    endDate: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).toISOString(),
+    description: 'Objectif mensuel Marie Martin',
+    createdAt: new Date().toISOString()
+  }
+];
+
 const DEFAULT_PASSWORDS: Record<string, string> = {
   'admin': 'admin123',
   'vendeur1': 'vendeur123',
@@ -88,9 +197,22 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (!storedUsers) {
         localStorage.setItem('aloelocation_users', JSON.stringify(DEFAULT_USERS));
         localStorage.setItem('aloelocation_passwords', JSON.stringify(DEFAULT_PASSWORDS));
+        localStorage.setItem('aloelocation_insurance_types', JSON.stringify(DEFAULT_INSURANCE_TYPES));
+        localStorage.setItem('aloelocation_sales', JSON.stringify(DEFAULT_SALES));
+        localStorage.setItem('aloelocation_objectives', JSON.stringify(DEFAULT_OBJECTIVES));
         setUsers(DEFAULT_USERS);
+        setInsuranceTypes(DEFAULT_INSURANCE_TYPES);
+        setSales(DEFAULT_SALES);
+        setObjectives(DEFAULT_OBJECTIVES);
       } else {
         setUsers(JSON.parse(storedUsers));
+        const storedInsurance = localStorage.getItem('aloelocation_insurance_types');
+        const storedSales = localStorage.getItem('aloelocation_sales');
+        const storedObjectives = localStorage.getItem('aloelocation_objectives');
+        
+        setInsuranceTypes(storedInsurance ? JSON.parse(storedInsurance) : DEFAULT_INSURANCE_TYPES);
+        setSales(storedSales ? JSON.parse(storedSales) : DEFAULT_SALES);
+        setObjectives(storedObjectives ? JSON.parse(storedObjectives) : DEFAULT_OBJECTIVES);
       }
 
       // Vérifier si un utilisateur est connecté
@@ -104,10 +226,19 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       // En cas d'erreur, réinitialiser
       localStorage.removeItem('aloelocation_users');
       localStorage.removeItem('aloelocation_passwords');
+      localStorage.removeItem('aloelocation_insurance_types');
+      localStorage.removeItem('aloelocation_sales');
+      localStorage.removeItem('aloelocation_objectives');
       localStorage.removeItem('aloelocation_current_user');
       setUsers(DEFAULT_USERS);
+      setInsuranceTypes(DEFAULT_INSURANCE_TYPES);
+      setSales(DEFAULT_SALES);
+      setObjectives(DEFAULT_OBJECTIVES);
       localStorage.setItem('aloelocation_users', JSON.stringify(DEFAULT_USERS));
       localStorage.setItem('aloelocation_passwords', JSON.stringify(DEFAULT_PASSWORDS));
+      localStorage.setItem('aloelocation_insurance_types', JSON.stringify(DEFAULT_INSURANCE_TYPES));
+      localStorage.setItem('aloelocation_sales', JSON.stringify(DEFAULT_SALES));
+      localStorage.setItem('aloelocation_objectives', JSON.stringify(DEFAULT_OBJECTIVES));
     } finally {
       setLoading(false);
     }
@@ -362,6 +493,204 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
+  // Gestion des assurances
+  const addInsuranceType = async (name: string, commission: number): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const newInsurance: InsuranceType = {
+        id: Date.now().toString(),
+        name,
+        commission,
+        isActive: true,
+        createdAt: new Date().toISOString()
+      };
+
+      const updatedInsurances = [...insuranceTypes, newInsurance];
+      localStorage.setItem('aloelocation_insurance_types', JSON.stringify(updatedInsurances));
+      setInsuranceTypes(updatedInsurances);
+
+      toast({
+        title: "Assurance ajoutée",
+        description: `${name} a été ajoutée avec succès`,
+      });
+
+      return { success: true };
+    } catch (error: any) {
+      return { success: false, error: error.message };
+    }
+  };
+
+  const updateInsuranceType = async (id: string, name: string, commission: number): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const updatedInsurances = insuranceTypes.map(ins => 
+        ins.id === id ? { ...ins, name, commission } : ins
+      );
+
+      localStorage.setItem('aloelocation_insurance_types', JSON.stringify(updatedInsurances));
+      setInsuranceTypes(updatedInsurances);
+
+      toast({
+        title: "Assurance modifiée",
+        description: `${name} a été mise à jour`,
+      });
+
+      return { success: true };
+    } catch (error: any) {
+      return { success: false, error: error.message };
+    }
+  };
+
+  const removeInsuranceType = async (id: string): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const updatedInsurances = insuranceTypes.filter(ins => ins.id !== id);
+      localStorage.setItem('aloelocation_insurance_types', JSON.stringify(updatedInsurances));
+      setInsuranceTypes(updatedInsurances);
+
+      toast({
+        title: "Assurance supprimée",
+        description: "L'assurance a été supprimée",
+      });
+
+      return { success: true };
+    } catch (error: any) {
+      return { success: false, error: error.message };
+    }
+  };
+
+  const fetchInsuranceTypes = () => {
+    try {
+      const stored = localStorage.getItem('aloelocation_insurance_types');
+      if (stored) {
+        setInsuranceTypes(JSON.parse(stored));
+      }
+    } catch (error) {
+      console.error('Erreur récupération assurances:', error);
+    }
+  };
+
+  // Gestion des ventes
+  const addSale = async (sale: Omit<Sale, 'id' | 'createdAt'>): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const newSale: Sale = {
+        ...sale,
+        id: Date.now().toString(),
+        createdAt: new Date().toISOString()
+      };
+
+      const updatedSales = [newSale, ...sales];
+      localStorage.setItem('aloelocation_sales', JSON.stringify(updatedSales));
+      setSales(updatedSales);
+
+      toast({
+        title: "Vente enregistrée",
+        description: `Commission: ${sale.commissionAmount.toFixed(2)} €`,
+      });
+
+      return { success: true };
+    } catch (error: any) {
+      return { success: false, error: error.message };
+    }
+  };
+
+  const deleteSale = async (id: string): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const updatedSales = sales.filter(sale => sale.id !== id);
+      localStorage.setItem('aloelocation_sales', JSON.stringify(updatedSales));
+      setSales(updatedSales);
+
+      toast({
+        title: "Vente supprimée",
+        description: "La vente a été supprimée",
+      });
+
+      return { success: true };
+    } catch (error: any) {
+      return { success: false, error: error.message };
+    }
+  };
+
+  const fetchSales = () => {
+    try {
+      const stored = localStorage.getItem('aloelocation_sales');
+      if (stored) {
+        setSales(JSON.parse(stored));
+      }
+    } catch (error) {
+      console.error('Erreur récupération ventes:', error);
+    }
+  };
+
+  // Gestion des objectifs
+  const addObjective = async (objective: Omit<Objective, 'id' | 'createdAt'>): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const newObjective: Objective = {
+        ...objective,
+        id: Date.now().toString(),
+        createdAt: new Date().toISOString()
+      };
+
+      const updatedObjectives = [...objectives, newObjective];
+      localStorage.setItem('aloelocation_objectives', JSON.stringify(updatedObjectives));
+      setObjectives(updatedObjectives);
+
+      toast({
+        title: "Objectif créé",
+        description: `Objectif pour ${objective.employeeName} créé`,
+      });
+
+      return { success: true };
+    } catch (error: any) {
+      return { success: false, error: error.message };
+    }
+  };
+
+  const updateObjective = async (id: string, updates: Partial<Objective>): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const updatedObjectives = objectives.map(obj => 
+        obj.id === id ? { ...obj, ...updates } : obj
+      );
+
+      localStorage.setItem('aloelocation_objectives', JSON.stringify(updatedObjectives));
+      setObjectives(updatedObjectives);
+
+      toast({
+        title: "Objectif modifié",
+        description: "L'objectif a été mis à jour",
+      });
+
+      return { success: true };
+    } catch (error: any) {
+      return { success: false, error: error.message };
+    }
+  };
+
+  const removeObjective = async (id: string): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const updatedObjectives = objectives.filter(obj => obj.id !== id);
+      localStorage.setItem('aloelocation_objectives', JSON.stringify(updatedObjectives));
+      setObjectives(updatedObjectives);
+
+      toast({
+        title: "Objectif supprimé",
+        description: "L'objectif a été supprimé",
+      });
+
+      return { success: true };
+    } catch (error: any) {
+      return { success: false, error: error.message };
+    }
+  };
+
+  const fetchObjectives = () => {
+    try {
+      const stored = localStorage.getItem('aloelocation_objectives');
+      if (stored) {
+        setObjectives(JSON.parse(stored));
+      }
+    } catch (error) {
+      console.error('Erreur récupération objectifs:', error);
+    }
+  };
+
   const value: AuthContextType = {
     user,
     profile: user,
@@ -376,7 +705,24 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     removeUser,
     fetchUsers,
     updateUser,
-    updatePassword
+    updatePassword,
+    // Assurances
+    insuranceTypes,
+    addInsuranceType,
+    updateInsuranceType,
+    removeInsuranceType,
+    fetchInsuranceTypes,
+    // Ventes
+    sales,
+    addSale,
+    deleteSale,
+    fetchSales,
+    // Objectifs
+    objectives,
+    addObjective,
+    updateObjective,
+    removeObjective,
+    fetchObjectives
   };
 
   return (
