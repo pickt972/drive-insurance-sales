@@ -424,61 +424,6 @@ export const SalesHistory = () => {
         </Card>
       </div>
 
-      {/* Performance par employé avec jauges */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Target className="h-5 w-5 text-primary" />
-            Performance par Employé
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {employeeStats.map((employee) => (
-              <div key={employee.username} className="p-4 border rounded-lg">
-                <div className="flex items-center justify-between mb-3">
-                  <div>
-                    <div className="font-medium">{employee.firstName} {employee.lastName}</div>
-                    <div className="text-sm text-muted-foreground">
-                      {employee.salesCount} ventes • {employee.totalCommission.toFixed(2)} € de commission
-                    </div>
-                  </div>
-                  {employee.objective ? (
-                    <div className="text-right">
-                      <div className="text-sm font-medium">
-                        {employee.progressPercentage.toFixed(0)}% de l'objectif
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        Objectif: {employee.objective.targetAmount.toFixed(2)} €
-                      </div>
-                    </div>
-                  ) : (
-                    <div>
-                      <div className="text-sm text-muted-foreground mb-1">Aucun objectif défini</div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm">{employee.salesCount} ventes • {employee.totalCommission.toFixed(2)} € commission</span>
-                      </div>
-                      <div className="w-full bg-gray-200 rounded-full h-3 mt-1">
-                        <div className="h-3 rounded-full bg-blue-500 transition-all duration-300" style={{ width: '0%' }}></div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-                
-                {employee.objective && (
-                  <div className="w-full bg-gray-200 rounded-full h-3">
-                    <div 
-                      className={`h-3 rounded-full transition-all duration-500 ${getProgressColor(employee.progressPercentage)}`}
-                      style={{ width: `${Math.min(employee.progressPercentage, 100)}%` }}
-                    ></div>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
       {/* Historique détaillé */}
       <Card>
         <CardHeader>
