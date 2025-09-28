@@ -57,19 +57,6 @@ export const AuthPage = () => {
         </CardHeader>
         
         <CardContent>
-          <div className="mb-4 p-3 bg-muted rounded-lg">
-            <p className="text-sm text-muted-foreground text-center">
-              <strong className="text-primary">🔐 Comptes disponibles :</strong><br />
-              <span className="text-xs">
-                <strong>Admin :</strong> admin / admin123<br />
-                <strong>Vendeur 1 :</strong> vendeur1 / vendeur123<br />
-                <strong>Vendeur 2 :</strong> vendeur2 / vendeur123<br />
-                <strong>Julie :</strong> JULIE / julie123<br />
-                <em className="text-info">+ Tous les utilisateurs créés en administration</em>
-              </span>
-            </p>
-          </div>
-          
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="username" className="flex items-center gap-2">
