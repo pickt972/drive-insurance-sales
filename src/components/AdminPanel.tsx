@@ -5,9 +5,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Settings, Plus, Euro, Users, Trash2, CreditCard as Edit, Key, Eye, EyeOff, Target, Car, Shield, User, TrendingUp } from "lucide-react";
+import { Settings, Plus, Euro, Users, Trash2, CreditCard as Edit, Key, Eye, EyeOff, Target, Car, Shield, User, TrendingUp, GitBranch } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
+import { VersionManager } from "@/components/VersionManager";
 
 export const AdminPanel = () => {
   const [newUsername, setNewUsername] = useState("");
