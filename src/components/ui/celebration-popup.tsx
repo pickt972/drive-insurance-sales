@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { PartyPopper, CircleCheck as CheckCircle } from 'lucide-react';
 
 interface CelebrationPopupProps {
@@ -153,9 +153,9 @@ export const CelebrationPopup = ({ isOpen, onClose, saleAmount }: CelebrationPop
 
             {/* Message avec animation séquentielle */}
             <div className="space-y-4">
-              <h2 className={`text-2xl font-bold bg-gradient-to-r from-success to-success/70 bg-clip-text text-transparent transition-all duration-500 ${animationPhase >= 1 ? 'animate-fade-in translate-y-0' : 'translate-y-4 opacity-0'}`}>
+              <DialogTitle className={`text-3xl font-bold bg-gradient-to-r from-success to-success/70 bg-clip-text text-transparent transition-all duration-500 ${animationPhase >= 1 ? 'animate-fade-in translate-y-0' : 'translate-y-4 opacity-0'}`}>
                 Vente Validée !
-              </h2>
+              </DialogTitle>
               <div className={`text-lg font-medium text-primary transition-all duration-700 delay-200 ${animationPhase >= 2 ? 'animate-fade-in translate-y-0' : 'translate-y-4 opacity-0'}`}>
                 {currentMessage}
               </div>

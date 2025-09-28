@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { PartyPopper, CheckCircle } from 'lucide-react';
 
@@ -101,9 +101,9 @@ export const SuccessPopup = ({ isOpen, onClose, message, title = "Félicitations
 
             {/* Titre avec animation séquentielle */}
             <div className="space-y-3">
-              <h2 className={`text-3xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent transition-all duration-500 ${animationPhase >= 1 ? 'animate-fade-in translate-y-0' : 'translate-y-4 opacity-0'}`}>
+              <DialogTitle className={`text-3xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent transition-all duration-500 ${animationPhase >= 1 ? 'animate-fade-in translate-y-0' : 'translate-y-4 opacity-0'}`}>
                 {title}
-              </h2>
+              </DialogTitle>
               <div className={`flex items-center justify-center gap-3 text-lg text-muted-foreground transition-all duration-700 delay-200 ${animationPhase >= 2 ? 'animate-fade-in translate-y-0' : 'translate-y-4 opacity-0'}`}>
                 <PartyPopper className="w-6 h-6 animate-bounce" style={{animationDelay: '0ms'}} />
                 <span className="font-medium">{message}</span>
