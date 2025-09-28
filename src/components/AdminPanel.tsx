@@ -23,6 +23,7 @@ export const AdminPanel = () => {
   const [editLastName, setEditLastName] = useState("");
   const [editEmail, setEditEmail] = useState("");
   const [editRole, setEditRole] = useState<'admin' | 'employee'>('employee');
+  const [editUsername, setEditUsername] = useState("");
   const [changingPassword, setChangingPassword] = useState<string | null>(null);
   const [newPasswordValue, setNewPasswordValue] = useState("");
   const [confirmPasswordValue, setConfirmPasswordValue] = useState("");
@@ -109,6 +110,7 @@ export const AdminPanel = () => {
 
   const handleEditUser = (user: any) => {
     setEditingUser(user);
+    setEditUsername(user.username);
     setEditFirstName(user.firstName);
     setEditLastName(user.lastName);
     setEditEmail(user.email);
@@ -119,6 +121,7 @@ export const AdminPanel = () => {
     if (!editingUser) return;
 
     const result = await updateUser(editingUser.username, {
+      username: editUsername,
       firstName: editFirstName,
       lastName: editLastName,
       email: editEmail,
@@ -127,6 +130,7 @@ export const AdminPanel = () => {
 
     if (result.success) {
       setEditingUser(null);
+      setEditUsername("");
       setEditFirstName("");
       setEditLastName("");
       setEditEmail("");
@@ -542,9 +546,9 @@ export const AdminPanel = () => {
               <Label htmlFor="editUsername">Nom d'utilisateur</Label>
               <Input
                 id="editUsername"
-                value={editingUser?.username || ''}
-                disabled
-                className="bg-muted"
+                value={editUsername}
+                onChange={(e) => setEditUsername(e.target.value)}
+                placeholder="Nom d'utilisateur"
               />
             </div>
             <div>

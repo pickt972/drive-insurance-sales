@@ -398,14 +398,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
-  const updateUser = async (username: string, updates: { firstName?: string; lastName?: string; email?: string; role?: 'admin' | 'employee' }): Promise<{ success: boolean; error?: string }> => {
+  const updateUser = async (username: string, updates: { username?: string; firstName?: string; lastName?: string; email?: string; role?: 'admin' | 'employee' }): Promise<{ success: boolean; error?: string }> => {
     try {
       const storedUsers = localStorage.getItem('aloelocation_users');
+      const storedPasswords = localStorage.getItem('aloelocation_passwords');
       if (!storedUsers) {
         return { success: false, error: 'Erreur système' };
       }
 
       const usersList: User[] = JSON.parse(storedUsers);
+      const passwordsList: Record<string, string> = JSON.parse(storedPasswords || '{}');
       
       // Vérifier si le nouvel email est déjà utilisé
       if (updates.email) {
@@ -415,11 +417,29 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
       }
 
+      // Vérifier si le nouveau nom d'utilisateur est déjà utilisé
+      if (updates.username && updates.username !== username) {
+        const usernameExists = usersList.find(u => u.username === updates.username);
+        if (usernameExists) {
+          return { success: false, error: 'Nom d\'utilisateur déjà utilisé' };
+        }
+      }
       const updatedUsers = usersList.map(u => 
         u.username === username ? { ...u, ...updates } : u
       );
 
       localStorage.setItem('aloelocation_users', JSON.stringify(updatedUsers));
+      
+      // Si le nom d'utilisateur change, mettre à jour les mots de passe
+      if (updates.username && updates.username !== username) {
+        const userPassword = passwordsList[username];
+        if (userPassword) {
+          passwordsList[updates.username] = userPassword;
+          delete passwordsList[username];
+          localStorage.setItem('aloelocation_passwords', JSON.stringify(passwordsList));
+        }
+      }
+      
       setUsers(updatedUsers);
 
       // Mettre à jour l'utilisateur connecté si c'est lui
