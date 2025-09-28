@@ -454,6 +454,17 @@ export const SalesHistory = () => {
                     </div>
                   )}
                 </div>
+              ) : (
+                <div>
+                  <div className="text-sm text-muted-foreground mb-1">Aucun objectif défini</div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm">{employee.salesCount} ventes • {employee.totalCommission.toFixed(2)} € commission</span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-3 mt-1">
+                    <div className="h-3 rounded-full bg-blue-500 transition-all duration-300" style={{ width: '0%' }}></div>
+                  </div>
+                </div>
+              )}
                 
                 {employee.objective && (
                   <div className="w-full bg-gray-200 rounded-full h-3">
@@ -462,7 +473,6 @@ export const SalesHistory = () => {
                       style={{ width: `${Math.min(employee.progressPercentage, 100)}%` }}
                     ></div>
                   </div>
-                )}
               </div>
             ))}
           </div>
