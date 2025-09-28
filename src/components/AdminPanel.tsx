@@ -38,10 +38,20 @@ export const AdminPanel = () => {
   
   // États pour la gestion des objectifs
   const [newObjectiveEmployee, setNewObjectiveEmployee] = useState("");
+  const [newObjectiveType, setNewObjectiveType] = useState<'amount' | 'sales_count'>('amount');
   const [newObjectiveAmount, setNewObjectiveAmount] = useState("");
   const [newObjectiveSales, setNewObjectiveSales] = useState("");
   const [newObjectivePeriod, setNewObjectivePeriod] = useState<'monthly' | 'quarterly' | 'yearly'>('monthly');
   const [newObjectiveDescription, setNewObjectiveDescription] = useState("");
+  
+  // États pour l'édition des objectifs
+  const [editingObjective, setEditingObjective] = useState<any>(null);
+  const [editObjectiveEmployee, setEditObjectiveEmployee] = useState("");
+  const [editObjectiveType, setEditObjectiveType] = useState<'amount' | 'sales_count'>('amount');
+  const [editObjectiveAmount, setEditObjectiveAmount] = useState("");
+  const [editObjectiveSales, setEditObjectiveSales] = useState("");
+  const [editObjectivePeriod, setEditObjectivePeriod] = useState<'monthly' | 'quarterly' | 'yearly'>('monthly');
+  const [editObjectiveDescription, setEditObjectiveDescription] = useState("");
   
   const { 
     users, 
@@ -279,6 +289,7 @@ export const AdminPanel = () => {
 
     const result = await addObjective({
       employeeName: newObjectiveEmployee,
+      objectiveType: newObjectiveType,
       targetAmount: amount,
       targetSalesCount: salesCount,
       period: newObjectivePeriod,
@@ -289,10 +300,56 @@ export const AdminPanel = () => {
     
     if (result.success) {
       setNewObjectiveEmployee("");
+      setNewObjectiveType('amount');
       setNewObjectiveAmount("");
       setNewObjectiveSales("");
       setNewObjectivePeriod('monthly');
       setNewObjectiveDescription("");
+    }
+  };
+
+  const handleEditObjective = (objective: any) => {
+    setEditingObjective(objective);
+    setEditObjectiveEmployee(objective.employeeName);
+    setEditObjectiveType(objective.objectiveType);
+    setEditObjectiveAmount(objective.targetAmount.toString());
+    setEditObjectiveSales(objective.targetSalesCount.toString());
+    setEditObjectivePeriod(objective.period);
+    setEditObjectiveDescription(objective.description || "");
+  };
+
+  const handleSaveObjectiveEdit = async () => {
+    if (!editingObjective) return;
+
+    const amount = parseFloat(editObjectiveAmount);
+    const salesCount = parseInt(editObjectiveSales);
+    
+    if (isNaN(amount) || amount < 0 || isNaN(salesCount) || salesCount < 0) {
+      toast({
+        title: "Erreur",
+        description: "Les montants doivent être des nombres positifs",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const result = await updateObjective(editingObjective.id, {
+      employeeName: editObjectiveEmployee,
+      objectiveType: editObjectiveType,
+      targetAmount: amount,
+      targetSalesCount: salesCount,
+      period: editObjectivePeriod,
+      description: editObjectiveDescription || `Objectif ${editObjectivePeriod} pour ${editObjectiveEmployee}`
+    });
+
+    if (result.success) {
+      setEditingObjective(null);
+      setEditObjectiveEmployee("");
+      setEditObjectiveType('amount');
+      setEditObjectiveAmount("");
+      setEditObjectiveSales("");
+      setEditObjectivePeriod('monthly');
+      setEditObjectiveDescription("");
     }
   };
 
@@ -313,15 +370,18 @@ export const AdminPanel = () => {
     const achievedAmount = employeeSales.reduce((sum, sale) => sum + sale.commissionAmount, 0);
     const achievedSales = employeeSales.length;
     
-    const amountProgress = Math.min((achievedAmount / objective.targetAmount) * 100, 100);
-    const salesProgress = Math.min((achievedSales / objective.targetSalesCount) * 100, 100);
+    let progress = 0;
+    if (objective.objectiveType === 'amount') {
+      progress = Math.min((achievedAmount / objective.targetAmount) * 100, 100);
+    } else {
+      progress = Math.min((achievedSales / objective.targetSalesCount) * 100, 100);
+    }
     
     return {
       achievedAmount,
       achievedSales,
-      amountProgress,
-      salesProgress,
-      overallProgress: (amountProgress + salesProgress) / 2
+      progress,
+      objectiveType: objective.objectiveType
     };
   };
 
@@ -719,7 +779,7 @@ export const AdminPanel = () => {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleAddObjective} className="space-y-4 mb-6">
-            <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-7 gap-4">
               <div>
                 <Label htmlFor="objectiveEmployee">Employé</Label>
                 <select
@@ -737,7 +797,21 @@ export const AdminPanel = () => {
                 </select>
               </div>
               <div>
-                <Label htmlFor="objectiveAmount">Objectif CA (€)</Label>
+                <Label htmlFor="objectiveType">Type d'objectif</Label>
+                <select
+                  id="objectiveType"
+                  value={newObjectiveType}
+                  onChange={(e) => setNewObjectiveType(e.target.value as 'amount' | 'sales_count')}
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                >
+                  <option value="amount">Chiffre d'affaires</option>
+                  <option value="sales_count">Nombre de ventes</option>
+                </select>
+              </div>
+              <div>
+                <Label htmlFor="objectiveAmount">
+                  {newObjectiveType === 'amount' ? 'Objectif CA (€)' : 'Objectif CA (€)'}
+                </Label>
                 <Input
                   id="objectiveAmount"
                   type="number"
@@ -749,7 +823,9 @@ export const AdminPanel = () => {
                 />
               </div>
               <div>
-                <Label htmlFor="objectiveSales">Nb Ventes</Label>
+                <Label htmlFor="objectiveSales">
+                  {newObjectiveType === 'sales_count' ? 'Objectif Ventes' : 'Nb Ventes'}
+                </Label>
                 <Input
                   id="objectiveSales"
                   type="number"
@@ -794,7 +870,7 @@ export const AdminPanel = () => {
             <h3 className="font-medium">Objectifs actifs avec progression</h3>
             {objectives.map((objective) => {
               const progress = getObjectiveProgress(objective);
-              const progressColor = getProgressColor(progress.overallProgress);
+             const progressColor = getProgressColor(progress.progress);
               
               return (
                 <div key={objective.id} className="p-4 border rounded-lg">
@@ -804,13 +880,20 @@ export const AdminPanel = () => {
                         {users.find(u => u.username === objective.employeeName)?.firstName} {users.find(u => u.username === objective.employeeName)?.lastName}
                       </div>
                       <div className="text-sm text-muted-foreground">
-                        {objective.description} • {objective.period === 'monthly' ? 'Mensuel' : objective.period === 'quarterly' ? 'Trimestriel' : 'Annuel'}
+                       {objective.description} • {objective.period === 'monthly' ? 'Mensuel' : objective.period === 'quarterly' ? 'Trimestriel' : 'Annuel'} • {objective.objectiveType === 'amount' ? 'CA' : 'Ventes'}
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
                       <div className={`px-3 py-1 rounded-full text-sm font-medium ${progressColor}`}>
-                        {progress.overallProgress.toFixed(0)}%
+                       {progress.progress.toFixed(0)}%
                       </div>
+                     <Button
+                       variant="outline"
+                       size="sm"
+                       onClick={() => handleEditObjective(objective)}
+                     >
+                       <Edit className="h-4 w-4" />
+                     </Button>
                       <Button
                         variant="outline"
                         size="sm"
@@ -822,42 +905,44 @@ export const AdminPanel = () => {
                     </div>
                   </div>
                   
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <div className="text-sm text-muted-foreground mb-1">Chiffre d'affaires</div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm">{progress.achievedAmount.toFixed(2)} € / {objective.targetAmount.toFixed(2)} €</span>
-                        <span className="text-sm font-medium">{progress.amountProgress.toFixed(0)}%</span>
-                      </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
-                        <div 
-                          className={`h-2 rounded-full transition-all duration-300 ${
-                            progress.amountProgress >= 100 ? 'bg-green-500' :
-                            progress.amountProgress >= 75 ? 'bg-yellow-500' :
-                            progress.amountProgress >= 50 ? 'bg-orange-500' : 'bg-red-500'
-                          }`}
-                          style={{ width: `${Math.min(progress.amountProgress, 100)}%` }}
-                        ></div>
-                      </div>
-                    </div>
-                    
-                    <div>
-                      <div className="text-sm text-muted-foreground mb-1">Nombre de ventes</div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm">{progress.achievedSales} / {objective.targetSalesCount}</span>
-                        <span className="text-sm font-medium">{progress.salesProgress.toFixed(0)}%</span>
-                      </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
-                        <div 
-                          className={`h-2 rounded-full transition-all duration-300 ${
-                            progress.salesProgress >= 100 ? 'bg-green-500' :
-                            progress.salesProgress >= 75 ? 'bg-yellow-500' :
-                            progress.salesProgress >= 50 ? 'bg-orange-500' : 'bg-red-500'
-                          }`}
-                          style={{ width: `${Math.min(progress.salesProgress, 100)}%` }}
-                        ></div>
-                      </div>
-                    </div>
+                 <div>
+                   {objective.objectiveType === 'amount' ? (
+                     <div>
+                       <div className="text-sm text-muted-foreground mb-1">Chiffre d'affaires</div>
+                       <div className="flex items-center justify-between">
+                         <span className="text-sm">{progress.achievedAmount.toFixed(2)} € / {objective.targetAmount.toFixed(2)} €</span>
+                         <span className="text-sm font-medium">{progress.progress.toFixed(0)}%</span>
+                       </div>
+                       <div className="w-full bg-gray-200 rounded-full h-3 mt-1">
+                         <div 
+                           className={`h-3 rounded-full transition-all duration-300 ${
+                             progress.progress >= 100 ? 'bg-green-500' :
+                             progress.progress >= 75 ? 'bg-yellow-500' :
+                             progress.progress >= 50 ? 'bg-orange-500' : 'bg-red-500'
+                           }`}
+                           style={{ width: `${Math.min(progress.progress, 100)}%` }}
+                         ></div>
+                       </div>
+                     </div>
+                   ) : (
+                     <div>
+                       <div className="text-sm text-muted-foreground mb-1">Nombre de ventes</div>
+                       <div className="flex items-center justify-between">
+                         <span className="text-sm">{progress.achievedSales} / {objective.targetSalesCount}</span>
+                         <span className="text-sm font-medium">{progress.progress.toFixed(0)}%</span>
+                       </div>
+                       <div className="w-full bg-gray-200 rounded-full h-3 mt-1">
+                         <div 
+                           className={`h-3 rounded-full transition-all duration-300 ${
+                             progress.progress >= 100 ? 'bg-green-500' :
+                             progress.progress >= 75 ? 'bg-yellow-500' :
+                             progress.progress >= 50 ? 'bg-orange-500' : 'bg-red-500'
+                           }`}
+                           style={{ width: `${Math.min(progress.progress, 100)}%` }}
+                         ></div>
+                       </div>
+                     </div>
+                   )}
                   </div>
                 </div>
               );
@@ -872,6 +957,101 @@ export const AdminPanel = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Dialog d'édition objectif */}
+      <Dialog open={!!editingObjective} onOpenChange={(open) => !open && setEditingObjective(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Modifier l'objectif de {editingObjective?.employeeName}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="editObjectiveEmployee">Employé</Label>
+                <select
+                  id="editObjectiveEmployee"
+                  value={editObjectiveEmployee}
+                  onChange={(e) => setEditObjectiveEmployee(e.target.value)}
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                >
+                  {users.filter(u => u.role === 'employee').map(user => (
+                    <option key={user.username} value={user.username}>
+                      {user.firstName} {user.lastName}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <Label htmlFor="editObjectiveType">Type d'objectif</Label>
+                <select
+                  id="editObjectiveType"
+                  value={editObjectiveType}
+                  onChange={(e) => setEditObjectiveType(e.target.value as 'amount' | 'sales_count')}
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                >
+                  <option value="amount">Chiffre d'affaires</option>
+                  <option value="sales_count">Nombre de ventes</option>
+                </select>
+              </div>
+            </div>
+            <div className="grid grid-cols-3 gap-4">
+              <div>
+                <Label htmlFor="editObjectiveAmount">Objectif CA (€)</Label>
+                <Input
+                  id="editObjectiveAmount"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={editObjectiveAmount}
+                  onChange={(e) => setEditObjectiveAmount(e.target.value)}
+                  placeholder="500.00"
+                />
+              </div>
+              <div>
+                <Label htmlFor="editObjectiveSales">Nb Ventes</Label>
+                <Input
+                  id="editObjectiveSales"
+                  type="number"
+                  min="0"
+                  value={editObjectiveSales}
+                  onChange={(e) => setEditObjectiveSales(e.target.value)}
+                  placeholder="20"
+                />
+              </div>
+              <div>
+                <Label htmlFor="editObjectivePeriod">Période</Label>
+                <select
+                  id="editObjectivePeriod"
+                  value={editObjectivePeriod}
+                  onChange={(e) => setEditObjectivePeriod(e.target.value as 'monthly' | 'quarterly' | 'yearly')}
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                >
+                  <option value="monthly">Mensuel</option>
+                  <option value="quarterly">Trimestriel</option>
+                  <option value="yearly">Annuel</option>
+                </select>
+              </div>
+            </div>
+            <div>
+              <Label htmlFor="editObjectiveDescription">Description</Label>
+              <Input
+                id="editObjectiveDescription"
+                value={editObjectiveDescription}
+                onChange={(e) => setEditObjectiveDescription(e.target.value)}
+                placeholder="Description de l'objectif"
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setEditingObjective(null)}>
+                Annuler
+              </Button>
+              <Button onClick={handleSaveObjectiveEdit}>
+                Sauvegarder
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Statistiques système */}
       <Card>

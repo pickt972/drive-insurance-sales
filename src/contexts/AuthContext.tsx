@@ -70,6 +70,7 @@ interface Sale {
 interface Objective {
   id: string;
   employeeName: string;
+  objectiveType: 'amount' | 'sales_count';
   targetAmount: number;
   targetSalesCount: number;
   period: 'monthly' | 'quarterly' | 'yearly';
@@ -153,6 +154,7 @@ const DEFAULT_OBJECTIVES: Objective[] = [
   {
     id: '1',
     employeeName: 'vendeur1',
+    objectiveType: 'amount',
     targetAmount: 500.00,
     targetSalesCount: 20,
     period: 'monthly',
@@ -164,6 +166,7 @@ const DEFAULT_OBJECTIVES: Objective[] = [
   {
     id: '2',
     employeeName: 'vendeur2',
+    objectiveType: 'sales_count',
     targetAmount: 400.00,
     targetSalesCount: 15,
     period: 'monthly',
