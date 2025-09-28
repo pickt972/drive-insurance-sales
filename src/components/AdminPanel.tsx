@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Settings, Plus, Euro, Users, Trash2, CreditCard as Edit, Key, Eye, EyeOff, Target, Car, Shield } from "lucide-react";
+import { Settings, Plus, Euro, Users, Trash2, CreditCard as Edit, Key, Eye, EyeOff, Target, Car, Shield, User, TrendingUp } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
 
@@ -566,46 +566,6 @@ export const AdminPanel = () => {
           </div>
         </div>
       </div>
-                <div className="flex items-center gap-3">
-                  <div>
-                    <div className="font-medium">{user.firstName} {user.lastName}</div>
-                    <div className="text-sm text-muted-foreground">@{user.username} • {user.email}</div>
-                  </div>
-                  <Badge variant={user.role === 'admin' ? 'default' : 'secondary'}>
-                    {user.role === 'admin' ? 'Admin' : 'Employé'}
-                  </Badge>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleEditUser(user)}
-                  >
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleChangePassword(user.username)}
-                  >
-                    <Key className="h-4 w-4" />
-                  </Button>
-                  {user.username !== 'admin' && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleRemoveUser(user.username)}
-                      className="text-destructive hover:text-destructive"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
 
       {/* Dialog d'édition utilisateur */}
       <Dialog open={!!editingUser} onOpenChange={(open) => !open && setEditingUser(null)}>
@@ -821,36 +781,6 @@ export const AdminPanel = () => {
           </div>
         </div>
       </div>
-                <div className="flex items-center gap-3">
-                  <Car className="h-4 w-4 text-primary" />
-                  <span className="font-medium">{insurance.name}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="flex items-center gap-1 text-success font-medium">
-                    <Euro className="h-4 w-4" />
-                    <span>{insurance.commission.toFixed(2)} €</span>
-                  </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleEditInsurance(insurance)}
-                  >
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleRemoveInsurance(insurance.id, insurance.name)}
-                    className="text-destructive hover:text-destructive"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
 
       {/* Dialog d'édition assurance */}
       <Dialog open={!!editingInsurance} onOpenChange={(open) => !open && setEditingInsurance(null)}>
@@ -997,7 +927,7 @@ export const AdminPanel = () => {
             <h3 className="font-bold text-lg text-foreground">Objectifs actifs avec progression</h3>
             {objectives.map((objective) => {
               const progress = getObjectiveProgress(objective);
-             const progressColor = getProgressColor(progress.progress);
+              const progressColor = getProgressColor(progress.progress);
               
               return (
                 <div key={objective.id} className="modern-card p-6 animate-elegant-slide">
@@ -1007,21 +937,21 @@ export const AdminPanel = () => {
                         {users.find(u => u.username === objective.employeeName)?.firstName} {users.find(u => u.username === objective.employeeName)?.lastName}
                       </div>
                       <div className="text-base text-muted-foreground">
-                       {objective.description} • {objective.period === 'monthly' ? 'Mensuel' : objective.period === 'quarterly' ? 'Trimestriel' : 'Annuel'} • {objective.objectiveType === 'amount' ? 'CA' : 'Ventes'}
+                        {objective.description} • {objective.period === 'monthly' ? 'Mensuel' : objective.period === 'quarterly' ? 'Trimestriel' : 'Annuel'} • {objective.objectiveType === 'amount' ? 'CA' : 'Ventes'}
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
                       <div className={`px-4 py-2 rounded-2xl text-base font-bold ${progressColor}`}>
-                       {progress.progress.toFixed(0)}%
+                        {progress.progress.toFixed(0)}%
                       </div>
-                     <Button
-                       variant="outline"
-                       size="sm"
-                       onClick={() => handleEditObjective(objective)}
-                       className="rounded-2xl hover:scale-105 transition-all duration-300"
-                     >
-                       <Edit className="h-4 w-4" />
-                     </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleEditObjective(objective)}
+                        className="rounded-2xl hover:scale-105 transition-all duration-300"
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
                       <Button
                         variant="outline"
                         size="sm"
@@ -1033,44 +963,44 @@ export const AdminPanel = () => {
                     </div>
                   </div>
                   
-                 <div className="space-y-3">
-                   {objective.objectiveType === 'amount' ? (
-                     <div>
-                       <div className="text-base font-semibold text-muted-foreground mb-2">💰 Chiffre d'affaires</div>
-                       <div className="flex items-center justify-between">
-                         <span className="text-base font-medium">{progress.achievedAmount.toFixed(2)} € / {objective.targetAmount.toFixed(2)} €</span>
-                         <span className="text-base font-bold">{progress.progress.toFixed(0)}%</span>
-                       </div>
-                       <div className="w-full bg-muted rounded-full h-4 mt-2">
-                         <div 
-                           className={`h-4 rounded-full transition-all duration-500 ${
-                             progress.progress >= 100 ? 'bg-gradient-to-r from-success to-success-variant' :
-                             progress.progress >= 75 ? 'bg-gradient-to-r from-warning to-orange' :
-                             progress.progress >= 50 ? 'bg-gradient-to-r from-orange to-destructive' : 'bg-gradient-to-r from-destructive to-destructive/80'
-                           }`}
-                           style={{ width: `${Math.min(progress.progress, 100)}%` }}
-                         ></div>
-                       </div>
-                     </div>
-                   ) : (
-                     <div>
-                       <div className="text-base font-semibold text-muted-foreground mb-2">📊 Nombre de ventes</div>
-                       <div className="flex items-center justify-between">
-                         <span className="text-base font-medium">{progress.achievedSales} / {objective.targetSalesCount}</span>
-                         <span className="text-base font-bold">{progress.progress.toFixed(0)}%</span>
-                       </div>
-                       <div className="w-full bg-muted rounded-full h-4 mt-2">
-                         <div 
-                           className={`h-4 rounded-full transition-all duration-500 ${
-                             progress.progress >= 100 ? 'bg-gradient-to-r from-success to-success-variant' :
-                             progress.progress >= 75 ? 'bg-gradient-to-r from-warning to-orange' :
-                             progress.progress >= 50 ? 'bg-gradient-to-r from-orange to-destructive' : 'bg-gradient-to-r from-destructive to-destructive/80'
-                           }`}
-                           style={{ width: `${Math.min(progress.progress, 100)}%` }}
-                         ></div>
-                       </div>
-                     </div>
-                   )}
+                  <div className="space-y-3">
+                    {objective.objectiveType === 'amount' ? (
+                      <div>
+                        <div className="text-base font-semibold text-muted-foreground mb-2">💰 Chiffre d'affaires</div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-base font-medium">{progress.achievedAmount.toFixed(2)} € / {objective.targetAmount.toFixed(2)} €</span>
+                          <span className="text-base font-bold">{progress.progress.toFixed(0)}%</span>
+                        </div>
+                        <div className="w-full bg-muted rounded-full h-4 mt-2">
+                          <div 
+                            className={`h-4 rounded-full transition-all duration-500 ${
+                              progress.progress >= 100 ? 'bg-gradient-to-r from-success to-success-variant' :
+                              progress.progress >= 75 ? 'bg-gradient-to-r from-warning to-orange' :
+                              progress.progress >= 50 ? 'bg-gradient-to-r from-orange to-destructive' : 'bg-gradient-to-r from-destructive to-destructive/80'
+                            }`}
+                            style={{ width: `${Math.min(progress.progress, 100)}%` }}
+                          ></div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div>
+                        <div className="text-base font-semibold text-muted-foreground mb-2">📊 Nombre de ventes</div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-base font-medium">{progress.achievedSales} / {objective.targetSalesCount}</span>
+                          <span className="text-base font-bold">{progress.progress.toFixed(0)}%</span>
+                        </div>
+                        <div className="w-full bg-muted rounded-full h-4 mt-2">
+                          <div 
+                            className={`h-4 rounded-full transition-all duration-500 ${
+                              progress.progress >= 100 ? 'bg-gradient-to-r from-success to-success-variant' :
+                              progress.progress >= 75 ? 'bg-gradient-to-r from-warning to-orange' :
+                              progress.progress >= 50 ? 'bg-gradient-to-r from-orange to-destructive' : 'bg-gradient-to-r from-destructive to-destructive/80'
+                            }`}
+                            style={{ width: `${Math.min(progress.progress, 100)}%` }}
+                          ></div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               );
