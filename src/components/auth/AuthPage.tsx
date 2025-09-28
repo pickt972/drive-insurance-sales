@@ -51,11 +51,11 @@ export const AuthPage = () => {
       <div className="modern-form max-w-md w-full animate-smooth-scale-in">
         <div className="text-center mb-8">
           <div className="icon-wrapper mx-auto mb-6 w-20 h-20">
-            <div className="w-full h-full bg-gradient-to-br from-primary to-primary-variant rounded-3xl flex items-center justify-center animate-float-gentle">
+            <div className="w-full h-full bg-gradient-to-br from-primary to-primary-variant rounded-2xl flex items-center justify-center animate-float-gentle">
               <span className="text-2xl font-bold text-primary-foreground">AL</span>
             </div>
           </div>
-          <h1 className="gradient-text text-4xl mb-2">Aloe Location</h1>
+          <h1 className="gradient-text text-3xl mb-2">Aloe Location</h1>
           <p className="text-muted-foreground text-lg">Gestion des ventes d'assurances</p>
         </div>
         

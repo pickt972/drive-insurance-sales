@@ -46,7 +46,7 @@ const HomePage: React.FC = () => {
       {/* Header */}
       <header className="glass-header p-6">
         <div className="modern-container">
-          <div className="flex items-center justify-between">
+        <nav className="modern-sidebar w-72 p-6 rounded-2xl">
             <div className="flex items-center gap-4">
               <div className="icon-wrapper">
                 <div className="w-8 h-8 bg-gradient-to-br from-primary to-primary-variant rounded-xl"></div>
