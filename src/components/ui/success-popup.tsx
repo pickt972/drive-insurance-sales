@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { PartyPopper, CheckCircle } from 'lucide-react';
+import { PartyPopper, CircleCheck as CheckCircle } from 'lucide-react';
 
 interface SuccessPopupProps {
   isOpen: boolean;
