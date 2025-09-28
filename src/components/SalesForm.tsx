@@ -80,47 +80,47 @@ export const SalesForm = ({ onSaleAdded }: SalesFormProps) => {
   };
 
   return (
-    <div className="modern-form animate-gentle-fade-in">
-      <div className="flex items-center gap-4 mb-8">
+    <div className="modern-form animate-gentle-fade-in max-w-4xl mx-auto">
+      <div className="flex items-center gap-3 lg:gap-4 mb-6 lg:mb-8">
         <div className="icon-wrapper">
           <Plus className="h-6 w-6 text-primary" />
         </div>
-        <h2 className="text-3xl font-bold gradient-text">✨ Nouvelle Vente</h2>
+        <h2 className="text-xl lg:text-3xl font-bold gradient-text">✨ Nouvelle Vente</h2>
       </div>
       
       <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
           <div className="space-y-2">
-            <Label htmlFor="clientName" className="text-base font-semibold text-foreground">👤 Nom du client *</Label>
+            <Label htmlFor="clientName" className="text-sm lg:text-base font-semibold text-foreground">👤 Nom du client *</Label>
             <Input
               id="clientName"
               value={clientName}
               onChange={(e) => setClientName(e.target.value)}
               placeholder="Nom du client"
-              className="friendly-input text-base"
+              className="friendly-input text-sm lg:text-base"
               required
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="reservationNumber" className="text-base font-semibold text-foreground">🎫 N° de réservation *</Label>
+            <Label htmlFor="reservationNumber" className="text-sm lg:text-base font-semibold text-foreground">🎫 N° de réservation *</Label>
             <Input
               id="reservationNumber"
               value={reservationNumber}
               onChange={(e) => setReservationNumber(e.target.value)}
               placeholder="Ex: LOC-2024-001"
-              className="friendly-input text-base"
+              className="friendly-input text-sm lg:text-base"
               required
             />
           </div>
         </div>
 
         <div className="space-y-4">
-          <Label className="text-base font-semibold text-foreground">🛡️ Assurances souscrites *</Label>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Label className="text-sm lg:text-base font-semibold text-foreground">🛡️ Assurances souscrites *</Label>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 lg:gap-4">
               {insuranceTypes.filter(ins => ins.isActive).map((insurance) => (
-              <div key={insurance.id} className="modern-card p-4 cursor-pointer hover:scale-105 transition-all duration-300 group">
-                <div className="flex items-center space-x-4">
+              <div key={insurance.id} className="modern-card p-3 lg:p-4 cursor-pointer hover:scale-105 transition-all duration-300 group">
+                <div className="flex items-center space-x-3 lg:space-x-4">
                   <Checkbox
                     checked={selectedInsurances.includes(insurance.name)}
                     onCheckedChange={(checked) => {
@@ -130,11 +130,11 @@ export const SalesForm = ({ onSaleAdded }: SalesFormProps) => {
                         setSelectedInsurances(selectedInsurances.filter(name => name !== insurance.name));
                       }
                     }}
-                    className="scale-125"
+                    className="scale-110 lg:scale-125"
                   />
                   <div className="flex-1">
-                    <Label className="font-semibold text-base group-hover:text-primary transition-colors duration-300">{insurance.name}</Label>
-                    <div className="success-indicator mt-2">
+                    <Label className="font-semibold text-sm lg:text-base group-hover:text-primary transition-colors duration-300">{insurance.name}</Label>
+                    <div className="success-indicator mt-1 lg:mt-2 text-xs lg:text-sm">
                       <span className="font-bold">+{insurance.commission.toFixed(2)} €</span>
                     </div>
                   </div>
@@ -145,21 +145,21 @@ export const SalesForm = ({ onSaleAdded }: SalesFormProps) => {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="notes" className="text-base font-semibold text-foreground">📝 Notes (optionnel)</Label>
+          <Label htmlFor="notes" className="text-sm lg:text-base font-semibold text-foreground">📝 Notes (optionnel)</Label>
             <Input
               id="notes"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Informations complémentaires..."
-              className="friendly-input text-base"
+              className="friendly-input text-sm lg:text-base"
             />
         </div>
 
         {selectedInsurances.length > 0 && (
-          <div className="modern-card p-6 bg-gradient-to-r from-success/10 to-success/5 border-success/30 animate-gentle-bounce">
+          <div className="modern-card p-4 lg:p-6 bg-gradient-to-r from-success/10 to-success/5 border-success/30 animate-gentle-bounce">
             <div className="flex items-center justify-between">
-              <span className="text-lg font-semibold text-success">💰 Commission totale</span>
-              <span className="text-2xl font-bold text-success">
+              <span className="text-base lg:text-lg font-semibold text-success">💰 Commission totale</span>
+              <span className="text-xl lg:text-2xl font-bold text-success">
                 {selectedInsurances.reduce((sum, insuranceName) => {
                   const insurance = insuranceTypes.find(ins => ins.name === insuranceName);
                   return sum + (insurance?.commission || 0);
@@ -171,7 +171,7 @@ export const SalesForm = ({ onSaleAdded }: SalesFormProps) => {
 
         <Button 
           type="submit" 
-          className="modern-button w-full py-4 text-lg font-bold" 
+          className="modern-button w-full py-3 lg:py-4 text-base lg:text-lg font-bold" 
           disabled={loading}
         >
           {loading ? "🔄 Enregistrement..." : "🚀 Enregistrer la vente"}

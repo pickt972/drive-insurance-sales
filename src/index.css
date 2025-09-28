@@ -193,9 +193,14 @@
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    transform-origin: left top;
-    width: 100vw;
     overflow-x: hidden;
+    font-size: 14px;
+  }
+
+  @media (min-width: 1024px) {
+    body {
+      font-size: 16px;
+    }
   }
 
   /* Typographie moderne */
@@ -204,15 +209,28 @@
   }
 
   h1 {
-    @apply text-3xl lg:text-4xl;
+    @apply text-xl lg:text-4xl;
   }
 
   h2 {
-    @apply text-2xl lg:text-3xl;
+    @apply text-lg lg:text-3xl;
   }
 
   h3 {
-    @apply text-xl lg:text-2xl;
+    @apply text-base lg:text-2xl;
+  }
+
+  /* Responsive utilities */
+  .mobile-only {
+    @apply block lg:hidden;
+  }
+
+  .desktop-only {
+    @apply hidden lg:block;
+  }
+
+  .tablet-up {
+    @apply hidden md:block;
   }
 }
 
@@ -283,7 +301,7 @@
 
 /* Classes utilitaires modernes */
 .modern-container {
-  @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  @apply max-w-7xl mx-auto px-2 sm:px-4 lg:px-8;
 }
 
 .glass-header {
@@ -294,16 +312,16 @@
 }
 
 .modern-sidebar {
-  @apply bg-card/70 backdrop-blur-md border-r border-border/70;
+  @apply bg-card/90 lg:bg-card/70 backdrop-blur-md border-r border-border/70;
   background: linear-gradient(180deg, hsl(var(--card)) 0%, hsl(var(--card) / 0.98) 100%);
 }
 
 .modern-card {
-  @apply bg-card/90 backdrop-blur-sm border border-border/60 rounded-2xl shadow-card transition-all duration-300 hover:shadow-elevated hover:scale-[1.01] hover:bg-card;
+  @apply bg-card/90 backdrop-blur-sm border border-border/60 rounded-xl lg:rounded-2xl shadow-card transition-all duration-300 hover:shadow-elevated hover:scale-[1.01] hover:bg-card;
 }
 
 .stat-card {
-  @apply modern-card p-6 text-center cursor-pointer;
+  @apply modern-card p-3 lg:p-6 text-center cursor-pointer;
   background: linear-gradient(135deg, hsl(var(--card)) 0%, hsl(var(--card) / 0.95) 100%);
 }
 
@@ -316,11 +334,11 @@
 }
 
 .friendly-input {
-  @apply bg-input/90 backdrop-blur-sm border border-border/60 rounded-xl px-4 py-3 transition-all duration-300 focus:border-primary/70 focus:bg-input focus:shadow-md focus:shadow-primary/15 hover:border-border;
+  @apply bg-input/90 backdrop-blur-sm border border-border/60 rounded-lg lg:rounded-xl px-3 lg:px-4 py-2 lg:py-3 transition-all duration-300 focus:border-primary/70 focus:bg-input focus:shadow-md focus:shadow-primary/15 hover:border-border;
 }
 
 .nav-button {
-  @apply relative overflow-hidden rounded-xl px-6 py-3 font-medium transition-all duration-300 hover:scale-[1.02] active:scale-95;
+  @apply relative overflow-hidden rounded-lg lg:rounded-xl px-4 lg:px-6 py-2 lg:py-3 font-medium transition-all duration-300 hover:scale-[1.02] active:scale-95;
   background: linear-gradient(135deg, transparent 0%, hsl(var(--primary) / 0.08) 100%);
 }
 
@@ -344,14 +362,14 @@
 }
 
 .floating-badge {
-  @apply inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 hover:scale-[1.02];
+  @apply inline-flex items-center gap-1 lg:gap-2 px-2 lg:px-4 py-1 lg:py-2 rounded-lg lg:rounded-xl text-xs lg:text-sm font-medium transition-all duration-300 hover:scale-[1.02];
   background: linear-gradient(135deg, hsl(var(--success)) 0%, hsl(var(--success-variant)) 100%);
   color: hsl(var(--success-foreground));
   box-shadow: 0 2px 8px hsl(var(--success) / 0.25);
 }
 
 .icon-wrapper {
-  @apply p-3 rounded-xl transition-all duration-300;
+  @apply p-2 lg:p-3 rounded-lg lg:rounded-xl transition-all duration-300;
   background: linear-gradient(135deg, hsl(var(--primary) / 0.08) 0%, hsl(var(--primary) / 0.15) 100%);
 }
 
@@ -366,11 +384,11 @@
 }
 
 .modern-form {
-  @apply space-y-6 p-8 bg-gradient-to-br from-card to-card/90 rounded-2xl border border-border/60 shadow-card backdrop-blur-sm;
+  @apply space-y-4 lg:space-y-6 p-4 lg:p-8 bg-gradient-to-br from-card to-card/90 rounded-xl lg:rounded-2xl border border-border/60 shadow-card backdrop-blur-sm;
 }
 
 .success-indicator {
-  @apply flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold;
+  @apply flex items-center gap-1 lg:gap-2 px-2 lg:px-4 py-1 lg:py-2 rounded-lg lg:rounded-xl text-xs lg:text-sm font-semibold;
   background: linear-gradient(135deg, hsl(var(--success) / 0.12) 0%, hsl(var(--success) / 0.18) 100%);
   color: hsl(var(--success));
   border: 1px solid hsl(var(--success) / 0.25);

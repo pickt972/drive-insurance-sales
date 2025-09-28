@@ -263,21 +263,21 @@ export const SalesHistory = () => {
   return (
     <div className="space-y-8">
       {/* Filtres et Export */}
-      <div className="modern-card animate-gentle-fade-in">
-        <div className="p-8">
-          <div className="flex items-center justify-between mb-6">
+      <div className="modern-card animate-gentle-fade-in max-w-7xl mx-auto">
+        <div className="p-4 lg:p-8">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-6 gap-4 lg:gap-0">
             <div className="flex items-center gap-3">
               <div className="icon-wrapper">
                 <Filter className="h-6 w-6 text-primary" />
               </div>
-              <h2 className="text-2xl font-bold gradient-text">🔍 Filtres et Export</h2>
+              <h2 className="text-lg lg:text-2xl font-bold gradient-text">🔍 Filtres et Export</h2>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-2 lg:gap-3">
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => setShowFilters(!showFilters)}
-                className="rounded-2xl hover:scale-105 transition-all duration-300"
+                className="rounded-2xl hover:scale-105 transition-all duration-300 text-xs lg:text-sm"
               >
                 <Filter className="h-4 w-4 mr-2" />
                 {showFilters ? 'Masquer' : 'Afficher'} Filtres
@@ -286,7 +286,7 @@ export const SalesHistory = () => {
                 variant="outline"
                 size="sm"
                 onClick={exportToCSV}
-                className="rounded-2xl hover:scale-105 transition-all duration-300"
+                className="rounded-2xl hover:scale-105 transition-all duration-300 text-xs lg:text-sm"
               >
                 <Download className="h-4 w-4 mr-2" />
                 Export CSV
@@ -295,7 +295,7 @@ export const SalesHistory = () => {
                 variant="outline"
                 size="sm"
                 onClick={exportToPDF}
-                className="rounded-2xl hover:scale-105 transition-all duration-300"
+                className="rounded-2xl hover:scale-105 transition-all duration-300 text-xs lg:text-sm"
               >
                 <FileText className="h-4 w-4 mr-2" />
                 Export PDF
@@ -305,14 +305,14 @@ export const SalesHistory = () => {
           
           {showFilters && (
             <div className="space-y-6 animate-smooth-scale-in">
-              <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3 lg:gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="filterEmployee" className="font-semibold">Employé</Label>
+                  <Label htmlFor="filterEmployee" className="text-sm font-semibold">Employé</Label>
                   <select
                     id="filterEmployee"
                     value={filterEmployee}
                     onChange={(e) => setFilterEmployee(e.target.value)}
-                    className="friendly-input"
+                    className="friendly-input text-sm"
                   >
                     <option value="">Tous les employés</option>
                     {users.filter(u => u.role === 'employee').map(user => (
@@ -323,32 +323,32 @@ export const SalesHistory = () => {
                   </select>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="filterStartDate" className="font-semibold">Date de début</Label>
+                  <Label htmlFor="filterStartDate" className="text-sm font-semibold">Date de début</Label>
                   <Input
                     id="filterStartDate"
                     type="date"
                     value={filterStartDate}
                     onChange={(e) => setFilterStartDate(e.target.value)}
-                    className="friendly-input"
+                    className="friendly-input text-sm"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="filterEndDate" className="font-semibold">Date de fin</Label>
+                  <Label htmlFor="filterEndDate" className="text-sm font-semibold">Date de fin</Label>
                   <Input
                     id="filterEndDate"
                     type="date"
                     value={filterEndDate}
                     onChange={(e) => setFilterEndDate(e.target.value)}
-                    className="friendly-input"
+                    className="friendly-input text-sm"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="filterInsurance" className="font-semibold">Assurance</Label>
+                  <Label htmlFor="filterInsurance" className="text-sm font-semibold">Assurance</Label>
                   <select
                     id="filterInsurance"
                     value={filterInsurance}
                     onChange={(e) => setFilterInsurance(e.target.value)}
-                    className="friendly-input"
+                    className="friendly-input text-sm"
                   >
                     <option value="">Toutes les assurances</option>
                     {allInsurances.map(insurance => (
@@ -358,18 +358,18 @@ export const SalesHistory = () => {
                     ))}
                   </select>
                 </div>
-                <div className="flex items-end">
+                <div className="flex items-end md:col-span-2 lg:col-span-1">
                   <Button
                     variant="outline"
                     onClick={resetFilters}
-                    className="w-full rounded-2xl hover:scale-105 transition-all duration-300"
+                    className="w-full rounded-2xl hover:scale-105 transition-all duration-300 text-xs lg:text-sm"
                   >
                     Réinitialiser
                   </Button>
                 </div>
               </div>
-              <div className="modern-card p-4 bg-gradient-to-r from-info/10 to-info/5 border-info/30">
-                <div className="text-base text-info font-semibold">
+              <div className="modern-card p-3 lg:p-4 bg-gradient-to-r from-info/10 to-info/5 border-info/30">
+                <div className="text-sm lg:text-base text-info font-semibold">
                   📊 <strong>Résultats filtrés:</strong> {filteredSales.length} vente(s) • 
                   <strong> Commission totale:</strong> {totalCommission.toFixed(2)} €
                 </div>
@@ -380,15 +380,15 @@ export const SalesHistory = () => {
       </div>
 
       {/* Statistiques globales */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-6">
         <div className="stat-card animate-gentle-fade-in" style={{ animationDelay: '0.1s' }}>
           <div className="flex items-center justify-between mb-4">
-            <div className="icon-wrapper">
+            <div className="icon-wrapper p-1.5 lg:p-3">
               <TrendingUp className="h-6 w-6 text-primary" />
             </div>
             <div className="text-right">
-              <p className="text-3xl font-bold text-primary">{totalSales}</p>
-              <p className="text-sm text-muted-foreground">Total Ventes</p>
+              <p className="text-xl lg:text-3xl font-bold text-primary">{totalSales}</p>
+              <p className="text-xs lg:text-sm text-muted-foreground">Total Ventes</p>
             </div>
           </div>
           <div className="h-2 bg-muted rounded-full overflow-hidden">
@@ -398,12 +398,12 @@ export const SalesHistory = () => {
         
         <div className="stat-card animate-gentle-fade-in" style={{ animationDelay: '0.2s' }}>
           <div className="flex items-center justify-between mb-4">
-            <div className="icon-wrapper">
+            <div className="icon-wrapper p-1.5 lg:p-3">
               <Euro className="h-6 w-6 text-success" />
             </div>
             <div className="text-right">
-              <p className="text-3xl font-bold text-success">{totalCommission.toFixed(2)} €</p>
-              <p className="text-sm text-muted-foreground">CA Total</p>
+              <p className="text-lg lg:text-3xl font-bold text-success">{totalCommission.toFixed(2)} €</p>
+              <p className="text-xs lg:text-sm text-muted-foreground">CA Total</p>
             </div>
           </div>
           <div className="h-2 bg-muted rounded-full overflow-hidden">
@@ -413,12 +413,12 @@ export const SalesHistory = () => {
         
         <div className="stat-card animate-gentle-fade-in" style={{ animationDelay: '0.3s' }}>
           <div className="flex items-center justify-between mb-4">
-            <div className="icon-wrapper">
+            <div className="icon-wrapper p-1.5 lg:p-3">
               <Clock className="h-6 w-6 text-warning" />
             </div>
             <div className="text-right">
-              <p className="text-3xl font-bold text-warning">{salesThisMonth.length}</p>
-              <p className="text-sm text-muted-foreground">Ventes ce mois</p>
+              <p className="text-xl lg:text-3xl font-bold text-warning">{salesThisMonth.length}</p>
+              <p className="text-xs lg:text-sm text-muted-foreground">Ventes ce mois</p>
             </div>
           </div>
           <div className="h-2 bg-muted rounded-full overflow-hidden">
@@ -428,14 +428,14 @@ export const SalesHistory = () => {
         
         <div className="stat-card animate-gentle-fade-in" style={{ animationDelay: '0.4s' }}>
           <div className="flex items-center justify-between mb-4">
-            <div className="icon-wrapper">
+            <div className="icon-wrapper p-1.5 lg:p-3">
               <Target className="h-6 w-6 text-info" />
             </div>
             <div className="text-right">
-              <p className="text-3xl font-bold text-info">
+              <p className="text-lg lg:text-3xl font-bold text-info">
                 {salesThisMonth.reduce((sum, sale) => sum + sale.commissionAmount, 0).toFixed(2)} €
               </p>
-              <p className="text-sm text-muted-foreground">CA Mensuel</p>
+              <p className="text-xs lg:text-sm text-muted-foreground">CA Mensuel</p>
             </div>
           </div>
           <div className="h-2 bg-muted rounded-full overflow-hidden">
@@ -445,36 +445,36 @@ export const SalesHistory = () => {
       </div>
 
       {/* Historique détaillé */}
-      <div className="modern-card animate-smooth-scale-in" style={{ animationDelay: '0.5s' }}>
-        <div className="p-8">
-          <div className="flex items-center gap-3 mb-8">
+      <div className="modern-card animate-smooth-scale-in max-w-7xl mx-auto" style={{ animationDelay: '0.5s' }}>
+        <div className="p-4 lg:p-8">
+          <div className="flex items-center gap-3 mb-6 lg:mb-8">
             <div className="icon-wrapper">
               <Clock className="h-6 w-6 text-primary" />
             </div>
-            <h2 className="text-2xl font-bold gradient-text">📋 Historique Détaillé ({filteredSales.length})</h2>
+            <h2 className="text-lg lg:text-2xl font-bold gradient-text">📋 Historique Détaillé ({filteredSales.length})</h2>
           </div>
           
           {filteredSales.length === 0 ? (
-            <div className="text-center py-16">
+            <div className="text-center py-8 lg:py-16">
               <div className="icon-wrapper mx-auto mb-6 opacity-50">
-                <FileText className="h-16 w-16" />
+                <FileText className="h-12 lg:h-16 w-12 lg:w-16" />
               </div>
-              <p className="text-lg text-muted-foreground">
+              <p className="text-base lg:text-lg text-muted-foreground">
                 {sales.length === 0 ? 'Aucune vente enregistrée' : 'Aucune vente ne correspond aux filtres'}
               </p>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-3 lg:space-y-4">
               {filteredSales.map((sale, index) => (
-                <div key={sale.id} className="modern-card p-6 animate-elegant-slide" style={{ animationDelay: `${0.6 + index * 0.05}s` }}>
-                  <div className="flex items-center justify-between">
+                <div key={sale.id} className="modern-card p-4 lg:p-6 animate-elegant-slide" style={{ animationDelay: `${0.6 + index * 0.05}s` }}>
+                  <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 lg:gap-0">
                     <div className="flex-1">
-                      <div className="flex items-center gap-4 mb-4">
-                        <h3 className="font-bold text-xl text-foreground">{sale.clientName}</h3>
-                        <Badge variant="outline" className="rounded-full px-3 py-1">{sale.reservationNumber}</Badge>
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-2 lg:gap-4 mb-3 lg:mb-4">
+                        <h3 className="font-bold text-lg lg:text-xl text-foreground">{sale.clientName}</h3>
+                        <Badge variant="outline" className="rounded-full px-3 py-1 text-xs w-fit">{sale.reservationNumber}</Badge>
                       </div>
                       
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm text-muted-foreground mb-4">
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 lg:gap-6 text-xs lg:text-sm text-muted-foreground mb-3 lg:mb-4">
                         <div className="space-y-2">
                           <div className="flex items-center gap-2">
                             <User className="h-4 w-4" />
@@ -501,43 +501,45 @@ export const SalesHistory = () => {
                         </div>
                       </div>
 
-                      <div className="flex items-center justify-between">
-                        <div className="flex flex-wrap gap-2">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 lg:gap-0">
+                        <div className="flex flex-wrap gap-1 lg:gap-2">
                           {sale.insuranceTypes.map((insurance) => (
-                            <Badge key={insurance} variant="secondary" className="rounded-full px-3 py-1 text-xs font-medium">
+                            <Badge key={insurance} variant="secondary" className="rounded-full px-2 lg:px-3 py-1 text-xs font-medium">
                               {insurance}
                             </Badge>
                           ))}
                         </div>
-                        <div className="success-indicator text-lg font-bold">
+                        <div className="success-indicator text-base lg:text-lg font-bold">
                           {sale.commissionAmount.toFixed(2)} €
                         </div>
                       </div>
                       
                       {sale.notes && (
-                        <div className="mt-4 p-3 bg-muted/50 rounded-2xl">
-                          <p className="text-sm text-muted-foreground italic">"{sale.notes}"</p>
+                        <div className="mt-3 lg:mt-4 p-2 lg:p-3 bg-muted/50 rounded-2xl">
+                          <p className="text-xs lg:text-sm text-muted-foreground italic">"{sale.notes}"</p>
                         </div>
                       )}
                     </div>
 
                     {isAdmin && (
-                      <div className="flex gap-2 ml-4">
+                      <div className="flex gap-2 lg:ml-4">
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={() => handleEditSale(sale)}
-                          className="rounded-2xl hover:scale-105 transition-all duration-300"
+                          className="rounded-2xl hover:scale-105 transition-all duration-300 h-8 w-8 lg:h-9 lg:w-auto lg:px-3"
                         >
                           <Edit className="h-4 w-4" />
+                          <span className="hidden lg:inline ml-2">Modifier</span>
                         </Button>
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={() => handleDelete(sale.id)}
-                          className="rounded-2xl hover:scale-105 transition-all duration-300 text-destructive hover:text-destructive"
+                          className="rounded-2xl hover:scale-105 transition-all duration-300 text-destructive hover:text-destructive h-8 w-8 lg:h-9 lg:w-auto lg:px-3"
                         >
                           <Trash2 className="h-4 w-4" />
+                          <span className="hidden lg:inline ml-2">Supprimer</span>
                         </Button>
                       </div>
                     )}
@@ -551,39 +553,39 @@ export const SalesHistory = () => {
 
       {/* Dialog d'édition de vente */}
       <Dialog open={!!editingSale} onOpenChange={(open) => !open && setEditingSale(null)}>
-        <DialogContent className="max-w-2xl modern-card border-0">
+        <DialogContent className="max-w-2xl modern-card border-0 mx-4 lg:mx-auto">
           <DialogHeader>
-            <DialogTitle className="text-2xl font-bold gradient-text">✏️ Modifier la vente</DialogTitle>
+            <DialogTitle className="text-xl lg:text-2xl font-bold gradient-text">✏️ Modifier la vente</DialogTitle>
           </DialogHeader>
-          <div className="space-y-6 mt-6">
+          <div className="space-y-4 lg:space-y-6 mt-4 lg:mt-6">
             <div className="space-y-2">
-              <Label htmlFor="editClientName" className="font-semibold">👤 Nom du client *</Label>
+              <Label htmlFor="editClientName" className="text-sm font-semibold">👤 Nom du client *</Label>
               <Input
                 id="editClientName"
                 value={editClientName}
                 onChange={(e) => setEditClientName(e.target.value)}
                 placeholder="Nom du client"
-                className="friendly-input"
+                className="friendly-input text-sm"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="editReservationNumber" className="font-semibold">🎫 N° de réservation *</Label>
+              <Label htmlFor="editReservationNumber" className="text-sm font-semibold">🎫 N° de réservation *</Label>
               <Input
                 id="editReservationNumber"
                 value={editReservationNumber}
                 onChange={(e) => setEditReservationNumber(e.target.value)}
                 placeholder="Ex: LOC-2024-001"
-                className="friendly-input"
+                className="friendly-input text-sm"
               />
             </div>
 
             <div className="space-y-4">
-              <Label className="font-semibold">🛡️ Assurances souscrites *</Label>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-60 overflow-y-auto">
+              <Label className="text-sm font-semibold">🛡️ Assurances souscrites *</Label>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 lg:gap-4 max-h-48 lg:max-h-60 overflow-y-auto">
                 {insuranceTypes.filter(ins => ins.isActive).map((insurance) => (
-                  <div key={insurance.id} className="modern-card p-4 cursor-pointer hover:scale-105 transition-all duration-300 group">
-                    <div className="flex items-center space-x-4">
+                  <div key={insurance.id} className="modern-card p-3 lg:p-4 cursor-pointer hover:scale-105 transition-all duration-300 group">
+                    <div className="flex items-center space-x-3 lg:space-x-4">
                       <Checkbox
                         checked={editSelectedInsurances.includes(insurance.name)}
                         onCheckedChange={(checked) => {
@@ -593,11 +595,11 @@ export const SalesHistory = () => {
                             setEditSelectedInsurances(editSelectedInsurances.filter(name => name !== insurance.name));
                           }
                         }}
-                        className="scale-125"
+                        className="scale-110 lg:scale-125"
                       />
                       <div className="flex-1">
-                        <Label className="font-semibold group-hover:text-primary transition-colors duration-300">{insurance.name}</Label>
-                        <div className="success-indicator mt-2">
+                        <Label className="font-semibold text-sm lg:text-base group-hover:text-primary transition-colors duration-300">{insurance.name}</Label>
+                        <div className="success-indicator mt-1 lg:mt-2 text-xs lg:text-sm">
                           <span className="font-bold">+{insurance.commission.toFixed(2)} €</span>
                         </div>
                       </div>
@@ -608,22 +610,22 @@ export const SalesHistory = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="editNotes" className="font-semibold">📝 Notes (optionnel)</Label>
+              <Label htmlFor="editNotes" className="text-sm font-semibold">📝 Notes (optionnel)</Label>
               <Textarea
                 id="editNotes"
                 value={editNotes}
                 onChange={(e) => setEditNotes(e.target.value)}
                 placeholder="Informations complémentaires..."
-                className="friendly-input min-h-[100px]"
+                className="friendly-input text-sm min-h-[80px] lg:min-h-[100px]"
                 rows={3}
               />
             </div>
 
             {editSelectedInsurances.length > 0 && (
-              <div className="modern-card p-4 bg-gradient-to-r from-success/10 to-success/5 border-success/30">
+              <div className="modern-card p-3 lg:p-4 bg-gradient-to-r from-success/10 to-success/5 border-success/30">
                 <div className="flex items-center justify-between">
-                  <span className="text-lg font-semibold text-success">💰 Commission totale</span>
-                  <span className="text-xl font-bold text-success">
+                  <span className="text-base lg:text-lg font-semibold text-success">💰 Commission totale</span>
+                  <span className="text-lg lg:text-xl font-bold text-success">
                     {editSelectedInsurances.reduce((sum, insuranceName) => {
                       const insurance = insuranceTypes.find(ins => ins.name === insuranceName);
                       return sum + (insurance?.commission || 0);
@@ -633,19 +635,19 @@ export const SalesHistory = () => {
               </div>
             )}
 
-            <div className="flex justify-end gap-3 pt-4">
+            <div className="flex flex-col sm:flex-row justify-end gap-3 pt-4">
               <Button 
                 variant="outline" 
                 onClick={() => setEditingSale(null)} 
                 disabled={editLoading}
-                className="rounded-2xl hover:scale-105 transition-all duration-300"
+                className="rounded-2xl hover:scale-105 transition-all duration-300 text-sm lg:text-base"
               >
                 Annuler
               </Button>
               <Button 
                 onClick={handleSaveEdit} 
                 disabled={editLoading}
-                className="modern-button"
+                className="modern-button text-sm lg:text-base"
               >
                 {editLoading ? "🔄 Modification..." : "💾 Sauvegarder"}
               </Button>

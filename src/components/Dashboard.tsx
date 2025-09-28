@@ -61,15 +61,15 @@ export const Dashboard = () => {
   return (
     <div className="space-y-8">
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-6">
         <div className="stat-card animate-gentle-fade-in" style={{ animationDelay: '0.1s' }}>
           <div className="flex items-center justify-between mb-4">
-            <div className="icon-wrapper">
+            <div className="icon-wrapper p-1.5 lg:p-3">
               <TrendingUp className="h-6 w-6 text-primary" />
             </div>
             <div className="text-right">
-              <p className="text-3xl font-bold text-primary">{totalSales}</p>
-              <p className="text-sm text-muted-foreground">Total Ventes</p>
+              <p className="text-xl lg:text-3xl font-bold text-primary">{totalSales}</p>
+              <p className="text-xs lg:text-sm text-muted-foreground">Total Ventes</p>
             </div>
           </div>
           <div className="h-2 bg-muted rounded-full overflow-hidden">
@@ -79,12 +79,12 @@ export const Dashboard = () => {
 
         <div className="stat-card animate-gentle-fade-in" style={{ animationDelay: '0.2s' }}>
           <div className="flex items-center justify-between mb-4">
-            <div className="icon-wrapper">
+            <div className="icon-wrapper p-1.5 lg:p-3">
               <DollarSign className="h-6 w-6 text-success" />
             </div>
             <div className="text-right">
-              <p className="text-3xl font-bold text-success">{formatCurrency(totalCommission)}</p>
-              <p className="text-sm text-muted-foreground">Commission Totale</p>
+              <p className="text-lg lg:text-3xl font-bold text-success">{formatCurrency(totalCommission)}</p>
+              <p className="text-xs lg:text-sm text-muted-foreground">Commission Totale</p>
             </div>
           </div>
           <div className="h-2 bg-muted rounded-full overflow-hidden">
@@ -94,12 +94,12 @@ export const Dashboard = () => {
 
         <div className="stat-card animate-gentle-fade-in" style={{ animationDelay: '0.3s' }}>
           <div className="flex items-center justify-between mb-4">
-            <div className="icon-wrapper">
+            <div className="icon-wrapper p-1.5 lg:p-3">
               <Users className="h-6 w-6 text-warning" />
             </div>
             <div className="text-right">
-              <p className="text-3xl font-bold text-warning">{salesThisWeek}</p>
-              <p className="text-sm text-muted-foreground">Ventes 7 jours</p>
+              <p className="text-xl lg:text-3xl font-bold text-warning">{salesThisWeek}</p>
+              <p className="text-xs lg:text-sm text-muted-foreground">Ventes 7j</p>
             </div>
           </div>
           <div className="h-2 bg-muted rounded-full overflow-hidden">
@@ -109,11 +109,11 @@ export const Dashboard = () => {
 
         <div className="stat-card animate-gentle-fade-in" style={{ animationDelay: '0.4s' }}>
           <div className="flex items-center justify-between mb-4">
-            <div className="icon-wrapper">
+            <div className="icon-wrapper p-1.5 lg:p-3">
               <Trophy className="h-6 w-6 text-primary" />
             </div>
             <div className="text-right">
-              <p className="text-2xl font-bold text-primary">
+              <p className="text-lg lg:text-2xl font-bold text-primary">
                 {isAdmin 
                   ? (sellerStats[0]?.name.split(' ')[0] || 'Aucun')
                   : `${employeeStats.findIndex(emp => emp.username === profile?.username) + 1}${
@@ -122,7 +122,7 @@ export const Dashboard = () => {
                     }`
                 }
               </p>
-              <p className="text-sm text-muted-foreground">{isAdmin ? 'Top Vendeur' : 'Mon Rang'}</p>
+              <p className="text-xs lg:text-sm text-muted-foreground">{isAdmin ? 'Top Vendeur' : 'Mon Rang'}</p>
             </div>
           </div>
           <div className="h-2 bg-muted rounded-full overflow-hidden">
@@ -131,53 +131,53 @@ export const Dashboard = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 lg:gap-8">
         {/* Podium des Champions */}
         <div className="modern-card animate-smooth-scale-in" style={{ animationDelay: '0.5s' }}>
-          <div className="p-8">
-            <div className="flex items-center gap-3 mb-8">
+          <div className="p-4 lg:p-8">
+            <div className="flex items-center gap-3 mb-6 lg:mb-8">
               <div className="icon-wrapper">
                 <Trophy className="h-6 w-6 text-primary" />
               </div>
-              <h2 className="text-2xl font-bold gradient-text">🏆 Podium des Champions</h2>
+              <h2 className="text-lg lg:text-2xl font-bold gradient-text">🏆 Podium des Champions</h2>
             </div>
             
             {activeEmployees.length === 0 ? (
-              <div className="text-center text-muted-foreground py-16">
+              <div className="text-center text-muted-foreground py-8 lg:py-16">
                 <div className="icon-wrapper mx-auto mb-4 opacity-50">
-                  <Trophy className="h-16 w-16" />
+                  <Trophy className="h-12 lg:h-16 w-12 lg:w-16" />
                 </div>
-                <p className="text-lg">Aucun employé actif</p>
+                <p className="text-base lg:text-lg">Aucun employé actif</p>
               </div>
             ) : employeeStats.length === 0 ? (
-              <div className="text-center text-muted-foreground py-16">
+              <div className="text-center text-muted-foreground py-8 lg:py-16">
                 <div className="icon-wrapper mx-auto mb-4 opacity-50">
-                  <Trophy className="h-16 w-16" />
+                  <Trophy className="h-12 lg:h-16 w-12 lg:w-16" />
                 </div>
-                <p className="text-lg">Aucune vente enregistrée</p>
+                <p className="text-base lg:text-lg">Aucune vente enregistrée</p>
               </div>
             ) : (
               <div className="relative">
                 {/* Podium avec design ultra-moderne */}
-                <div className="flex items-end justify-center gap-6 mb-10 h-56 mt-8">
+                <div className="flex items-end justify-center gap-2 lg:gap-6 mb-6 lg:mb-10 h-40 lg:h-56 mt-4 lg:mt-8">
                   {/* 2ème place */}
                   {employeeStats[1] && (
                     <div className="flex flex-col items-center animate-elegant-slide" style={{ animationDelay: '0.8s' }}>
                       <div 
-                        className="podium-base p-6 w-24 flex flex-col items-center justify-end relative group"
+                        className="podium-base p-3 lg:p-6 w-16 lg:w-24 flex flex-col items-center justify-end relative group"
                         style={{ 
-                          height: `${calculatePodiumHeight(employeeStats[1].sales, maxSales, 80)}px`,
+                          height: `${calculatePodiumHeight(employeeStats[1].sales, maxSales, 60)}px`,
                           '--color': '#e5e7eb',
                           '--color-dark': '#d1d5db'
                         }}
                       >
-                        <div className="text-white font-bold text-2xl drop-shadow-lg">2</div>
+                        <div className="text-white font-bold text-lg lg:text-2xl drop-shadow-lg">2</div>
                         <div className="absolute inset-0 bg-gradient-to-t from-gray-400/20 to-transparent rounded-t-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                       </div>
-                      <div className="mt-4 text-center">
-                        <div className="font-bold text-base">{employeeStats[1].name}</div>
-                        <div className="text-sm text-muted-foreground">{employeeStats[1].sales} ventes</div>
-                        <div className="text-sm font-bold text-success">{formatCurrency(employeeStats[1].commission)}</div>
+                      <div className="mt-2 lg:mt-4 text-center">
+                        <div className="font-bold text-xs lg:text-base">{employeeStats[1].name.split(' ')[0]}</div>
+                        <div className="text-xs lg:text-sm text-muted-foreground">{employeeStats[1].sales} ventes</div>
+                        <div className="text-xs lg:text-sm font-bold text-success">{formatCurrency(employeeStats[1].commission)}</div>
                       </div>
                     </div>
                   )}
@@ -186,21 +186,21 @@ export const Dashboard = () => {
                   {employeeStats[0] && (
                     <div className="flex flex-col items-center animate-elegant-slide" style={{ animationDelay: '0.7s' }}>
                       <div 
-                        className="podium-base p-6 w-28 flex flex-col items-center justify-end relative group"
+                        className="podium-base p-4 lg:p-6 w-20 lg:w-28 flex flex-col items-center justify-end relative group"
                         style={{ 
-                          height: `${calculatePodiumHeight(employeeStats[0].sales, maxSales, 120)}px`,
+                          height: `${calculatePodiumHeight(employeeStats[0].sales, maxSales, 80)}px`,
                           '--color': '#fbbf24',
                           '--color-dark': '#f59e0b'
                         }}
                       >
                         <div className="podium-crown">👑</div>
-                        <div className="text-white font-bold text-3xl drop-shadow-lg">1</div>
+                        <div className="text-white font-bold text-xl lg:text-3xl drop-shadow-lg">1</div>
                         <div className="absolute inset-0 bg-gradient-to-t from-yellow-400/30 to-transparent rounded-t-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                       </div>
-                      <div className="mt-4 text-center">
-                        <div className="font-bold text-lg text-primary">{employeeStats[0].name}</div>
-                        <div className="text-sm text-muted-foreground">{employeeStats[0].sales} ventes</div>
-                        <div className="text-base font-bold text-success">{formatCurrency(employeeStats[0].commission)}</div>
+                      <div className="mt-2 lg:mt-4 text-center">
+                        <div className="font-bold text-sm lg:text-lg text-primary">{employeeStats[0].name.split(' ')[0]}</div>
+                        <div className="text-xs lg:text-sm text-muted-foreground">{employeeStats[0].sales} ventes</div>
+                        <div className="text-sm lg:text-base font-bold text-success">{formatCurrency(employeeStats[0].commission)}</div>
                       </div>
                     </div>
                   )}
@@ -209,20 +209,20 @@ export const Dashboard = () => {
                   {employeeStats[2] && (
                     <div className="flex flex-col items-center animate-elegant-slide" style={{ animationDelay: '0.9s' }}>
                       <div 
-                        className="podium-base p-6 w-20 flex flex-col items-center justify-end relative group"
+                        className="podium-base p-2 lg:p-6 w-14 lg:w-20 flex flex-col items-center justify-end relative group"
                         style={{ 
-                          height: `${calculatePodiumHeight(employeeStats[2].sales, maxSales, 60)}px`,
+                          height: `${calculatePodiumHeight(employeeStats[2].sales, maxSales, 45)}px`,
                           '--color': '#fb923c',
                           '--color-dark': '#ea580c'
                         }}
                       >
-                        <div className="text-white font-bold text-xl drop-shadow-lg">3</div>
+                        <div className="text-white font-bold text-base lg:text-xl drop-shadow-lg">3</div>
                         <div className="absolute inset-0 bg-gradient-to-t from-orange-400/20 to-transparent rounded-t-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                       </div>
-                      <div className="mt-4 text-center">
-                        <div className="font-bold text-sm">{employeeStats[2].name}</div>
+                      <div className="mt-2 lg:mt-4 text-center">
+                        <div className="font-bold text-xs lg:text-sm">{employeeStats[2].name.split(' ')[0]}</div>
                         <div className="text-xs text-muted-foreground">{employeeStats[2].sales} ventes</div>
-                        <div className="text-sm font-bold text-success">{formatCurrency(employeeStats[2].commission)}</div>
+                        <div className="text-xs lg:text-sm font-bold text-success">{formatCurrency(employeeStats[2].commission)}</div>
                       </div>
                     </div>
                   )}
@@ -231,20 +231,20 @@ export const Dashboard = () => {
                 {/* Autres employés avec design moderne */}
                 {employeeStats.length > 3 && (
                   <div className="space-y-3">
-                    <h4 className="font-semibold text-center text-muted-foreground mb-6 text-lg">Autres participants</h4>
+                    <h4 className="font-semibold text-center text-muted-foreground mb-4 lg:mb-6 text-base lg:text-lg">Autres participants</h4>
                     {employeeStats.slice(3).map((employee, index) => (
-                      <div key={employee.username} className="modern-card p-4 animate-elegant-slide" style={{ animationDelay: `${1 + index * 0.1}s` }}>
+                      <div key={employee.username} className="modern-card p-3 lg:p-4 animate-elegant-slide" style={{ animationDelay: `${1 + index * 0.1}s` }}>
                         <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-4">
-                            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-muted to-muted-foreground/20 flex items-center justify-center text-sm font-bold text-muted-foreground">
+                          <div className="flex items-center gap-2 lg:gap-4">
+                            <div className="w-8 lg:w-10 h-8 lg:h-10 rounded-2xl bg-gradient-to-br from-muted to-muted-foreground/20 flex items-center justify-center text-xs lg:text-sm font-bold text-muted-foreground">
                               {index + 4}
                             </div>
                             <div>
-                              <div className="font-semibold text-base">{employee.name}</div>
-                              <div className="text-sm text-muted-foreground">{employee.sales} ventes</div>
+                              <div className="font-semibold text-sm lg:text-base">{employee.name}</div>
+                              <div className="text-xs lg:text-sm text-muted-foreground">{employee.sales} ventes</div>
                             </div>
                           </div>
-                          <div className="text-lg font-bold text-success">{formatCurrency(employee.commission)}</div>
+                          <div className="text-sm lg:text-lg font-bold text-success">{formatCurrency(employee.commission)}</div>
                         </div>
                       </div>
                     ))}
@@ -257,31 +257,31 @@ export const Dashboard = () => {
 
         {/* Assurances les plus vendues */}
         <div className="modern-card animate-smooth-scale-in" style={{ animationDelay: '0.6s' }}>
-          <div className="p-8">
-            <div className="flex items-center gap-3 mb-8">
+          <div className="p-4 lg:p-8">
+            <div className="flex items-center gap-3 mb-6 lg:mb-8">
               <div className="icon-wrapper">
                 <Car className="h-6 w-6 text-primary" />
               </div>
-              <h2 className="text-2xl font-bold gradient-text">
+              <h2 className="text-lg lg:text-2xl font-bold gradient-text">
                 {isAdmin ? '🚗 Assurances les Plus Vendues' : '🚗 Mes Assurances Vendues'}
               </h2>
             </div>
             
             {topInsurances.length === 0 ? (
-              <div className="text-center text-muted-foreground py-12">
+              <div className="text-center text-muted-foreground py-8 lg:py-12">
                 <div className="icon-wrapper mx-auto mb-4 opacity-50">
-                  <Car className="h-16 w-16" />
+                  <Car className="h-12 lg:h-16 w-12 lg:w-16" />
                 </div>
-                <p className="text-lg">Aucune vente enregistrée</p>
+                <p className="text-base lg:text-lg">Aucune vente enregistrée</p>
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-3 lg:space-y-4">
                 {topInsurances.map((insurance, index) => {
                   const insuranceType = insuranceTypes.find(ins => ins.name === insurance.name);
                   return (
-                    <div key={insurance.name} className="modern-card p-4 animate-elegant-slide" style={{ animationDelay: `${0.8 + index * 0.1}s` }}>
+                    <div key={insurance.name} className="modern-card p-3 lg:p-4 animate-elegant-slide" style={{ animationDelay: `${0.8 + index * 0.1}s` }}>
                       <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-2 lg:gap-4">
                           <div className={`w-10 h-10 rounded-2xl flex items-center justify-center text-sm font-bold text-white ${
                             index === 0 ? 'bg-gradient-to-br from-primary to-primary-variant animate-soft-glow' : 
                             index === 1 ? 'bg-gradient-to-br from-success to-success-variant' :
@@ -290,15 +290,15 @@ export const Dashboard = () => {
                             {index + 1}
                           </div>
                           <div>
-                            <div className="font-semibold text-base">{insurance.name}</div>
-                            <div className="text-sm text-muted-foreground">
+                            <div className="font-semibold text-sm lg:text-base">{insurance.name}</div>
+                            <div className="text-xs lg:text-sm text-muted-foreground">
                               {insuranceType ? `${formatCurrency(insuranceType.commission)} par vente` : ''}
                             </div>
                           </div>
                         </div>
                         <div className="text-right">
-                          <div className="font-bold text-2xl text-primary">{insurance.count}</div>
-                          <div className="text-sm text-muted-foreground">ventes</div>
+                          <div className="font-bold text-lg lg:text-2xl text-primary">{insurance.count}</div>
+                          <div className="text-xs lg:text-sm text-muted-foreground">ventes</div>
                         </div>
                       </div>
                     </div>

@@ -427,60 +427,60 @@ export const AdminPanel = () => {
   return (
     <div className="space-y-8">
       {/* Gestion des utilisateurs */}
-      <div className="modern-card animate-gentle-fade-in">
-        <div className="p-8">
-          <div className="flex items-center gap-3 mb-8">
+      <div className="modern-card animate-gentle-fade-in max-w-7xl mx-auto">
+        <div className="p-4 lg:p-8">
+          <div className="flex items-center gap-3 mb-6 lg:mb-8">
             <div className="icon-wrapper">
               <Users className="h-6 w-6 text-primary" />
             </div>
-            <h2 className="text-2xl font-bold gradient-text">👥 Gestion des Utilisateurs</h2>
+            <h2 className="text-lg lg:text-2xl font-bold gradient-text">👥 Gestion des Utilisateurs</h2>
           </div>
           
-          <form onSubmit={handleAddUser} className="space-y-6 mb-8">
-            <div className="grid grid-cols-1 md:grid-cols-7 gap-4">
+          <form onSubmit={handleAddUser} className="space-y-4 lg:space-y-6 mb-6 lg:mb-8">
+            <div className="grid grid-cols-1 lg:grid-cols-7 gap-3 lg:gap-4">
               <div className="space-y-2">
-                <Label htmlFor="username" className="font-semibold">Nom d'utilisateur</Label>
+                <Label htmlFor="username" className="text-sm font-semibold">Nom d'utilisateur</Label>
                 <Input
                   id="username"
                   value={newUsername}
                   onChange={(e) => setNewUsername(e.target.value)}
                   placeholder="Ex: vendeur3"
-                  className="friendly-input"
+                  className="friendly-input text-sm"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="firstName" className="font-semibold">Prénom</Label>
+                <Label htmlFor="firstName" className="text-sm font-semibold">Prénom</Label>
                 <Input
                   id="firstName"
                   value={newFirstName}
                   onChange={(e) => setNewFirstName(e.target.value)}
                   placeholder="Ex: Pierre"
-                  className="friendly-input"
+                  className="friendly-input text-sm"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="lastName" className="font-semibold">Nom</Label>
+                <Label htmlFor="lastName" className="text-sm font-semibold">Nom</Label>
                 <Input
                   id="lastName"
                   value={newLastName}
                   onChange={(e) => setNewLastName(e.target.value)}
                   placeholder="Ex: Durand"
-                  className="friendly-input"
+                  className="friendly-input text-sm"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="email" className="font-semibold">Email</Label>
+                <Label htmlFor="email" className="text-sm font-semibold">Email</Label>
                 <Input
                   id="email"
                   type="email"
                   value={newEmail}
                   onChange={(e) => setNewEmail(e.target.value)}
                   placeholder="vendeur3@aloelocation.com"
-                  className="friendly-input"
+                  className="friendly-input text-sm"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="password" className="font-semibold">Mot de passe</Label>
+                <Label htmlFor="password" className="text-sm font-semibold">Mot de passe</Label>
                 <div className="relative">
                   <Input
                     id="password"
@@ -488,7 +488,7 @@ export const AdminPanel = () => {
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
                     placeholder="••••••••"
-                    className="friendly-input pr-12"
+                    className="friendly-input text-sm pr-12"
                   />
                   <Button
                     type="button"
@@ -502,12 +502,12 @@ export const AdminPanel = () => {
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="role" className="font-semibold">Rôle</Label>
+                <Label htmlFor="role" className="text-sm font-semibold">Rôle</Label>
                 <select
                   id="role"
                   value={newRole}
                   onChange={(e) => setNewRole(e.target.value as 'admin' | 'employee')}
-                  className="friendly-input"
+                  className="friendly-input text-sm"
                 >
                   <option value="employee">Employé</option>
                   <option value="admin">Administrateur</option>
@@ -523,47 +523,52 @@ export const AdminPanel = () => {
           </form>
 
           <div className="space-y-4">
-            <h3 className="font-bold text-lg text-foreground">Utilisateurs existants</h3>
+            <h3 className="font-bold text-base lg:text-lg text-foreground">Utilisateurs existants</h3>
             {users.map((user) => (
-              <div key={user.id} className="modern-card p-4 animate-elegant-slide">
+              <div key={user.id} className="modern-card p-3 lg:p-4 animate-elegant-slide">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-2 lg:gap-4 flex-1 min-w-0">
                     <div className="icon-wrapper">
                       <User className="h-5 w-5 text-primary" />
                     </div>
-                    <div>
-                      <div className="font-bold text-base">{user.firstName} {user.lastName}</div>
-                      <div className="text-sm text-muted-foreground">@{user.username} • {user.email}</div>
+                    <div className="min-w-0 flex-1">
+                      <div className="font-bold text-sm lg:text-base truncate">{user.firstName} {user.lastName}</div>
+                      <div className="text-xs lg:text-sm text-muted-foreground truncate">@{user.username}</div>
+                      <div className="text-xs text-muted-foreground truncate lg:hidden">{user.email}</div>
                     </div>
-                    <Badge variant={user.role === 'admin' ? 'default' : 'secondary'} className="rounded-full">
+                    <div className="hidden lg:block text-xs text-muted-foreground">{user.email}</div>
+                    <Badge variant={user.role === 'admin' ? 'default' : 'secondary'} className="rounded-full text-xs">
                       {user.role === 'admin' ? 'Admin' : 'Employé'}
                     </Badge>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1 lg:gap-2 ml-2">
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => handleEditUser(user)}
-                      className="rounded-2xl hover:scale-105 transition-all duration-300"
+                      className="rounded-2xl hover:scale-105 transition-all duration-300 h-8 w-8 lg:h-9 lg:w-auto lg:px-3"
                     >
                       <Edit className="h-4 w-4" />
+                      <span className="hidden lg:inline ml-2">Modifier</span>
                     </Button>
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => handleChangePassword(user.username)}
-                      className="rounded-2xl hover:scale-105 transition-all duration-300"
+                      className="rounded-2xl hover:scale-105 transition-all duration-300 h-8 w-8 lg:h-9 lg:w-auto lg:px-3"
                     >
                       <Key className="h-4 w-4" />
+                      <span className="hidden lg:inline ml-2">MDP</span>
                     </Button>
                     {user.username !== 'admin' && (
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => handleRemoveUser(user.username)}
-                        className="rounded-2xl hover:scale-105 transition-all duration-300 text-destructive hover:text-destructive"
+                        className="rounded-2xl hover:scale-105 transition-all duration-300 text-destructive hover:text-destructive h-8 w-8 lg:h-9 lg:w-auto lg:px-3"
                       >
                         <Trash2 className="h-4 w-4" />
+                        <span className="hidden lg:inline ml-2">Suppr</span>
                       </Button>
                     )}
                   </div>
@@ -706,29 +711,29 @@ export const AdminPanel = () => {
       </Dialog>
 
       {/* Gestion des assurances */}
-      <div className="modern-card animate-smooth-scale-in" style={{ animationDelay: '0.2s' }}>
-        <div className="p-8">
-          <div className="flex items-center gap-3 mb-8">
+      <div className="modern-card animate-smooth-scale-in max-w-7xl mx-auto" style={{ animationDelay: '0.2s' }}>
+        <div className="p-4 lg:p-8">
+          <div className="flex items-center gap-3 mb-6 lg:mb-8">
             <div className="icon-wrapper">
               <Shield className="h-6 w-6 text-primary" />
             </div>
-            <h2 className="text-2xl font-bold gradient-text">🛡️ Gestion des Assurances</h2>
+            <h2 className="text-lg lg:text-2xl font-bold gradient-text">🛡️ Gestion des Assurances</h2>
           </div>
           
-          <form onSubmit={handleAddInsurance} className="space-y-6 mb-8">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div className="md:col-span-2 space-y-2">
-                <Label htmlFor="insuranceName" className="font-semibold">Nom de l'assurance</Label>
+          <form onSubmit={handleAddInsurance} className="space-y-4 lg:space-y-6 mb-6 lg:mb-8">
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 lg:gap-4">
+              <div className="lg:col-span-2 space-y-2">
+                <Label htmlFor="insuranceName" className="text-sm font-semibold">Nom de l'assurance</Label>
                 <Input
                   id="insuranceName"
                   value={newInsuranceName}
                   onChange={(e) => setNewInsuranceName(e.target.value)}
                   placeholder="Ex: Assurance Tous Risques"
-                  className="friendly-input"
+                  className="friendly-input text-sm"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="insuranceCommission" className="font-semibold">Commission (€)</Label>
+                <Label htmlFor="insuranceCommission" className="text-sm font-semibold">Commission (€)</Label>
                 <Input
                   id="insuranceCommission"
                   type="number"
@@ -737,7 +742,7 @@ export const AdminPanel = () => {
                   value={newInsuranceCommission}
                   onChange={(e) => setNewInsuranceCommission(e.target.value)}
                   placeholder="25.00"
-                  className="friendly-input"
+                  className="friendly-input text-sm"
                 />
               </div>
               <div className="flex items-end">
@@ -750,18 +755,18 @@ export const AdminPanel = () => {
           </form>
 
           <div className="space-y-4">
-            <h3 className="font-bold text-lg text-foreground">Assurances disponibles</h3>
+            <h3 className="font-bold text-base lg:text-lg text-foreground">Assurances disponibles</h3>
             {insuranceTypes.filter(ins => ins.isActive).map((insurance) => (
-              <div key={insurance.id} className="modern-card p-4 animate-elegant-slide">
+              <div key={insurance.id} className="modern-card p-3 lg:p-4 animate-elegant-slide">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-2 lg:gap-4 flex-1 min-w-0">
                     <div className="icon-wrapper">
                       <Car className="h-5 w-5 text-primary" />
                     </div>
-                    <span className="font-semibold text-base">{insurance.name}</span>
+                    <span className="font-semibold text-sm lg:text-base truncate">{insurance.name}</span>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <div className="success-indicator">
+                  <div className="flex items-center gap-2 lg:gap-3">
+                    <div className="success-indicator text-xs lg:text-sm">
                       <Euro className="h-4 w-4" />
                       <span className="font-bold">{insurance.commission.toFixed(2)} €</span>
                     </div>
@@ -769,17 +774,19 @@ export const AdminPanel = () => {
                       variant="outline"
                       size="sm"
                       onClick={() => handleEditInsurance(insurance)}
-                      className="rounded-2xl hover:scale-105 transition-all duration-300"
+                      className="rounded-2xl hover:scale-105 transition-all duration-300 h-8 w-8 lg:h-9 lg:w-auto lg:px-3"
                     >
                       <Edit className="h-4 w-4" />
+                      <span className="hidden lg:inline ml-2">Modifier</span>
                     </Button>
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => handleRemoveInsurance(insurance.id, insurance.name)}
-                      className="rounded-2xl hover:scale-105 transition-all duration-300 text-destructive hover:text-destructive"
+                      className="rounded-2xl hover:scale-105 transition-all duration-300 text-destructive hover:text-destructive h-8 w-8 lg:h-9 lg:w-auto lg:px-3"
                     >
                       <Trash2 className="h-4 w-4" />
+                      <span className="hidden lg:inline ml-2">Suppr</span>
                     </Button>
                   </div>
                 </div>
@@ -830,24 +837,24 @@ export const AdminPanel = () => {
       </Dialog>
 
       {/* Gestion des objectifs */}
-      <div className="modern-card animate-smooth-scale-in" style={{ animationDelay: '0.3s' }}>
-        <div className="p-8">
-          <div className="flex items-center gap-3 mb-8">
+      <div className="modern-card animate-smooth-scale-in max-w-7xl mx-auto" style={{ animationDelay: '0.3s' }}>
+        <div className="p-4 lg:p-8">
+          <div className="flex items-center gap-3 mb-6 lg:mb-8">
             <div className="icon-wrapper">
               <Target className="h-6 w-6 text-primary" />
             </div>
-            <h2 className="text-2xl font-bold gradient-text">🎯 Gestion des Objectifs</h2>
+            <h2 className="text-lg lg:text-2xl font-bold gradient-text">🎯 Gestion des Objectifs</h2>
           </div>
           
-          <form onSubmit={handleAddObjective} className="space-y-6 mb-8">
-            <div className="grid grid-cols-1 md:grid-cols-7 gap-4">
+          <form onSubmit={handleAddObjective} className="space-y-4 lg:space-y-6 mb-6 lg:mb-8">
+            <div className="grid grid-cols-1 lg:grid-cols-7 gap-3 lg:gap-4">
               <div className="space-y-2">
-                <Label htmlFor="objectiveEmployee" className="font-semibold">Employé</Label>
+                <Label htmlFor="objectiveEmployee" className="text-sm font-semibold">Employé</Label>
                 <select
                   id="objectiveEmployee"
                   value={newObjectiveEmployee}
                   onChange={(e) => setNewObjectiveEmployee(e.target.value)}
-                  className="friendly-input"
+                  className="friendly-input text-sm"
                 >
                   <option value="">Sélectionner</option>
                   {users.filter(u => u.role === 'employee').map(user => (
@@ -858,12 +865,12 @@ export const AdminPanel = () => {
                 </select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="objectiveType" className="font-semibold">Type</Label>
+                <Label htmlFor="objectiveType" className="text-sm font-semibold">Type</Label>
                 <select
                   id="objectiveType"
                   value={newObjectiveType}
                   onChange={(e) => setNewObjectiveType(e.target.value as 'amount' | 'sales_count')}
-                  className="friendly-input"
+                  className="friendly-input text-sm"
                 >
                   <option value="amount">Chiffre d'affaires</option>
                   <option value="sales_count">Nombre de ventes</option>
@@ -881,7 +888,7 @@ export const AdminPanel = () => {
                   value={newObjectiveAmount}
                   onChange={(e) => setNewObjectiveAmount(e.target.value)}
                   placeholder="500.00"
-                  className="friendly-input"
+                  className="friendly-input text-sm"
                 />
               </div>
               <div className="space-y-2">
@@ -895,16 +902,16 @@ export const AdminPanel = () => {
                   value={newObjectiveSales}
                   onChange={(e) => setNewObjectiveSales(e.target.value)}
                   placeholder="20"
-                  className="friendly-input"
+                  className="friendly-input text-sm"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="objectivePeriod" className="font-semibold">Période</Label>
+                <Label htmlFor="objectivePeriod" className="text-sm font-semibold">Période</Label>
                 <select
                   id="objectivePeriod"
                   value={newObjectivePeriod}
                   onChange={(e) => setNewObjectivePeriod(e.target.value as 'monthly' | 'quarterly' | 'yearly')}
-                  className="friendly-input"
+                  className="friendly-input text-sm"
                 >
                   <option value="monthly">Mensuel</option>
                   <option value="quarterly">Trimestriel</option>
@@ -912,13 +919,13 @@ export const AdminPanel = () => {
                 </select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="objectiveDescription" className="font-semibold">Description</Label>
+                <Label htmlFor="objectiveDescription" className="text-sm font-semibold">Description</Label>
                 <Input
                   id="objectiveDescription"
                   value={newObjectiveDescription}
                   onChange={(e) => setNewObjectiveDescription(e.target.value)}
                   placeholder="Optionnel"
-                  className="friendly-input"
+                  className="friendly-input text-sm"
                 />
               </div>
               <div className="flex items-end">
@@ -931,56 +938,58 @@ export const AdminPanel = () => {
           </form>
 
           <div className="space-y-6">
-            <h3 className="font-bold text-lg text-foreground">Objectifs actifs avec progression</h3>
+            <h3 className="font-bold text-base lg:text-lg text-foreground">Objectifs actifs avec progression</h3>
             {objectives.map((objective) => {
               const progress = getObjectiveProgress(objective);
               const progressColor = getProgressColor(progress.progress);
               
               return (
-                <div key={objective.id} className="modern-card p-6 animate-elegant-slide">
-                  <div className="flex items-center justify-between mb-4">
-                    <div>
-                      <div className="font-bold text-lg">
+                <div key={objective.id} className="modern-card p-4 lg:p-6 animate-elegant-slide">
+                  <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-4 gap-3 lg:gap-0">
+                    <div className="flex-1 min-w-0">
+                      <div className="font-bold text-base lg:text-lg truncate">
                         {users.find(u => u.username === objective.employeeName)?.firstName} {users.find(u => u.username === objective.employeeName)?.lastName}
                       </div>
-                      <div className="text-base text-muted-foreground">
+                      <div className="text-sm lg:text-base text-muted-foreground">
                         {objective.description} • {objective.period === 'monthly' ? 'Mensuel' : objective.period === 'quarterly' ? 'Trimestriel' : 'Annuel'} • {objective.objectiveType === 'amount' ? 'CA' : 'Ventes'}
                       </div>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <div className={`px-4 py-2 rounded-2xl text-base font-bold ${progressColor}`}>
+                    <div className="flex items-center gap-2 lg:gap-3">
+                      <div className={`px-3 lg:px-4 py-1.5 lg:py-2 rounded-2xl text-sm lg:text-base font-bold ${progressColor}`}>
                         {progress.progress.toFixed(0)}%
                       </div>
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => handleEditObjective(objective)}
-                        className="rounded-2xl hover:scale-105 transition-all duration-300"
+                        className="rounded-2xl hover:scale-105 transition-all duration-300 h-8 w-8 lg:h-9 lg:w-auto lg:px-3"
                       >
                         <Edit className="h-4 w-4" />
+                        <span className="hidden lg:inline ml-2">Modifier</span>
                       </Button>
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => handleRemoveObjective(objective.id, objective.employeeName)}
-                        className="rounded-2xl hover:scale-105 transition-all duration-300 text-destructive hover:text-destructive"
+                        className="rounded-2xl hover:scale-105 transition-all duration-300 text-destructive hover:text-destructive h-8 w-8 lg:h-9 lg:w-auto lg:px-3"
                       >
                         <Trash2 className="h-4 w-4" />
+                        <span className="hidden lg:inline ml-2">Suppr</span>
                       </Button>
                     </div>
                   </div>
                   
-                  <div className="space-y-3">
+                  <div className="space-y-2 lg:space-y-3">
                     {objective.objectiveType === 'amount' ? (
                       <div>
-                        <div className="text-base font-semibold text-muted-foreground mb-2">💰 Chiffre d'affaires</div>
+                        <div className="text-sm lg:text-base font-semibold text-muted-foreground mb-2">💰 Chiffre d'affaires</div>
                         <div className="flex items-center justify-between">
-                          <span className="text-base font-medium">{progress.achievedAmount.toFixed(2)} € / {objective.targetAmount.toFixed(2)} €</span>
-                          <span className="text-base font-bold">{progress.progress.toFixed(0)}%</span>
+                          <span className="text-sm lg:text-base font-medium">{progress.achievedAmount.toFixed(2)} € / {objective.targetAmount.toFixed(2)} €</span>
+                          <span className="text-sm lg:text-base font-bold">{progress.progress.toFixed(0)}%</span>
                         </div>
-                        <div className="w-full bg-muted rounded-full h-4 mt-2">
+                        <div className="w-full bg-muted rounded-full h-3 lg:h-4 mt-2">
                           <div 
-                            className={`h-4 rounded-full transition-all duration-500 ${
+                            className={`h-3 lg:h-4 rounded-full transition-all duration-500 ${
                               progress.progress >= 100 ? 'bg-gradient-to-r from-success to-success-variant' :
                               progress.progress >= 75 ? 'bg-gradient-to-r from-warning to-orange' :
                               progress.progress >= 50 ? 'bg-gradient-to-r from-orange to-destructive' : 'bg-gradient-to-r from-destructive to-destructive/80'
@@ -991,14 +1000,14 @@ export const AdminPanel = () => {
                       </div>
                     ) : (
                       <div>
-                        <div className="text-base font-semibold text-muted-foreground mb-2">📊 Nombre de ventes</div>
+                        <div className="text-sm lg:text-base font-semibold text-muted-foreground mb-2">📊 Nombre de ventes</div>
                         <div className="flex items-center justify-between">
-                          <span className="text-base font-medium">{progress.achievedSales} / {objective.targetSalesCount}</span>
-                          <span className="text-base font-bold">{progress.progress.toFixed(0)}%</span>
+                          <span className="text-sm lg:text-base font-medium">{progress.achievedSales} / {objective.targetSalesCount}</span>
+                          <span className="text-sm lg:text-base font-bold">{progress.progress.toFixed(0)}%</span>
                         </div>
-                        <div className="w-full bg-muted rounded-full h-4 mt-2">
+                        <div className="w-full bg-muted rounded-full h-3 lg:h-4 mt-2">
                           <div 
-                            className={`h-4 rounded-full transition-all duration-500 ${
+                            className={`h-3 lg:h-4 rounded-full transition-all duration-500 ${
                               progress.progress >= 100 ? 'bg-gradient-to-r from-success to-success-variant' :
                               progress.progress >= 75 ? 'bg-gradient-to-r from-warning to-orange' :
                               progress.progress >= 50 ? 'bg-gradient-to-r from-orange to-destructive' : 'bg-gradient-to-r from-destructive to-destructive/80'
@@ -1014,11 +1023,11 @@ export const AdminPanel = () => {
             })}
             
             {objectives.length === 0 && (
-              <div className="text-center py-16 text-muted-foreground">
+              <div className="text-center py-8 lg:py-16 text-muted-foreground">
                 <div className="icon-wrapper mx-auto mb-6 opacity-50">
-                  <Target className="h-16 w-16" />
+                  <Target className="h-12 lg:h-16 w-12 lg:w-16" />
                 </div>
-                <p className="text-lg">Aucun objectif défini</p>
+                <p className="text-base lg:text-lg">Aucun objectif défini</p>
               </div>
             )}
           </div>
@@ -1121,36 +1130,36 @@ export const AdminPanel = () => {
       </Dialog>
 
       {/* Statistiques système */}
-      <div className="modern-card animate-gentle-fade-in" style={{ animationDelay: '0.4s' }}>
-        <div className="p-8">
-          <div className="flex items-center gap-3 mb-8">
+      <div className="modern-card animate-gentle-fade-in max-w-7xl mx-auto" style={{ animationDelay: '0.4s' }}>
+        <div className="p-4 lg:p-8">
+          <div className="flex items-center gap-3 mb-6 lg:mb-8">
             <div className="icon-wrapper">
               <Settings className="h-6 w-6 text-primary" />
             </div>
-            <h2 className="text-2xl font-bold gradient-text">📊 Statistiques Système</h2>
+            <h2 className="text-lg lg:text-2xl font-bold gradient-text">📊 Statistiques Système</h2>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6">
             <div className="stat-card">
               <div className="icon-wrapper mx-auto mb-4">
                 <Users className="h-8 w-8 text-primary" />
               </div>
-              <div className="text-4xl font-bold text-primary mb-2">{users.length}</div>
-              <div className="text-base text-muted-foreground">Utilisateurs</div>
+              <div className="text-2xl lg:text-4xl font-bold text-primary mb-2">{users.length}</div>
+              <div className="text-sm lg:text-base text-muted-foreground">Utilisateurs</div>
             </div>
             <div className="stat-card">
               <div className="icon-wrapper mx-auto mb-4">
                 <Shield className="h-8 w-8 text-success" />
               </div>
-              <div className="text-4xl font-bold text-success">{insuranceTypes.filter(ins => ins.isActive).length}</div>
-              <div className="text-base text-muted-foreground">Types d'assurances</div>
+              <div className="text-2xl lg:text-4xl font-bold text-success">{insuranceTypes.filter(ins => ins.isActive).length}</div>
+              <div className="text-sm lg:text-base text-muted-foreground">Types d'assurances</div>
             </div>
             <div className="stat-card">
               <div className="icon-wrapper mx-auto mb-4">
                 <TrendingUp className="h-8 w-8 text-warning" />
               </div>
-              <div className="text-4xl font-bold text-warning">{sales.length}</div>
-              <div className="text-base text-muted-foreground">Ventes totales</div>
+              <div className="text-2xl lg:text-4xl font-bold text-warning">{sales.length}</div>
+              <div className="text-sm lg:text-base text-muted-foreground">Ventes totales</div>
             </div>
           </div>
         </div>
