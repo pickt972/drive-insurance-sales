@@ -14,8 +14,6 @@ interface SalesFormProps {
 
 export const SalesForm = ({ onSaleAdded }: SalesFormProps) => {
   const [clientName, setClientName] = useState("");
-  const [clientEmail, setClientEmail] = useState("");
-  const [clientPhone, setClientPhone] = useState("");
   const [reservationNumber, setReservationNumber] = useState("");
   const [selectedInsurances, setSelectedInsurances] = useState<string[]>([]);
   const [notes, setNotes] = useState("");
@@ -46,8 +44,6 @@ export const SalesForm = ({ onSaleAdded }: SalesFormProps) => {
       const result = await addSale({
         employeeName: profile?.username || '',
         clientName,
-        clientEmail: clientEmail || undefined,
-        clientPhone: clientPhone || undefined,
         reservationNumber,
         insuranceTypes: selectedInsurances,
         commissionAmount: totalCommission,
@@ -56,8 +52,6 @@ export const SalesForm = ({ onSaleAdded }: SalesFormProps) => {
 
       if (result.success) {
         setClientName("");
-        setClientEmail("");
-        setClientPhone("");
         setReservationNumber("");
         setSelectedInsurances([]);
         setNotes("");
@@ -95,28 +89,6 @@ export const SalesForm = ({ onSaleAdded }: SalesFormProps) => {
               placeholder="Nom du client"
               required
             />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="clientEmail">Email du client</Label>
-              <Input
-                id="clientEmail"
-                type="email"
-                value={clientEmail}
-                onChange={(e) => setClientEmail(e.target.value)}
-                placeholder="client@email.com"
-              />
-            </div>
-            <div>
-              <Label htmlFor="clientPhone">Téléphone du client</Label>
-              <Input
-                id="clientPhone"
-                value={clientPhone}
-                onChange={(e) => setClientPhone(e.target.value)}
-                placeholder="06.12.34.56.78"
-              />
-            </div>
           </div>
 
           <div>
