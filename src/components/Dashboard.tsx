@@ -33,12 +33,12 @@ export const Dashboard = () => {
 
   // Calculer les hauteurs dynamiques du podium basées sur les ventes
   const calculatePodiumHeight = (sales: number, maxSales: number, baseHeight: number) => {
-    if (maxSales === 0) return baseHeight;
+    if (maxSales === 0 || sales === 0) return baseHeight;
     const ratio = sales / maxSales;
     return Math.max(baseHeight, baseHeight + (ratio * 60)); // 60px de variation max
   };
 
-  const maxSales = Math.max(...employeeStats.map(emp => emp.sales), 1);
+  const maxSales = Math.max(...employeeStats.map(emp => emp.sales));
   // Top des assurances
   const insuranceCount: Record<string, number> = {};
   sales.forEach(sale => {
