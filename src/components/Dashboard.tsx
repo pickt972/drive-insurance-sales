@@ -19,22 +19,20 @@ export const Dashboard = () => {
   const sellerStats = users.filter(u => u.role === 'employee').map(user => {
     const userSales = sales.filter(sale => sale.employeeName === user.username);
     const userCommission = userSales.reduce((sum, sale) => sum + sale.commissionAmount, 0);
-    const totalInsurances = userSales.reduce((sum, sale) => sum + sale.insuranceTypes.length, 0);
     return {
       username: user.username,
       name: `${user.firstName} ${user.lastName}`,
       sales: userSales.length,
-      commission: userCommission,
-      totalInsurances
+      commission: userCommission
     };
   });
 
   const employeeStats = sellerStats.sort((a, b) => b.commission - a.commission);
 
   // Calculer les hauteurs dynamiques du podium basées sur les ventes
-  const calculatePodiumHeight = (sales: number, maxSales: number, baseHeight: number) => {
+  const calculatePodiumHeight = (salesCount: number, maxSales: number, baseHeight: number) => {
     if (maxSales === 0 || sales === 0) return baseHeight;
-    const ratio = sales / maxSales;
+    const ratio = salesCount / maxSales;
     return Math.max(baseHeight, baseHeight + (ratio * 60)); // 60px de variation max
   };
 
