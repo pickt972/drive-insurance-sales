@@ -380,23 +380,16 @@ export const AdminPanel = () => {
   };
 
   const handleManualSave = async () => {
-    if (!saveDescription.trim()) {
-      toast({
-        title: "Erreur",
-        description: "Veuillez saisir une description",
-        variant: "destructive",
-      });
-      return;
-    }
-
     setSaveLoading(true);
     try {
       const changes = saveChanges.trim() 
         ? saveChanges.split('\n').map(line => line.trim()).filter(line => line)
         : [];
       
+      const description = saveDescription.trim() || `Sauvegarde manuelle du ${new Date().toLocaleDateString('fr-FR')}`;
+      
       versioningSystem.createVersion(
-        saveDescription.trim(),
+        description,
         changes,
         `${profile?.firstName} ${profile?.lastName}` || 'Administrateur'
       );
@@ -533,14 +526,15 @@ export const AdminPanel = () => {
                   </DialogHeader>
                   <div className="space-y-4 lg:space-y-6 mt-4 lg:mt-6">
                     <div className="space-y-2">
-                      <Label htmlFor="saveDescription" className="text-sm font-semibold">📝 Description de la sauvegarde *</Label>
+                      <Label htmlFor="saveDescription" className="text-sm font-semibold">📝 Description de la sauvegarde (optionnel)</Label>
                       <Input
                         id="saveDescription"
                         value={saveDescription}
                         onChange={(e) => setSaveDescription(e.target.value)}
-                        placeholder="Ex: Sauvegarde avant modifications importantes"
+                        placeholder="Ex: Sauvegarde avant modifications importantes (auto-générée si vide)"
                         className="friendly-input text-sm"
                       />
+                      <p className="text-xs text-muted-foreground">💡 Si vide, une description automatique sera générée</p>
                     </div>
 
                     <div className="space-y-2">
