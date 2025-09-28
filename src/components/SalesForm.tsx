@@ -65,7 +65,7 @@ export const SalesForm = ({ onSaleAdded }: SalesFormProps) => {
           setSelectedInsurances([]);
           setNotes("");
           onSaleAdded();
-        }, 3200); // Attendre que l'animation se termine
+        }, 6200); // Attendre que l'animation se termine
       }
 
     } catch (error) {

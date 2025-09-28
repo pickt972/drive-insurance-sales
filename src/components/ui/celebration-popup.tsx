@@ -147,7 +147,7 @@ export const CelebrationPopup = ({ isOpen, onClose, saleAmount }: CelebrationPop
       const autoClose = setTimeout(() => {
         setShowEffects(false);
         onClose();
-      }, 4000);
+      }, 6000);
       
       return () => {
         clearTimeout(phase1);
