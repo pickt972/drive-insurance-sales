@@ -5,18 +5,21 @@ import { useAuth } from "@/contexts/AuthContext";
 
 export const Dashboard = () => {
   const { sales, users, insuranceTypes, objectives } = useAuth();
+  const { profile, isAdmin } = useAuth();
 
-  // Calculer les statistiques
-  const totalSales = sales.length;
-  const totalCommission = sales.reduce((sum, sale) => sum + sale.commissionAmount, 0);
+  // Filtrer les ventes selon le rôle
+  const userSales = isAdmin ? sales : sales.filter(sale => sale.employeeName === profile?.username);
+  
+  // Calculer les statistiques (filtrées pour les employés)
+  const totalSales = userSales.length;
+  const totalCommission = userSales.reduce((sum, sale) => sum + sale.commissionAmount, 0);
   
   // Ventes de la semaine dernière
   const oneWeekAgo = new Date();
   oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-  const salesThisWeek = sales.filter(sale => new Date(sale.createdAt) >= oneWeekAgo).length;
+  const salesThisWeek = userSales.filter(sale => new Date(sale.createdAt) >= oneWeekAgo).length;
 
-  // Statistiques par vendeur
-  // Statistiques par vendeur - seulement les employés actifs avec des ventes
+  // Statistiques par vendeur (toujours toutes les ventes pour le podium)
   const activeEmployees = users.filter(u => u.role === 'employee' && u.isActive);
   const sellerStats = activeEmployees.map(user => {
     const userSales = sales.filter(sale => sale.employeeName === user.username);
@@ -39,9 +42,10 @@ export const Dashboard = () => {
   };
 
   const maxSales = Math.max(...employeeStats.map(emp => emp.sales));
-  // Top des assurances
+  
+  // Top des assurances (filtrées pour les employés)
   const insuranceCount: Record<string, number> = {};
-  sales.forEach(sale => {
+  userSales.forEach(sale => {
     sale.insuranceTypes.forEach(insurance => {
       insuranceCount[insurance] = (insuranceCount[insurance] || 0) + 1;
     });
@@ -98,8 +102,16 @@ export const Dashboard = () => {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Top Vendeur</p>
-                <p className="text-lg font-bold">{sellerStats[0]?.name || 'Aucun'}</p>
+                <p className="text-sm text-muted-foreground">{isAdmin ? 'Top Vendeur' : 'Mon Rang'}</p>
+                <p className="text-lg font-bold">
+                  {isAdmin 
+                    ? (sellerStats[0]?.name || 'Aucun')
+                    : `${employeeStats.findIndex(emp => emp.username === profile?.username) + 1}${
+                        employeeStats.findIndex(emp => emp.username === profile?.username) === 0 ? 'er' : 
+                        employeeStats.findIndex(emp => emp.username === profile?.username) === 1 ? 'nd' : 'ème'
+                      }`
+                  }
+                </p>
               </div>
               <Trophy className="h-8 w-8 text-primary" />
             </div>
@@ -214,7 +226,7 @@ export const Dashboard = () => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Car className="h-5 w-5 text-primary" />
-              Assurances les Plus Vendues
+              {isAdmin ? 'Assurances les Plus Vendues' : 'Mes Assurances Vendues'}
             </CardTitle>
           </CardHeader>
           <CardContent>
