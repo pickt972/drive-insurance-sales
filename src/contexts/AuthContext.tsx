@@ -118,9 +118,9 @@ const DEFAULT_USERS: User[] = [
   },
   {
     id: '4',
-    username: 'JULIE',
+    username: 'julie',
     firstName: 'Julie',
-    lastName: 'MISAT',
+    lastName: 'Misat',
     email: 'julie@aloelocation.com',
     role: 'employee',
     isActive: true,
@@ -193,7 +193,7 @@ const DEFAULT_PASSWORDS: Record<string, string> = {
   'admin': 'admin123',
   'vendeur1': 'vendeur123',
   'vendeur2': 'vendeur123',
-  'JULIE': 'julie123'
+  'julie': 'julie123'
 };
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
@@ -211,28 +211,20 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const initializeData = () => {
     try {
+      // Forcer la réinitialisation des données par défaut
+      localStorage.setItem('aloelocation_users', JSON.stringify(DEFAULT_USERS));
+      localStorage.setItem('aloelocation_passwords', JSON.stringify(DEFAULT_PASSWORDS));
+      localStorage.setItem('aloelocation_insurance_types', JSON.stringify(DEFAULT_INSURANCE_TYPES));
+      localStorage.setItem('aloelocation_sales', JSON.stringify(DEFAULT_SALES));
+      localStorage.setItem('aloelocation_objectives', JSON.stringify(DEFAULT_OBJECTIVES));
+      
+      setUsers(DEFAULT_USERS);
+      setInsuranceTypes(DEFAULT_INSURANCE_TYPES);
+      setSales(DEFAULT_SALES);
+      setObjectives(DEFAULT_OBJECTIVES);
+      
       // Initialiser les utilisateurs s'ils n'existent pas
-      const storedUsers = localStorage.getItem('aloelocation_users');
-      if (!storedUsers) {
-        localStorage.setItem('aloelocation_users', JSON.stringify(DEFAULT_USERS));
-        localStorage.setItem('aloelocation_passwords', JSON.stringify(DEFAULT_PASSWORDS));
-        localStorage.setItem('aloelocation_insurance_types', JSON.stringify(DEFAULT_INSURANCE_TYPES));
-        localStorage.setItem('aloelocation_sales', JSON.stringify(DEFAULT_SALES));
-        localStorage.setItem('aloelocation_objectives', JSON.stringify(DEFAULT_OBJECTIVES));
-        setUsers(DEFAULT_USERS);
-        setInsuranceTypes(DEFAULT_INSURANCE_TYPES);
-        setSales(DEFAULT_SALES);
-        setObjectives(DEFAULT_OBJECTIVES);
-      } else {
-        setUsers(JSON.parse(storedUsers));
-        const storedInsurance = localStorage.getItem('aloelocation_insurance_types');
-        const storedSales = localStorage.getItem('aloelocation_sales');
-        const storedObjectives = localStorage.getItem('aloelocation_objectives');
-        
-        setInsuranceTypes(storedInsurance ? JSON.parse(storedInsurance) : DEFAULT_INSURANCE_TYPES);
-        setSales(storedSales ? JSON.parse(storedSales) : DEFAULT_SALES);
-        setObjectives(storedObjectives ? JSON.parse(storedObjectives) : DEFAULT_OBJECTIVES);
-      }
+      console.log('✅ Données par défaut restaurées');
 
       // Vérifier si un utilisateur est connecté
       const storedUser = localStorage.getItem('aloelocation_current_user');
