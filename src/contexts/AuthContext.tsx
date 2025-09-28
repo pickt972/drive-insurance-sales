@@ -184,6 +184,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [user, setUser] = useState<User | null>(null);
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
+  const [insuranceTypes, setInsuranceTypes] = useState<InsuranceType[]>([]);
+  const [sales, setSales] = useState<Sale[]>([]);
+  const [objectives, setObjectives] = useState<Objective[]>([]);
 
   // Initialiser les données au premier lancement
   useEffect(() => {
