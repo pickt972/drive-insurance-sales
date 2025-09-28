@@ -154,6 +154,50 @@ export const SalesHistory = () => {
   // Obtenir toutes les assurances uniques
   const allInsurances = [...new Set(sales.flatMap(sale => sale.insuranceTypes))];
 
+  // Fonction pour sauvegarder les modifications
+  const handleSaveEdit = async () => {
+    if (!editingSale || !editClientName.trim() || !editReservationNumber.trim() || editSelectedInsurances.length === 0) {
+      return;
+    }
+
+    setEditLoading(true);
+    try {
+      // Calculer la commission totale
+      const totalCommission = editSelectedInsurances.reduce((sum, insuranceName) => {
+        const insurance = insuranceTypes.find(ins => ins.name === insuranceName);
+        return sum + (insurance?.commission || 0);
+      }, 0);
+
+      // Mettre à jour la vente
+      await updateSale(editingSale.id, {
+        clientName: editClientName.trim(),
+        reservationNumber: editReservationNumber.trim(),
+        insuranceTypes: editSelectedInsurances,
+        commissionAmount: totalCommission,
+        notes: editNotes.trim() || null
+      });
+
+      // Réinitialiser l'état d'édition
+      setEditingSale(null);
+      setEditClientName("");
+      setEditReservationNumber("");
+      setEditSelectedInsurances([]);
+      setEditNotes("");
+    } catch (error) {
+      console.error('Erreur lors de la modification de la vente:', error);
+    } finally {
+      setEditLoading(false);
+    }
+  };
+
+  // Fonction pour ouvrir le dialog d'édition
+  const handleEditSale = (sale: any) => {
+    setEditingSale(sale);
+    setEditClientName(sale.clientName);
+    setEditReservationNumber(sale.reservationNumber);
+    setEditSelectedInsurances([...sale.insuranceTypes]);
+    setEditNotes(sale.notes || "");
+  };
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('fr-FR', {
@@ -500,14 +544,23 @@ export const SalesHistory = () => {
                     </div>
 
                     {isAdmin && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDelete(sale.id)}
-                        className="text-destructive hover:text-destructive"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleEditSale(sale)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDelete(sale.id)}
+                          className="text-destructive hover:text-destructive"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     )}
                   </div>
                 </div>
