@@ -275,14 +275,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const usersList: User[] = JSON.parse(storedUsers);
       const passwordsList: Record<string, string> = JSON.parse(storedPasswords);
 
-      // Vérifier si l'utilisateur existe et est actif
-      const foundUser = usersList.find(u => u.username === username && u.isActive);
+      // Vérifier si l'utilisateur existe et est actif (insensible à la casse)
+      const foundUser = usersList.find(u => u.username.toLowerCase() === username.toLowerCase() && u.isActive);
       if (!foundUser) {
         return { success: false, error: 'Utilisateur non trouvé ou inactif' };
       }
 
-      // Vérifier le mot de passe
-      if (passwordsList[username] !== password) {
+      // Vérifier le mot de passe (utiliser le vrai nom d'utilisateur)
+      if (passwordsList[foundUser.username] !== password) {
         return { success: false, error: 'Mot de passe incorrect' };
       }
 
@@ -292,7 +292,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       
       toast({
         title: "Connexion réussie",
-        description: `Bienvenue ${foundUser.username} !`,
+        description: `Bienvenue ${foundUser.firstName} ${foundUser.lastName} !`,
       });
 
       return { success: true };
