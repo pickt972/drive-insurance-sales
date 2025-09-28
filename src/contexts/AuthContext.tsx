@@ -115,6 +115,16 @@ const DEFAULT_USERS: User[] = [
     role: 'employee',
     isActive: true,
     createdAt: new Date().toISOString()
+  },
+  {
+    id: '4',
+    username: 'JULIE',
+    firstName: 'Julie',
+    lastName: 'MISAT',
+    email: 'julie@aloelocation.com',
+    role: 'employee',
+    isActive: true,
+    createdAt: new Date().toISOString()
   }
 ];
 
@@ -182,7 +192,8 @@ const DEFAULT_OBJECTIVES: Objective[] = [
 const DEFAULT_PASSWORDS: Record<string, string> = {
   'admin': 'admin123',
   'vendeur1': 'vendeur123',
-  'vendeur2': 'vendeur123'
+  'vendeur2': 'vendeur123',
+  'JULIE': 'julie123'
 };
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {

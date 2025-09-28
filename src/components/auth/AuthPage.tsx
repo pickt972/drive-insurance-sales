@@ -63,7 +63,8 @@ export const AuthPage = () => {
               <span className="text-xs">
                 <strong>Admin :</strong> admin / admin123<br />
                 <strong>Vendeur 1 :</strong> vendeur1 / vendeur123<br />
-                <strong>Vendeur 2 :</strong> vendeur2 / vendeur123
+                <strong>Vendeur 2 :</strong> vendeur2 / vendeur123<br />
+                <strong>Julie :</strong> JULIE / julie123
               </span>
             </p>
           </div>
