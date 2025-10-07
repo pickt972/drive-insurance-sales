@@ -7,6 +7,7 @@ import { SalesForm } from "@/components/SalesForm";
 import { SalesHistory } from "@/components/SalesHistory";
 import { AdminPanel } from "@/components/AdminPanel";
 import { VersionBadge } from "@/components/ui/version-badge";
+import aloeLogo from "@/assets/aloelocation-logo.png";
 
 const HomePage: React.FC = () => {
   const { profile, isAdmin, signOut } = useAuth();
@@ -46,7 +47,7 @@ const HomePage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 overflow-x-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondary/5 overflow-x-hidden">
       {/* Header */}
       <header className="glass-header p-4 lg:p-6">
         <div className="modern-container">
@@ -64,11 +65,8 @@ const HomePage: React.FC = () => {
             </button>
             
             <div className="flex items-center gap-2 lg:gap-4">
-              <div className="icon-wrapper">
-                <div className="w-6 h-6 lg:w-8 lg:h-8 bg-gradient-to-br from-primary to-primary-variant rounded-xl"></div>
-              </div>
+              <img src={aloeLogo} alt="Aloe Location" className="h-8 w-auto lg:h-10" />
               <div className="hidden sm:block">
-                <h1 className="gradient-text text-xl lg:text-3xl">Aloe Location</h1>
                 <p className="text-muted-foreground text-xs lg:text-sm">Gestion des ventes d'assurances</p>
               </div>
             </div>
@@ -99,11 +97,8 @@ const HomePage: React.FC = () => {
               {/* Header mobile de la sidebar */}
               <div className="lg:hidden flex items-center justify-between mb-6 pb-4 border-b border-border/50">
                 <div className="flex items-center gap-3">
-                  <div className="icon-wrapper">
-                    <div className="w-6 h-6 bg-gradient-to-br from-primary to-primary-variant rounded-xl"></div>
-                  </div>
+                  <img src={aloeLogo} alt="Aloe Location" className="h-8 w-auto" />
                   <div>
-                    <h2 className="gradient-text text-lg font-bold">Aloe Location</h2>
                     <p className="text-muted-foreground text-xs">Menu</p>
                   </div>
                 </div>

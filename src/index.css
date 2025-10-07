@@ -359,7 +359,7 @@
 }
 
 .modern-button {
-  @apply bg-gradient-to-r from-primary to-primary-variant text-primary-foreground hover:from-primary-hover hover:to-primary transition-all duration-300 rounded-xl font-semibold shadow-md hover:shadow-primary active:scale-95 hover:scale-[1.02] hover:-translate-y-0.5;
+  @apply bg-gradient-to-r from-primary via-primary-variant to-secondary text-primary-foreground hover:shadow-primary hover:shadow-lg transition-all duration-300 rounded-xl font-semibold shadow-md active:scale-95 hover:scale-[1.02] hover:-translate-y-0.5;
 }
 
 .friendly-input {
@@ -387,7 +387,7 @@
 }
 
 .gradient-text {
-  @apply bg-gradient-to-r from-primary via-primary-variant to-primary bg-clip-text text-transparent font-semibold;
+  @apply bg-gradient-to-r from-primary via-primary-variant to-secondary bg-clip-text text-transparent font-semibold;
 }
 
 .floating-badge {
