@@ -1,6 +1,10 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { toast } from '@/hooks/use-toast';
 import { versioningSystem } from '@/lib/versioning';
+import { supabase } from '@/integrations/supabase/client';
+
+// Type assertion pour contourner les types Supabase vides
+const db = supabase as any;
 
 interface User {
   id: string;
@@ -624,12 +628,26 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
-  const fetchInsuranceTypes = () => {
+  const fetchInsuranceTypes = async () => {
     try {
-      const stored = localStorage.getItem('aloelocation_insurance_types');
-      if (stored) {
-        setInsuranceTypes(JSON.parse(stored));
-      }
+      const { data, error } = await db
+        .from('insurance_types')
+        .select('*')
+        .eq('is_active', true)
+        .order('name', { ascending: true });
+
+      if (error) throw error;
+
+      // Transformer les données pour correspondre à l'interface InsuranceType
+      const transformedInsurances: InsuranceType[] = (data || []).map((ins: any) => ({
+        id: ins.id,
+        name: ins.name,
+        commission: ins.commission,
+        isActive: ins.is_active,
+        createdAt: ins.created_at
+      }));
+
+      setInsuranceTypes(transformedInsurances);
     } catch (error) {
       console.error('Erreur récupération assurances:', error);
     }
@@ -647,15 +665,62 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         );
       }
       
-      const newSale: Sale = {
-        ...sale,
-        id: Date.now().toString(),
-        createdAt: new Date().toISOString()
-      };
+      // Récupérer les IDs des assurances depuis leurs noms
+      const { data: insuranceData, error: insuranceError } = await db
+        .from('insurance_types')
+        .select('id, name, commission')
+        .in('name', sale.insuranceTypes)
+        .eq('is_active', true);
 
-      const updatedSales = [newSale, ...sales];
-      localStorage.setItem('aloelocation_sales', JSON.stringify(updatedSales));
-      setSales(updatedSales);
+      if (insuranceError) {
+        throw new Error('Erreur lors de la récupération des types d\'assurance');
+      }
+
+      if (!insuranceData || insuranceData.length === 0) {
+        throw new Error('Aucune assurance valide trouvée');
+      }
+
+      // Insérer la vente dans la table sales
+      const { data: saleData, error: saleError } = await db
+        .from('sales')
+        .insert({
+          employee_name: sale.employeeName,
+          client_name: sale.clientName,
+          client_email: sale.clientEmail || null,
+          client_phone: sale.clientPhone || null,
+          reservation_number: sale.reservationNumber,
+          commission_amount: sale.commissionAmount,
+          notes: sale.notes || null,
+          status: 'active'
+        })
+        .select()
+        .single();
+
+      if (saleError || !saleData) {
+        console.error('Erreur insertion vente:', saleError);
+        throw new Error(saleError?.message || 'Erreur lors de la création de la vente');
+      }
+
+      // Insérer les assurances liées dans la table sale_insurances
+      const saleInsurances = insuranceData.map((insurance: any) => ({
+        sale_id: saleData.id,
+        insurance_type_id: insurance.id,
+        commission_amount: insurance.commission
+      }));
+
+      const { error: junctionError } = await db
+        .from('sale_insurances')
+        .insert(saleInsurances);
+
+      if (junctionError) {
+        console.error('Erreur insertion assurances:', junctionError);
+        // Supprimer la vente si l'insertion des assurances échoue
+        await db.from('sales').delete().eq('id', saleData.id);
+        throw new Error('Erreur lors de l\'enregistrement des assurances');
+      }
+
+      // Rafraîchir la liste des ventes
+      await fetchSales();
 
       toast({
         title: "Vente enregistrée",
@@ -664,15 +729,26 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       return { success: true };
     } catch (error: any) {
+      console.error('Erreur addSale:', error);
+      toast({
+        title: "Erreur",
+        description: error.message || "Impossible d'enregistrer la vente",
+        variant: "destructive",
+      });
       return { success: false, error: error.message };
     }
   };
 
   const deleteSale = async (id: string): Promise<{ success: boolean; error?: string }> => {
     try {
-      const updatedSales = sales.filter(sale => sale.id !== id);
-      localStorage.setItem('aloelocation_sales', JSON.stringify(updatedSales));
-      setSales(updatedSales);
+      const { error } = await db
+        .from('sales')
+        .update({ status: 'deleted', updated_at: new Date().toISOString() })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      await fetchSales();
 
       toast({
         title: "Vente supprimée",
@@ -681,6 +757,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       return { success: true };
     } catch (error: any) {
+      console.error('Erreur deleteSale:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de supprimer la vente",
+        variant: "destructive",
+      });
       return { success: false, error: error.message };
     }
   };
@@ -704,12 +786,54 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
-  const fetchSales = () => {
+  const fetchSales = async () => {
     try {
-      const stored = localStorage.getItem('aloelocation_sales');
-      if (stored) {
-        setSales(JSON.parse(stored));
-      }
+      const { data, error } = await db
+        .from('sales')
+        .select(`
+          id,
+          employee_name,
+          client_name,
+          client_email,
+          client_phone,
+          reservation_number,
+          commission_amount,
+          notes,
+          status,
+          created_at,
+          sale_insurances (
+            insurance_type_id,
+            insurance_types (
+              name,
+              commission
+            )
+          )
+        `)
+        .eq('status', 'active')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      // Transformer les données pour correspondre à l'interface Sale
+      const transformedSales: Sale[] = (data || []).map((sale: any) => ({
+        id: sale.id,
+        employeeName: sale.employee_name,
+        clientName: sale.client_name,
+        clientEmail: sale.client_email,
+        clientPhone: sale.client_phone,
+        reservationNumber: sale.reservation_number,
+        commissionAmount: sale.commission_amount,
+        notes: sale.notes,
+        createdAt: sale.created_at,
+        insuranceTypes: sale.sale_insurances?.map((si: any) => si.insurance_types?.name).filter(Boolean) || []
+      }));
+
+      // Filtrer selon le rôle
+      const filteredSales = user?.role === 'admin' 
+        ? transformedSales 
+        : transformedSales.filter(sale => sale.employeeName === user?.username);
+
+      setSales(filteredSales);
     } catch (error) {
       console.error('Erreur récupération ventes:', error);
     }
