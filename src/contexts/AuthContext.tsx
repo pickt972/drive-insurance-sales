@@ -39,7 +39,6 @@ interface AuthContextType {
   addSale: (sale: Omit<Sale, 'id' | 'createdAt'>) => Promise<{ success: boolean; error?: string }>;
   deleteSale: (id: string) => Promise<{ success: boolean; error?: string }>;
   updateSale: (id: string, updates: Partial<Omit<Sale, 'id' | 'createdAt'>>) => Promise<{ success: boolean; error?: string }>;
-  updateSale: (id: string, updates: Partial<Omit<Sale, 'id' | 'createdAt'>>) => Promise<{ success: boolean; error?: string }>;
   fetchSales: () => void;
   // Gestion des objectifs
   objectives: Objective[];

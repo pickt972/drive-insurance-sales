@@ -80,7 +80,7 @@ export const SalesForm = ({ onSaleAdded }: SalesFormProps) => {
   };
 
   return (
-    <div className="modern-form animate-gentle-fade-in max-w-4xl mx-auto">
+    <div className="modern-form animate-gentle-fade-in max-w-4xl mx-auto w-full overflow-x-hidden">
       <div className="flex items-center gap-3 lg:gap-4 mb-6 lg:mb-8">
         <div className="icon-wrapper">
           <Plus className="h-6 w-6 text-primary" />

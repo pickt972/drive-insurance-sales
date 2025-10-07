@@ -111,7 +111,7 @@ export const Dashboard = () => {
   return (
     <div className="space-y-8">
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-6 w-full overflow-x-hidden">
         <div className="stat-card animate-gentle-fade-in" style={{ animationDelay: '0.1s' }}>
           <div className="flex items-center justify-between mb-4">
             <div className="icon-wrapper p-1.5 lg:p-3">
@@ -181,7 +181,7 @@ export const Dashboard = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 lg:gap-8">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 lg:gap-8 w-full overflow-x-hidden">
         {/* Section Mes Objectifs (pour les employés) */}
         {!isAdmin && (
           <div className="xl:col-span-2 modern-card animate-smooth-scale-in" style={{ animationDelay: '0.4s' }}>
@@ -311,11 +311,9 @@ export const Dashboard = () => {
                   {employeeStats[1] && (
                     <div className="flex flex-col items-center animate-elegant-slide" style={{ animationDelay: '0.8s' }}>
                       <div 
-                        className="podium-base p-3 lg:p-6 w-16 lg:w-24 flex flex-col items-center justify-end relative group"
+                        className="podium-base p-3 lg:p-6 w-16 lg:w-24 flex flex-col items-center justify-end relative group bg-gradient-to-b from-gray-200 to-gray-300"
                         style={{ 
-                          height: `${calculatePodiumHeight(employeeStats[1].sales, maxSales, 60)}px`,
-                          '--color': '#e5e7eb',
-                          '--color-dark': '#d1d5db'
+                          height: `${calculatePodiumHeight(employeeStats[1].sales, maxSales, 60)}px`
                         }}
                       >
                         <div className="text-white font-bold text-lg lg:text-2xl drop-shadow-lg">2</div>
@@ -353,11 +351,9 @@ export const Dashboard = () => {
                   {employeeStats[0] && (
                     <div className="flex flex-col items-center animate-elegant-slide" style={{ animationDelay: '0.7s' }}>
                       <div 
-                        className="podium-base p-4 lg:p-6 w-20 lg:w-28 flex flex-col items-center justify-end relative group"
+                        className="podium-base p-4 lg:p-6 w-20 lg:w-28 flex flex-col items-center justify-end relative group bg-gradient-to-b from-yellow-300 to-yellow-500"
                         style={{ 
-                          height: `${calculatePodiumHeight(employeeStats[0].sales, maxSales, 80)}px`,
-                          '--color': '#fbbf24',
-                          '--color-dark': '#f59e0b'
+                          height: `${calculatePodiumHeight(employeeStats[0].sales, maxSales, 80)}px`
                         }}
                       >
                         <div className="podium-crown">👑</div>
@@ -396,11 +392,9 @@ export const Dashboard = () => {
                   {employeeStats[2] && (
                     <div className="flex flex-col items-center animate-elegant-slide" style={{ animationDelay: '0.9s' }}>
                       <div 
-                        className="podium-base p-2 lg:p-6 w-14 lg:w-20 flex flex-col items-center justify-end relative group"
+                        className="podium-base p-2 lg:p-6 w-14 lg:w-20 flex flex-col items-center justify-end relative group bg-gradient-to-b from-orange-300 to-orange-500"
                         style={{ 
-                          height: `${calculatePodiumHeight(employeeStats[2].sales, maxSales, 45)}px`,
-                          '--color': '#fb923c',
-                          '--color-dark': '#ea580c'
+                          height: `${calculatePodiumHeight(employeeStats[2].sales, maxSales, 45)}px`
                         }}
                       >
                         <div className="text-white font-bold text-base lg:text-xl drop-shadow-lg">3</div>

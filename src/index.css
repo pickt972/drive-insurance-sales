@@ -220,7 +220,7 @@
     @apply text-base lg:text-2xl;
   }
 
-  /* Responsive utilities */
+/* Responsive utilities */
   .mobile-only {
     @apply block lg:hidden;
   }
@@ -231,6 +231,35 @@
 
   .tablet-up {
     @apply hidden md:block;
+  }
+
+  /* Prevent overflow on all elements */
+  * {
+    @apply max-w-full;
+  }
+
+  /* Ensure container doesn't overflow */
+  .container, .modern-container {
+    @apply w-full overflow-x-hidden;
+  }
+
+  /* Improved table responsiveness */
+  table {
+    @apply w-full;
+  }
+
+  td, th {
+    @apply break-words;
+  }
+
+  /* Card overflow prevention */
+  .modern-card, .stat-card {
+    @apply overflow-x-hidden;
+  }
+
+  /* Grid responsiveness */
+  .grid {
+    @apply w-full overflow-x-hidden;
   }
 }
 

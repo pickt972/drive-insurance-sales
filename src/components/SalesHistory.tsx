@@ -12,7 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/contexts/AuthContext";
 
 export const SalesHistory = () => {
-  const { isAdmin, sales, users, objectives, deleteSale, updateSale, insuranceTypes } = useAuth();
+  const { isAdmin, sales, users, objectives, deleteSale, updateSale, insuranceTypes, profile } = useAuth();
   
   // États pour les filtres
   const [filterEmployee, setFilterEmployee] = useState("");
@@ -261,9 +261,9 @@ export const SalesHistory = () => {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 w-full overflow-x-hidden">
       {/* Filtres et Export */}
-      <div className="modern-card animate-gentle-fade-in max-w-7xl mx-auto">
+      <div className="modern-card animate-gentle-fade-in max-w-7xl mx-auto w-full overflow-x-hidden">
         <div className="p-4 lg:p-8">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-6 gap-4 lg:gap-0">
             <div className="flex items-center gap-3">

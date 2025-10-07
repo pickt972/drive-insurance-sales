@@ -89,10 +89,10 @@ const HomePage: React.FC = () => {
         </div>
       </header>
 
-      <div className="modern-container px-2 lg:px-8">
-        <div className="flex gap-0 lg:gap-8 py-4 lg:py-8 relative">
+      <div className="modern-container px-2 lg:px-8 w-full overflow-hidden">
+        <div className="flex gap-0 lg:gap-8 py-4 lg:py-8 relative w-full">
           {/* Sidebar */}
-          <nav className={`modern-sidebar fixed lg:static inset-y-0 left-0 z-40 w-80 lg:w-72 p-4 lg:p-6 rounded-none lg:rounded-3xl transform transition-transform duration-300 lg:transform-none ${
+          <nav className={`modern-sidebar fixed lg:static inset-y-0 left-0 z-40 w-[280px] max-w-[85vw] lg:w-72 p-4 lg:p-6 rounded-none lg:rounded-3xl transform transition-transform duration-300 lg:transform-none ${
             sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
           }`}>
             <div className="space-y-2 lg:space-y-3">
@@ -148,8 +148,8 @@ const HomePage: React.FC = () => {
           )}
 
           {/* Main content */}
-          <main className="flex-1 animate-gentle-fade-in px-2 lg:px-0">
-            <div className="space-y-4 lg:space-y-8">
+          <main className="flex-1 animate-gentle-fade-in px-2 lg:px-0 w-full min-w-0 overflow-x-hidden">
+            <div className="space-y-4 lg:space-y-8 w-full">
               {renderContent()}
             </div>
           </main>

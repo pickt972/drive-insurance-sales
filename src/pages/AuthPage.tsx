@@ -1,11 +1,11 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { FirebaseAuthPage } from "@/components/auth/FirebaseAuthPage";
-import { useFirebaseAuth } from "@/hooks/useFirebaseAuth";
+import { AuthPage as AuthPageComponent } from "@/components/AuthPage";
+import { useAuth } from "@/contexts/AuthContext";
 
 const AuthPage = () => {
   const navigate = useNavigate();
-  const { isAuthenticated } = useFirebaseAuth();
+  const { isAuthenticated } = useAuth();
   
   // Rediriger si déjà connecté
   useEffect(() => {
@@ -19,7 +19,7 @@ const AuthPage = () => {
     return null;
   }
 
-  return <FirebaseAuthPage />;
+  return <AuthPageComponent />;
 };
 
 export default AuthPage;

@@ -133,7 +133,6 @@ export const AdminPanel = () => {
     if (!editingUser) return;
 
     const result = await updateUser(editingUser.username, {
-      username: editUsername,
       firstName: editFirstName,
       lastName: editLastName,
       email: editEmail,
@@ -497,9 +496,9 @@ export const AdminPanel = () => {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 w-full overflow-x-hidden">
       {/* Section Sauvegarde Rapide */}
-      <div className="modern-card animate-gentle-fade-in max-w-7xl mx-auto">
+      <div className="modern-card animate-gentle-fade-in max-w-7xl mx-auto w-full overflow-x-hidden">
         <div className="p-4 lg:p-8">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 lg:gap-0 mb-6">
             <div className="flex items-center gap-3">
