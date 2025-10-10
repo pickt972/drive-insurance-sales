@@ -305,24 +305,18 @@ export const Dashboard = () => {
               </div>
             ) : (
               <div className="relative">
-                {/* Podium avec design ultra-moderne */}
-                <div className="flex items-end justify-center gap-2 lg:gap-6 mb-6 lg:mb-10 h-40 lg:h-56 mt-4 lg:mt-8">
-                  {/* 2ème place */}
+                {/* Podium avec design ultra-moderne - ordre classique */}
+                <div className="flex items-end justify-center gap-4 lg:gap-8 mb-8 lg:mb-12 min-h-[300px] lg:min-h-[400px]">
+                  {/* 2ème place - À GAUCHE */}
                   {employeeStats[1] && (
-                    <div className="flex flex-col items-center animate-elegant-slide" style={{ animationDelay: '0.8s' }}>
-                      <div 
-                        className="podium-base p-3 lg:p-6 w-16 lg:w-24 flex flex-col items-center justify-end relative group bg-gradient-to-b from-gray-200 to-gray-300"
-                        style={{ 
-                          height: `${calculatePodiumHeight(employeeStats[1].sales, maxSales, 60)}px`
-                        }}
-                      >
-                        <div className="text-white font-bold text-lg lg:text-2xl drop-shadow-lg">2</div>
-                        <div className="absolute inset-0 bg-gradient-to-t from-gray-400/20 to-transparent rounded-t-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                      </div>
-                      <div className="mt-2 lg:mt-4 text-center">
-                        <div className="font-bold text-xs lg:text-base">{employeeStats[1].name.split(' ')[0]}</div>
-                        <div className="text-xs lg:text-sm text-muted-foreground">{employeeStats[1].sales} ventes</div>
-                        <div className="text-xs lg:text-sm font-bold text-success">{formatCurrency(employeeStats[1].commission)}</div>
+                    <div className="flex flex-col items-center flex-1 max-w-[140px] lg:max-w-[180px] animate-elegant-slide" style={{ animationDelay: '0.8s' }}>
+                      <div className="w-full space-y-3 mb-3">
+                        <div className="text-center">
+                          <div className="text-2xl mb-2">🥈</div>
+                          <div className="font-bold text-sm lg:text-lg">{employeeStats[1].name}</div>
+                          <div className="text-xs lg:text-sm text-muted-foreground mt-1">{employeeStats[1].sales} ventes</div>
+                          <div className="text-sm lg:text-base font-bold text-success mt-1">{formatCurrency(employeeStats[1].commission)}</div>
+                        </div>
                         
                         {/* Barre de progression pour le 2ème */}
                         {(() => {
@@ -330,40 +324,44 @@ export const Dashboard = () => {
                           if (!progressData) return null;
                           
                           return (
-                            <div className="mt-2 w-full max-w-16 lg:max-w-24">
-                              <div className="w-full bg-white/30 rounded-full h-1.5">
+                            <div className="w-full px-2">
+                              <div className="w-full bg-muted rounded-full h-2">
                                 <div 
-                                  className={`h-1.5 rounded-full bg-gradient-to-r ${getProgressColor(progressData.progress)} transition-all duration-500`}
+                                  className={`h-2 rounded-full bg-gradient-to-r ${getProgressColor(progressData.progress)} transition-all duration-500`}
                                   style={{ width: `${Math.min(progressData.progress, 100)}%` }}
                                 ></div>
                               </div>
                               <div className="text-xs text-center mt-1 font-bold">
-                                {progressData.progress.toFixed(0)}%
+                                {progressData.progress.toFixed(0)}% objectif
                               </div>
                             </div>
                           );
                         })()}
                       </div>
+                      
+                      <div 
+                        className="w-full podium-base flex flex-col items-center justify-center relative group bg-gradient-to-b from-slate-300 via-slate-400 to-slate-500 shadow-lg"
+                        style={{ 
+                          height: `${calculatePodiumHeight(employeeStats[1].sales, maxSales, 100)}px`
+                        }}
+                      >
+                        <div className="text-white font-bold text-3xl lg:text-5xl drop-shadow-lg">2</div>
+                        <div className="absolute inset-0 bg-gradient-to-t from-white/10 to-transparent rounded-t-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                        <div className="absolute -top-1 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-white/50 to-transparent"></div>
+                      </div>
                     </div>
                   )}
                   
-                  {/* 1ère place */}
+                  {/* 1ère place - AU CENTRE */}
                   {employeeStats[0] && (
-                    <div className="flex flex-col items-center animate-elegant-slide" style={{ animationDelay: '0.7s' }}>
-                      <div 
-                        className="podium-base p-4 lg:p-6 w-20 lg:w-28 flex flex-col items-center justify-end relative group bg-gradient-to-b from-yellow-300 to-yellow-500"
-                        style={{ 
-                          height: `${calculatePodiumHeight(employeeStats[0].sales, maxSales, 80)}px`
-                        }}
-                      >
-                        <div className="podium-crown">👑</div>
-                        <div className="text-white font-bold text-xl lg:text-3xl drop-shadow-lg">1</div>
-                        <div className="absolute inset-0 bg-gradient-to-t from-yellow-400/30 to-transparent rounded-t-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                      </div>
-                      <div className="mt-2 lg:mt-4 text-center">
-                        <div className="font-bold text-sm lg:text-lg text-primary">{employeeStats[0].name.split(' ')[0]}</div>
-                        <div className="text-xs lg:text-sm text-muted-foreground">{employeeStats[0].sales} ventes</div>
-                        <div className="text-sm lg:text-base font-bold text-success">{formatCurrency(employeeStats[0].commission)}</div>
+                    <div className="flex flex-col items-center flex-1 max-w-[160px] lg:max-w-[200px] animate-elegant-slide -mt-8" style={{ animationDelay: '0.7s' }}>
+                      <div className="w-full space-y-3 mb-3">
+                        <div className="text-center">
+                          <div className="text-4xl mb-2 animate-bounce">👑</div>
+                          <div className="font-bold text-base lg:text-xl gradient-text">{employeeStats[0].name}</div>
+                          <div className="text-xs lg:text-sm text-muted-foreground mt-1">{employeeStats[0].sales} ventes</div>
+                          <div className="text-base lg:text-lg font-bold text-success mt-1">{formatCurrency(employeeStats[0].commission)}</div>
+                        </div>
                         
                         {/* Barre de progression pour le 1er */}
                         {(() => {
@@ -371,39 +369,45 @@ export const Dashboard = () => {
                           if (!progressData) return null;
                           
                           return (
-                            <div className="mt-2 w-full max-w-20 lg:max-w-28">
-                              <div className="w-full bg-white/30 rounded-full h-1.5">
+                            <div className="w-full px-2">
+                              <div className="w-full bg-muted rounded-full h-2.5">
                                 <div 
-                                  className={`h-1.5 rounded-full bg-gradient-to-r ${getProgressColor(progressData.progress)} transition-all duration-500`}
+                                  className={`h-2.5 rounded-full bg-gradient-to-r ${getProgressColor(progressData.progress)} transition-all duration-500 shadow-md`}
                                   style={{ width: `${Math.min(progressData.progress, 100)}%` }}
                                 ></div>
                               </div>
                               <div className="text-xs text-center mt-1 font-bold text-primary">
-                                {progressData.progress.toFixed(0)}%
+                                {progressData.progress.toFixed(0)}% objectif
                               </div>
                             </div>
                           );
                         })()}
                       </div>
+                      
+                      <div 
+                        className="w-full podium-base flex flex-col items-center justify-center relative group bg-gradient-to-b from-yellow-300 via-yellow-400 to-yellow-600 shadow-xl"
+                        style={{ 
+                          height: `${calculatePodiumHeight(employeeStats[0].sales, maxSales, 140)}px`
+                        }}
+                      >
+                        <div className="text-white font-bold text-4xl lg:text-6xl drop-shadow-2xl">1</div>
+                        <div className="absolute inset-0 bg-gradient-to-t from-yellow-500/30 to-transparent rounded-t-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                        <div className="absolute -top-1 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-yellow-200 to-transparent"></div>
+                        <div className="absolute top-0 left-0 right-0 h-full bg-[radial-gradient(circle_at_50%_120%,rgba(255,215,0,0.3),transparent)] rounded-t-3xl"></div>
+                      </div>
                     </div>
                   )}
                   
-                  {/* 3ème place */}
+                  {/* 3ème place - À DROITE */}
                   {employeeStats[2] && (
-                    <div className="flex flex-col items-center animate-elegant-slide" style={{ animationDelay: '0.9s' }}>
-                      <div 
-                        className="podium-base p-2 lg:p-6 w-14 lg:w-20 flex flex-col items-center justify-end relative group bg-gradient-to-b from-orange-300 to-orange-500"
-                        style={{ 
-                          height: `${calculatePodiumHeight(employeeStats[2].sales, maxSales, 45)}px`
-                        }}
-                      >
-                        <div className="text-white font-bold text-base lg:text-xl drop-shadow-lg">3</div>
-                        <div className="absolute inset-0 bg-gradient-to-t from-orange-400/20 to-transparent rounded-t-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                      </div>
-                      <div className="mt-2 lg:mt-4 text-center">
-                        <div className="font-bold text-xs lg:text-sm">{employeeStats[2].name.split(' ')[0]}</div>
-                        <div className="text-xs text-muted-foreground">{employeeStats[2].sales} ventes</div>
-                        <div className="text-xs lg:text-sm font-bold text-success">{formatCurrency(employeeStats[2].commission)}</div>
+                    <div className="flex flex-col items-center flex-1 max-w-[130px] lg:max-w-[160px] animate-elegant-slide" style={{ animationDelay: '0.9s' }}>
+                      <div className="w-full space-y-3 mb-3">
+                        <div className="text-center">
+                          <div className="text-2xl mb-2">🥉</div>
+                          <div className="font-bold text-sm lg:text-base">{employeeStats[2].name}</div>
+                          <div className="text-xs text-muted-foreground mt-1">{employeeStats[2].sales} ventes</div>
+                          <div className="text-xs lg:text-sm font-bold text-success mt-1">{formatCurrency(employeeStats[2].commission)}</div>
+                        </div>
                         
                         {/* Barre de progression pour le 3ème */}
                         {(() => {
@@ -411,19 +415,30 @@ export const Dashboard = () => {
                           if (!progressData) return null;
                           
                           return (
-                            <div className="mt-2 w-full max-w-14 lg:max-w-20">
-                              <div className="w-full bg-white/30 rounded-full h-1.5">
+                            <div className="w-full px-2">
+                              <div className="w-full bg-muted rounded-full h-1.5">
                                 <div 
                                   className={`h-1.5 rounded-full bg-gradient-to-r ${getProgressColor(progressData.progress)} transition-all duration-500`}
                                   style={{ width: `${Math.min(progressData.progress, 100)}%` }}
                                 ></div>
                               </div>
                               <div className="text-xs text-center mt-1 font-bold">
-                                {progressData.progress.toFixed(0)}%
+                                {progressData.progress.toFixed(0)}% objectif
                               </div>
                             </div>
                           );
                         })()}
+                      </div>
+                      
+                      <div 
+                        className="w-full podium-base flex flex-col items-center justify-center relative group bg-gradient-to-b from-orange-300 via-orange-400 to-orange-600 shadow-lg"
+                        style={{ 
+                          height: `${calculatePodiumHeight(employeeStats[2].sales, maxSales, 70)}px`
+                        }}
+                      >
+                        <div className="text-white font-bold text-2xl lg:text-4xl drop-shadow-lg">3</div>
+                        <div className="absolute inset-0 bg-gradient-to-t from-orange-500/20 to-transparent rounded-t-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                        <div className="absolute -top-1 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-orange-200 to-transparent"></div>
                       </div>
                     </div>
                   )}
