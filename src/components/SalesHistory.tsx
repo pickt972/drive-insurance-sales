@@ -529,7 +529,7 @@ export const SalesHistory = () => {
                           onClick={() => handleEditSale(sale)}
                           className="rounded-2xl hover:scale-105 transition-all duration-300 h-8 w-8 lg:h-9 lg:w-auto lg:px-3"
                         >
-                          <Edit className="h-4 w-4" />
+                          <Edit className="h-5 w-5" />
                           <span className="hidden lg:inline ml-2">Modifier</span>
                         </Button>
                         <Button
@@ -538,7 +538,7 @@ export const SalesHistory = () => {
                           onClick={() => handleDelete(sale.id)}
                           className="rounded-2xl hover:scale-105 transition-all duration-300 text-destructive hover:text-destructive h-8 w-8 lg:h-9 lg:w-auto lg:px-3"
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <Trash2 className="h-5 w-5" />
                           <span className="hidden lg:inline ml-2">Supprimer</span>
                         </Button>
                       </div>

@@ -460,7 +460,7 @@ export const VersionManager = () => {
                   size="sm"
                   className="rounded-2xl hover:scale-105 transition-all duration-300 text-xs lg:text-sm"
                 >
-                  <Trash2 className="h-4 w-4 mr-2" />
+                  <Trash2 className="h-5 w-5 mr-2" />
                   🧹 Nettoyer
                 </Button>
               }
@@ -582,7 +582,7 @@ export const VersionManager = () => {
                               size="sm"
                               className="rounded-2xl hover:scale-105 transition-all duration-300 text-destructive hover:text-destructive h-8 w-8 lg:h-9 lg:w-auto lg:px-3"
                             >
-                              <Trash2 className="h-4 w-4" />
+                              <Trash2 className="h-5 w-5" />
                               <span className="hidden lg:inline ml-2">Supprimer</span>
                             </Button>
                           }
