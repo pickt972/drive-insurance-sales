@@ -398,9 +398,14 @@
   box-shadow: 0 2px 8px hsl(var(--success) / 0.25);
 }
 
-.icon-wrapper {
+  .icon-wrapper {
   @apply p-2 lg:p-3 rounded-lg lg:rounded-xl transition-all duration-300;
   background: linear-gradient(135deg, hsl(var(--primary) / 0.08) 0%, hsl(var(--primary) / 0.15) 100%);
+}
+
+/* Taille par défaut des icônes - augmentée pour meilleure lisibilité */
+.lucide {
+  @apply w-5 h-5;
 }
 
 .podium-base {
