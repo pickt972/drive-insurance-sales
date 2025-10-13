@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { toast } from '@/hooks/use-toast';
 import { versioningSystem } from '@/lib/versioning';
+import { supabase } from '@/integrations/supabase/client';
+import { User as SupabaseUser, Session } from '@supabase/supabase-js';
 
 interface User {
   id: string;
@@ -193,75 +195,84 @@ const DEFAULT_PASSWORDS: Record<string, string> = {
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [supabaseUser, setSupabaseUser] = useState<SupabaseUser | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [insuranceTypes, setInsuranceTypes] = useState<InsuranceType[]>([]);
   const [sales, setSales] = useState<Sale[]>([]);
   const [objectives, setObjectives] = useState<Objective[]>([]);
 
-  // Initialiser les données au premier lancement
+  // Initialiser l'authentification Supabase
   useEffect(() => {
-    initializeData();
+    // Écouter les changements d'auth
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setSession(session);
+        setSupabaseUser(session?.user ?? null);
+        
+        // Charger le profil utilisateur si connecté
+        if (session?.user) {
+          setTimeout(() => {
+            loadUserProfile(session.user.id);
+          }, 0);
+        } else {
+          setUser(null);
+        }
+      }
+    );
+
+    // Vérifier la session existante
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setSupabaseUser(session?.user ?? null);
+      if (session?.user) {
+        loadUserProfile(session.user.id);
+      } else {
+        setLoading(false);
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
-  const initializeData = () => {
+  // Charger les données initiales
+  useEffect(() => {
+    if (user) {
+      fetchInsuranceTypes();
+      fetchSales();
+      fetchObjectives();
+    }
+  }, [user]);
+
+  const loadUserProfile = async (userId: string) => {
     try {
-      // Récupérer les données existantes ou utiliser les valeurs par défaut
-      const existingUsers = localStorage.getItem('aloelocation_users');
-      const existingPasswords = localStorage.getItem('aloelocation_passwords');
-      const existingInsuranceTypes = localStorage.getItem('aloelocation_insurance_types');
-      const existingSales = localStorage.getItem('aloelocation_sales');
-      const existingObjectives = localStorage.getItem('aloelocation_objectives');
+      const supabaseClient: any = supabase;
+      const result: any = await supabaseClient
+        .from('profiles')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('is_active', true)
+        .single();
+      
+      const { data, error } = result;
 
-      // Initialiser seulement si les données n'existent pas
-      if (!existingUsers) {
-        localStorage.setItem('aloelocation_users', JSON.stringify(DEFAULT_USERS));
-        setUsers(DEFAULT_USERS);
-      } else {
-        const users = JSON.parse(existingUsers);
-        setUsers(users);
-      }
+      if (error) throw error;
 
-      if (!existingPasswords) {
-        localStorage.setItem('aloelocation_passwords', JSON.stringify(DEFAULT_PASSWORDS));
-      }
-
-      if (!existingInsuranceTypes) {
-        localStorage.setItem('aloelocation_insurance_types', JSON.stringify(DEFAULT_INSURANCE_TYPES));
-        setInsuranceTypes(DEFAULT_INSURANCE_TYPES);
-      } else {
-        const insurances = JSON.parse(existingInsuranceTypes);
-        setInsuranceTypes(insurances);
-      }
-
-      if (!existingSales) {
-        localStorage.setItem('aloelocation_sales', JSON.stringify(DEFAULT_SALES));
-        setSales(DEFAULT_SALES);
-      } else {
-        const salesData = JSON.parse(existingSales);
-        setSales(salesData);
-      }
-
-      if (!existingObjectives) {
-        localStorage.setItem('aloelocation_objectives', JSON.stringify(DEFAULT_OBJECTIVES));
-        setObjectives(DEFAULT_OBJECTIVES);
-      } else {
-        const objectivesData = JSON.parse(existingObjectives);
-        setObjectives(objectivesData);
-      }
-
-      // Vérifier si un utilisateur est connecté
-      const storedUser = localStorage.getItem('aloelocation_current_user');
-      if (storedUser) {
-        const userData = JSON.parse(storedUser);
-        setUser(userData);
+      if (data) {
+        const userProfile: User = {
+          id: data.id,
+          username: data.username,
+          firstName: data.first_name || '',
+          lastName: data.last_name || '',
+          role: data.role as 'admin' | 'employee',
+          isActive: data.is_active,
+          createdAt: data.created_at
+        };
+        setUser(userProfile);
       }
     } catch (error) {
-      console.error('Erreur initialisation données:', error);
-      setUsers(DEFAULT_USERS);
-      setInsuranceTypes(DEFAULT_INSURANCE_TYPES);
-      setSales(DEFAULT_SALES);
-      setObjectives(DEFAULT_OBJECTIVES);
+      console.error('Erreur chargement profil:', error);
     } finally {
       setLoading(false);
     }
@@ -269,35 +280,23 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const signIn = async (username: string, password: string): Promise<{ success: boolean; error?: string }> => {
     try {
-      const storedUsers = localStorage.getItem('aloelocation_users');
-      const storedPasswords = localStorage.getItem('aloelocation_passwords');
+      const email = `${username.toLowerCase()}@aloelocation.internal`;
       
-      if (!storedUsers || !storedPasswords) {
-        return { success: false, error: 'Données utilisateurs non trouvées' };
-      }
-
-      const usersList: User[] = JSON.parse(storedUsers);
-      const passwordsList: Record<string, string> = JSON.parse(storedPasswords);
-
-      // Vérifier si l'utilisateur existe et est actif (insensible à la casse)
-      const foundUser = usersList.find(u => u.username.toLowerCase() === username.toLowerCase() && u.isActive);
-      if (!foundUser) {
-        return { success: false, error: 'Utilisateur non trouvé ou inactif' };
-      }
-
-      // Vérifier le mot de passe (utiliser le vrai nom d'utilisateur)
-      if (passwordsList[foundUser.username] !== password) {
-        return { success: false, error: 'Mot de passe incorrect' };
-      }
-
-      // Connexion réussie
-      setUser(foundUser);
-      localStorage.setItem('aloelocation_current_user', JSON.stringify(foundUser));
-      
-      toast({
-        title: "Connexion réussie",
-        description: `Bienvenue ${foundUser.firstName} ${foundUser.lastName} !`,
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
       });
+
+      if (error) {
+        return { success: false, error: 'Nom d\'utilisateur ou mot de passe incorrect' };
+      }
+
+      if (data.user) {
+        toast({
+          title: "Connexion réussie",
+          description: `Bienvenue !`,
+        });
+      }
 
       return { success: true };
     } catch (error) {
@@ -306,9 +305,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
-  const signOut = () => {
+  const signOut = async () => {
+    await supabase.auth.signOut();
     setUser(null);
-    localStorage.removeItem('aloelocation_current_user');
+    setSupabaseUser(null);
+    setSession(null);
     toast({
       title: "Déconnexion réussie",
       description: "À bientôt !",
@@ -317,46 +318,22 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const addUser = async (username: string, firstName: string, lastName: string, password: string, role: 'admin' | 'employee' = 'employee'): Promise<{ success: boolean; error?: string }> => {
     try {
-      // Créer une sauvegarde avant modification importante
       versioningSystem.createVersion(
         `Ajout utilisateur: ${firstName} ${lastName}`,
         [`Nouvel utilisateur: ${username} (${role})`],
         user?.firstName + ' ' + user?.lastName || 'Système'
       );
-      
-      const storedUsers = localStorage.getItem('aloelocation_users');
-      const storedPasswords = localStorage.getItem('aloelocation_passwords');
-      
-      if (!storedUsers || !storedPasswords) {
-        return { success: false, error: 'Erreur système' };
+
+      const { data, error } = await supabase.functions.invoke('create-user', {
+        body: { username, firstName, lastName, password, role }
+      });
+
+      if (error) throw error;
+      if (!data.success) {
+        return { success: false, error: data.error || 'Erreur lors de la création' };
       }
 
-      const usersList: User[] = JSON.parse(storedUsers);
-      const passwordsList: Record<string, string> = JSON.parse(storedPasswords);
-
-      // Vérifier si l'utilisateur existe déjà
-      if (usersList.find(u => u.username === username)) {
-        return { success: false, error: 'Nom d\'utilisateur déjà utilisé' };
-      }
-
-      // Créer le nouvel utilisateur
-      const newUser: User = {
-        id: Date.now().toString(),
-        username,
-        firstName,
-        lastName,
-        role,
-        isActive: true,
-        createdAt: new Date().toISOString()
-      };
-
-      const updatedUsers = [...usersList, newUser];
-      const updatedPasswords = { ...passwordsList, [username]: password };
-
-      localStorage.setItem('aloelocation_users', JSON.stringify(updatedUsers));
-      localStorage.setItem('aloelocation_passwords', JSON.stringify(updatedPasswords));
-      
-      setUsers(updatedUsers);
+      await fetchUsers();
 
       toast({
         title: "Utilisateur créé",
@@ -364,9 +341,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       });
 
       return { success: true };
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erreur création utilisateur:', error);
-      return { success: false, error: 'Erreur lors de la création' };
+      return { success: false, error: error.message || 'Erreur lors de la création' };
     }
   };
 
@@ -485,10 +462,32 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
-  const fetchUsers = () => {
-    const storedUsers = localStorage.getItem('aloelocation_users');
-    if (storedUsers) {
-      setUsers(JSON.parse(storedUsers));
+  const fetchUsers = async () => {
+    try {
+      const supabaseClient: any = supabase;
+      const result: any = await supabaseClient
+        .from('profiles')
+        .select('*')
+        .eq('is_active', true)
+        .order('username');
+      
+      const { data, error } = result;
+
+      if (error) throw error;
+
+      const usersList: User[] = (data || []).map((profile: any) => ({
+        id: profile.id,
+        username: profile.username,
+        firstName: profile.first_name || '',
+        lastName: profile.last_name || '',
+        role: profile.role as 'admin' | 'employee',
+        isActive: profile.is_active,
+        createdAt: profile.created_at
+      }));
+
+      setUsers(usersList);
+    } catch (error) {
+      console.error('Erreur récupération utilisateurs:', error);
     }
   };
 
