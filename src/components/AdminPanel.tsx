@@ -106,13 +106,12 @@ export const AdminPanel = () => {
     }
 
     setLoading(true);
-    const result = await addUser(newUsername, newFirstName, newLastName, newEmail, newPassword, newRole);
+    const result = await addUser(newUsername, newFirstName, newLastName, newPassword, newRole);
     
     if (result.success) {
       setNewUsername("");
       setNewFirstName("");
       setNewLastName("");
-      setNewEmail("");
       setNewPassword("");
       setNewRole('employee');
     }
@@ -125,7 +124,6 @@ export const AdminPanel = () => {
     setEditUsername(user.username);
     setEditFirstName(user.firstName);
     setEditLastName(user.lastName);
-    setEditEmail(user.email);
     setEditRole(user.role);
   };
 
@@ -135,7 +133,6 @@ export const AdminPanel = () => {
     const result = await updateUser(editingUser.username, {
       firstName: editFirstName,
       lastName: editLastName,
-      email: editEmail,
       role: editRole
     });
 
@@ -144,7 +141,6 @@ export const AdminPanel = () => {
       setEditUsername("");
       setEditFirstName("");
       setEditLastName("");
-      setEditEmail("");
       setEditRole('employee');
     }
   };
@@ -755,9 +751,7 @@ export const AdminPanel = () => {
                         <div className="min-w-0 flex-1">
                           <div className="font-bold text-sm lg:text-base truncate">{user.firstName} {user.lastName}</div>
                           <div className="text-xs lg:text-sm text-muted-foreground truncate">@{user.username}</div>
-                          <div className="text-xs text-muted-foreground truncate lg:hidden">{user.email}</div>
                         </div>
-                        <div className="hidden lg:block text-xs text-muted-foreground">{user.email}</div>
                         <Badge variant={user.role === 'admin' ? 'default' : 'secondary'} className="rounded-full text-xs">
                           {user.role === 'admin' ? 'Admin' : 'Employé'}
                         </Badge>
