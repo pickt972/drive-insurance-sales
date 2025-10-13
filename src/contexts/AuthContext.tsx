@@ -298,6 +298,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const signIn = async (username: string, password: string): Promise<{ success: boolean; error?: string }> => {
     try {
+      console.log('🔐 Tentative de connexion pour:', username);
       const email = `${username.toLowerCase()}@aloelocation.internal`;
       
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -306,10 +307,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       });
 
       if (error) {
-        return { success: false, error: 'Nom d\'utilisateur ou mot de passe incorrect' };
+        console.error('❌ Erreur Supabase auth:', error);
+        return { success: false, error: 'Nom d\'utilisateur ou mot de passe incorrect. Assurez-vous que l\'utilisateur existe dans Supabase Auth.' };
       }
 
       if (data.user) {
+        console.log('✅ Connexion Supabase réussie:', data.user.id);
         toast({
           title: "Connexion réussie",
           description: `Bienvenue !`,
@@ -318,7 +321,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       return { success: true };
     } catch (error) {
-      console.error('Erreur connexion:', error);
+      console.error('💥 Erreur connexion:', error);
       return { success: false, error: 'Erreur lors de la connexion' };
     }
   };
