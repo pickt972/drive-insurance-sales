@@ -767,18 +767,18 @@ export const AdminPanel = () => {
                           variant="outline"
                           size="sm"
                           onClick={() => handleEditUser(user)}
-                          className="rounded-2xl hover:scale-105 transition-all duration-300 h-8 w-8 lg:h-9 lg:w-auto lg:px-3"
+                          className="rounded-2xl hover:scale-105 transition-all duration-300 h-12 w-12 lg:h-9 lg:w-auto lg:px-3"
                         >
-                          <Edit className="h-5 w-5" />
+                          <Edit className="h-6 w-6" />
                           <span className="hidden lg:inline ml-2">Modifier</span>
                         </Button>
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={() => handleChangePassword(user.username)}
-                          className="rounded-2xl hover:scale-105 transition-all duration-300 h-8 w-8 lg:h-9 lg:w-auto lg:px-3"
+                          className="rounded-2xl hover:scale-105 transition-all duration-300 h-12 w-12 lg:h-9 lg:w-auto lg:px-3"
                         >
-                          <Key className="h-4 w-4" />
+                          <Key className="h-6 w-6" />
                           <span className="hidden lg:inline ml-2">MDP</span>
                         </Button>
                         {user.username !== 'admin' && (
@@ -786,9 +786,9 @@ export const AdminPanel = () => {
                             variant="outline"
                             size="sm"
                             onClick={() => handleRemoveUser(user.username)}
-                            className="rounded-2xl hover:scale-105 transition-all duration-300 text-destructive hover:text-destructive h-8 w-8 lg:h-9 lg:w-auto lg:px-3"
+                            className="rounded-2xl hover:scale-105 transition-all duration-300 text-destructive hover:text-destructive h-12 w-12 lg:h-9 lg:w-auto lg:px-3"
                           >
-                            <Trash2 className="h-5 w-5" />
+                            <Trash2 className="h-6 w-6" />
                             <span className="hidden lg:inline ml-2">Suppr</span>
                           </Button>
                         )}
@@ -866,18 +866,18 @@ export const AdminPanel = () => {
                           variant="outline"
                           size="sm"
                           onClick={() => handleEditInsurance(insurance)}
-                          className="rounded-2xl hover:scale-105 transition-all duration-300 h-8 w-8 lg:h-9 lg:w-auto lg:px-3"
+                          className="rounded-2xl hover:scale-105 transition-all duration-300 h-12 w-12 lg:h-9 lg:w-auto lg:px-3"
                         >
-                          <Edit className="h-5 w-5" />
+                          <Edit className="h-6 w-6" />
                           <span className="hidden lg:inline ml-2">Modifier</span>
                         </Button>
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={() => handleRemoveInsurance(insurance.id, insurance.name)}
-                          className="rounded-2xl hover:scale-105 transition-all duration-300 text-destructive hover:text-destructive h-8 w-8 lg:h-9 lg:w-auto lg:px-3"
+                          className="rounded-2xl hover:scale-105 transition-all duration-300 text-destructive hover:text-destructive h-12 w-12 lg:h-9 lg:w-auto lg:px-3"
                         >
-                          <Trash2 className="h-5 w-5" />
+                          <Trash2 className="h-6 w-6" />
                           <span className="hidden lg:inline ml-2">Suppr</span>
                         </Button>
                       </div>
@@ -1016,18 +1016,18 @@ export const AdminPanel = () => {
                             variant="outline"
                             size="sm"
                             onClick={() => handleEditObjective(objective)}
-                            className="rounded-2xl hover:scale-105 transition-all duration-300 h-8 w-8 lg:h-9 lg:w-auto lg:px-3"
+                            className="rounded-2xl hover:scale-105 transition-all duration-300 h-12 w-12 lg:h-9 lg:w-auto lg:px-3"
                           >
-                            <Edit className="h-5 w-5" />
+                            <Edit className="h-6 w-6" />
                             <span className="hidden lg:inline ml-2">Modifier</span>
                           </Button>
                           <Button
                             variant="outline"
                             size="sm"
                             onClick={() => handleRemoveObjective(objective.id, objective.employeeName)}
-                            className="rounded-2xl hover:scale-105 transition-all duration-300 text-destructive hover:text-destructive h-8 w-8 lg:h-9 lg:w-auto lg:px-3"
+                            className="rounded-2xl hover:scale-105 transition-all duration-300 text-destructive hover:text-destructive h-12 w-12 lg:h-9 lg:w-auto lg:px-3"
                           >
-                            <Trash2 className="h-5 w-5" />
+                            <Trash2 className="h-6 w-6" />
                             <span className="hidden lg:inline ml-2">Suppr</span>
                           </Button>
                         </div>

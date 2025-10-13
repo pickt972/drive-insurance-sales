@@ -562,9 +562,9 @@ export const VersionManager = () => {
                               variant="outline"
                               size="sm"
                               disabled={loading}
-                              className="rounded-2xl hover:scale-105 transition-all duration-300 h-8 w-8 lg:h-9 lg:w-auto lg:px-3"
+                              className="rounded-2xl hover:scale-105 transition-all duration-300 h-12 w-12 lg:h-9 lg:w-auto lg:px-3"
                             >
-                              <RefreshCw className="h-4 w-4" />
+                              <RefreshCw className="h-6 w-6" />
                               <span className="hidden lg:inline ml-2">Restaurer</span>
                             </Button>
                           }
@@ -580,9 +580,9 @@ export const VersionManager = () => {
                             <Button
                               variant="outline"
                               size="sm"
-                              className="rounded-2xl hover:scale-105 transition-all duration-300 text-destructive hover:text-destructive h-8 w-8 lg:h-9 lg:w-auto lg:px-3"
+                              className="rounded-2xl hover:scale-105 transition-all duration-300 text-destructive hover:text-destructive h-12 w-12 lg:h-9 lg:w-auto lg:px-3"
                             >
-                              <Trash2 className="h-5 w-5" />
+                              <Trash2 className="h-6 w-6" />
                               <span className="hidden lg:inline ml-2">Supprimer</span>
                             </Button>
                           }
