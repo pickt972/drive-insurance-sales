@@ -203,6 +203,24 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [sales, setSales] = useState<Sale[]>([]);
   const [objectives, setObjectives] = useState<Objective[]>([]);
 
+  // Initialiser l'admin au premier lancement
+  useEffect(() => {
+    const initializeAdmin = async () => {
+      try {
+        const { data, error } = await supabase.functions.invoke('initialize-admin');
+        if (error) {
+          console.error('Erreur initialisation admin:', error);
+        } else {
+          console.log('Initialisation admin:', data);
+        }
+      } catch (error) {
+        console.error('Erreur appel initialize-admin:', error);
+      }
+    };
+
+    initializeAdmin();
+  }, []);
+
   // Initialiser l'authentification Supabase
   useEffect(() => {
     // Écouter les changements d'auth
