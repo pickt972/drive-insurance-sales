@@ -23,8 +23,7 @@ serve(async (req) => {
       .from('user_roles')
       .select('user_id')
       .eq('role', 'admin')
-      .limit(1)
-      .single()
+      .maybeSingle()
 
     if (existingAdmin) {
       return new Response(
@@ -59,6 +58,32 @@ serve(async (req) => {
     }
 
     console.log('Admin créé avec succès:', newUser.user.id)
+
+    // S'assurer que le profil et le rôle existent (au cas où le trigger n'est pas en place)
+    const adminId = newUser.user.id;
+
+    const { error: profileError } = await supabaseAdmin
+      .from('profiles')
+      .upsert({
+        user_id: adminId,
+        username: adminUsername,
+        first_name: 'Admin',
+        last_name: 'System',
+        role: 'admin',
+        is_active: true
+      }, { onConflict: 'user_id' });
+
+    if (profileError) {
+      console.error('Erreur upsert profil admin:', profileError);
+    }
+
+    const { error: roleError } = await supabaseAdmin
+      .from('user_roles')
+      .upsert({ user_id: adminId, role: 'admin' }, { onConflict: 'user_id,role' });
+
+    if (roleError) {
+      console.error('Erreur upsert rôle admin:', roleError);
+    }
 
     return new Response(
       JSON.stringify({ 

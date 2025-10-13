@@ -19,6 +19,12 @@ export const AuthPage = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    document.title = 'Connexion | Aloe Location';
+    const meta = document.querySelector('meta[name="description"]');
+    if (meta) meta.setAttribute('content', "Connexion Aloe Location - Authentification par nom d'utilisateur");
+  }, []);
+
+  useEffect(() => {
     if (!authLoading && isAuthenticated) {
       navigate("/", { replace: true });
     }
