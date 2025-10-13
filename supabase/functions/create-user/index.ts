@@ -18,7 +18,7 @@ serve(async (req) => {
       { auth: { autoRefreshToken: false, persistSession: false } }
     )
 
-    const { username, firstName, lastName, password, role = 'employee' } = await req.json()
+    const { username, firstName, lastName, password, role = 'user' } = await req.json()
 
     // Vérifier si le username existe déjà
     const { data: existingProfile } = await supabaseAdmin
