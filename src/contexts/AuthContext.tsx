@@ -1,32 +1,33 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { User, Session } from '@supabase/supabase-js';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
-import { versioningSystem } from '@/lib/versioning';
 
-interface User {
+interface Profile {
   id: string;
+  user_id: string;
   username: string;
-  firstName: string;
-  lastName: string;
-  email: string;
+  first_name?: string;
+  last_name?: string;
   role: 'admin' | 'employee';
-  isActive: boolean;
-  createdAt: string;
+  is_active: boolean;
 }
 
 interface AuthContextType {
   user: User | null;
-  profile: User | null;
+  session: Session | null;
+  profile: Profile | null;
   isAuthenticated: boolean;
   isAdmin: boolean;
   loading: boolean;
   signIn: (username: string, password: string) => Promise<{ success: boolean; error?: string }>;
-  signOut: () => void;
-  users: User[];
-  addUser: (username: string, firstName: string, lastName: string, email: string, password: string, role?: 'admin' | 'employee') => Promise<{ success: boolean; error?: string }>;
+  signOut: () => Promise<void>;
+  users: Profile[];
+  addUser: (username: string, firstName: string, lastName: string, password: string, role?: 'admin' | 'employee') => Promise<{ success: boolean; error?: string }>;
   updateUserRole: (username: string, newRole: 'admin' | 'employee') => Promise<{ success: boolean; error?: string }>;
   removeUser: (username: string) => Promise<{ success: boolean; error?: string }>;
-  fetchUsers: () => void;
-  updateUser: (username: string, updates: { firstName?: string; lastName?: string; email?: string; role?: 'admin' | 'employee' }) => Promise<{ success: boolean; error?: string }>;
+  fetchUsers: () => Promise<void>;
+  updateUser: (username: string, updates: { firstName?: string; lastName?: string; role?: 'admin' | 'employee' }) => Promise<{ success: boolean; error?: string }>;
   updatePassword: (username: string, newPassword: string) => Promise<{ success: boolean; error?: string }>;
   // Gestion des assurances
   insuranceTypes: InsuranceType[];
@@ -84,202 +85,63 @@ interface Objective {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Données par défaut
-const DEFAULT_USERS: User[] = [
-  {
-    id: '1',
-    username: 'admin',
-    firstName: 'Administrateur',
-    lastName: 'Système',
-    email: 'admin@aloelocation.com',
-    role: 'admin',
-    isActive: true,
-    createdAt: new Date().toISOString()
-  },
-  {
-    id: '2',
-    username: 'vendeur1',
-    firstName: 'Jean',
-    lastName: 'Dupont',
-    email: 'vendeur1@aloelocation.com',
-    role: 'employee',
-    isActive: true,
-    createdAt: new Date().toISOString()
-  },
-  {
-    id: '3',
-    username: 'vendeur2',
-    firstName: 'Marie',
-    lastName: 'Martin',
-    email: 'vendeur2@aloelocation.com',
-    role: 'employee',
-    isActive: true,
-    createdAt: new Date().toISOString()
-  },
-  {
-    id: '4',
-    username: 'julie',
-    firstName: 'Julie',
-    lastName: 'Misat',
-    email: 'julie@aloelocation.com',
-    role: 'employee',
-    isActive: true,
-    createdAt: new Date().toISOString()
-  }
-];
-
-const DEFAULT_INSURANCE_TYPES: InsuranceType[] = [
-  { id: '1', name: 'Assurance Tous Risques', commission: 25.00, isActive: true, createdAt: new Date().toISOString() },
-  { id: '2', name: 'Assurance Vol/Incendie', commission: 18.00, isActive: true, createdAt: new Date().toISOString() },
-  { id: '3', name: 'Assurance Bris de Glace', commission: 12.00, isActive: true, createdAt: new Date().toISOString() },
-  { id: '4', name: 'Assurance Conducteur Additionnel', commission: 8.00, isActive: true, createdAt: new Date().toISOString() },
-  { id: '5', name: 'Assurance Annulation', commission: 15.00, isActive: true, createdAt: new Date().toISOString() },
-  { id: '6', name: 'Assurance Assistance Panne', commission: 10.00, isActive: true, createdAt: new Date().toISOString() }
-];
-
-const DEFAULT_SALES: Sale[] = [
-  {
-    id: '1',
-    employeeName: 'vendeur1',
-    clientName: 'Pierre Durand',
-    clientEmail: 'pierre.durand@email.com',
-    clientPhone: '06.12.34.56.78',
-    reservationNumber: 'LOC-2024-001',
-    insuranceTypes: ['Assurance Tous Risques', 'Assurance Vol/Incendie'],
-    commissionAmount: 43.00,
-    notes: 'Client fidèle',
-    createdAt: new Date(Date.now() - 86400000).toISOString()
-  },
-  {
-    id: '2',
-    employeeName: 'vendeur2',
-    clientName: 'Sophie Martin',
-    clientEmail: 'sophie.martin@email.com',
-    reservationNumber: 'LOC-2024-002',
-    insuranceTypes: ['Assurance Tous Risques'],
-    commissionAmount: 25.00,
-    createdAt: new Date(Date.now() - 172800000).toISOString()
-  }
-];
-
-const DEFAULT_OBJECTIVES: Objective[] = [
-  {
-    id: '1',
-    employeeName: 'vendeur1',
-    objectiveType: 'amount',
-    targetAmount: 500.00,
-    targetSalesCount: 20,
-    period: 'monthly',
-    startDate: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString(),
-    endDate: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).toISOString(),
-    description: 'Objectif mensuel Jean Dupont',
-    createdAt: new Date().toISOString()
-  },
-  {
-    id: '2',
-    employeeName: 'vendeur2',
-    objectiveType: 'sales_count',
-    targetAmount: 400.00,
-    targetSalesCount: 15,
-    period: 'monthly',
-    startDate: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString(),
-    endDate: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).toISOString(),
-    description: 'Objectif mensuel Marie Martin',
-    createdAt: new Date().toISOString()
-  }
-];
-
-const DEFAULT_PASSWORDS: Record<string, string> = {
-  'admin': 'admin123',
-  'vendeur1': 'vendeur123',
-  'vendeur2': 'vendeur123',
-  'julie': 'julie123'
-};
-
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [users, setUsers] = useState<User[]>([]);
+  const [session, setSession] = useState<Session | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [users, setUsers] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
   const [insuranceTypes, setInsuranceTypes] = useState<InsuranceType[]>([]);
   const [sales, setSales] = useState<Sale[]>([]);
   const [objectives, setObjectives] = useState<Objective[]>([]);
 
-  // Initialiser les données au premier lancement
+  // Écouter les changements d'authentification
   useEffect(() => {
-    initializeData();
+    // Configurer l'écouteur d'abord
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      
+      if (session?.user) {
+        setTimeout(() => {
+          fetchUserProfile(session.user.id);
+        }, 0);
+      } else {
+        setProfile(null);
+      }
+    });
+
+    // Puis vérifier la session existante
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      
+      if (session?.user) {
+        fetchUserProfile(session.user.id);
+      } else {
+        setLoading(false);
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
-  const initializeData = () => {
+  const fetchUserProfile = async (userId: string) => {
     try {
-      // Récupérer les données existantes ou utiliser les valeurs par défaut
-      const existingUsers = localStorage.getItem('aloelocation_users');
-      const existingPasswords = localStorage.getItem('aloelocation_passwords');
-      const existingInsuranceTypes = localStorage.getItem('aloelocation_insurance_types');
-      const existingSales = localStorage.getItem('aloelocation_sales');
-      const existingObjectives = localStorage.getItem('aloelocation_objectives');
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('is_active', true)
+        .single();
 
-      // Initialiser seulement si les données n'existent pas
-      if (!existingUsers) {
-        localStorage.setItem('aloelocation_users', JSON.stringify(DEFAULT_USERS));
-        setUsers(DEFAULT_USERS);
-        console.log('✅ Utilisateurs par défaut initialisés');
-      } else {
-        const users = JSON.parse(existingUsers);
-        setUsers(users);
-        console.log('✅ Utilisateurs existants préservés:', users.length);
-      }
+      if (error) throw error;
 
-      if (!existingPasswords) {
-        localStorage.setItem('aloelocation_passwords', JSON.stringify(DEFAULT_PASSWORDS));
-        console.log('✅ Mots de passe par défaut initialisés');
-      } else {
-        console.log('✅ Mots de passe existants préservés');
-      }
-
-      if (!existingInsuranceTypes) {
-        localStorage.setItem('aloelocation_insurance_types', JSON.stringify(DEFAULT_INSURANCE_TYPES));
-        setInsuranceTypes(DEFAULT_INSURANCE_TYPES);
-        console.log('✅ Types d\'assurance par défaut initialisés');
-      } else {
-        const insurances = JSON.parse(existingInsuranceTypes);
-        setInsuranceTypes(insurances);
-        console.log('✅ Types d\'assurance existants préservés:', insurances.length);
-      }
-
-      if (!existingSales) {
-        localStorage.setItem('aloelocation_sales', JSON.stringify(DEFAULT_SALES));
-        setSales(DEFAULT_SALES);
-        console.log('✅ Ventes par défaut initialisées');
-      } else {
-        const salesData = JSON.parse(existingSales);
-        setSales(salesData);
-        console.log('✅ Ventes existantes préservées:', salesData.length);
-      }
-
-      if (!existingObjectives) {
-        localStorage.setItem('aloelocation_objectives', JSON.stringify(DEFAULT_OBJECTIVES));
-        setObjectives(DEFAULT_OBJECTIVES);
-        console.log('✅ Objectifs par défaut initialisés');
-      } else {
-        const objectivesData = JSON.parse(existingObjectives);
-        setObjectives(objectivesData);
-        console.log('✅ Objectifs existants préservés:', objectivesData.length);
-      }
-
-      // Vérifier si un utilisateur est connecté
-      const storedUser = localStorage.getItem('aloelocation_current_user');
-      if (storedUser) {
-        const userData = JSON.parse(storedUser);
-        setUser(userData);
+      if (data) {
+        setProfile(data);
       }
     } catch (error) {
-      console.error('Erreur initialisation données:', error);
-      // En cas d'erreur, utiliser les valeurs par défaut sans écraser
-      console.warn('⚠️ Erreur lors de l\'initialisation, utilisation des valeurs par défaut');
-      setUsers(DEFAULT_USERS);
-      setInsuranceTypes(DEFAULT_INSURANCE_TYPES);
-      setSales(DEFAULT_SALES);
-      setObjectives(DEFAULT_OBJECTIVES);
+      console.error('Erreur récupération profil:', error);
     } finally {
       setLoading(false);
     }
@@ -287,132 +149,94 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const signIn = async (username: string, password: string): Promise<{ success: boolean; error?: string }> => {
     try {
-      const storedUsers = localStorage.getItem('aloelocation_users');
-      const storedPasswords = localStorage.getItem('aloelocation_passwords');
+      // Générer l'email à partir du username
+      const email = `${username.toLowerCase()}@aloelocation.internal`;
       
-      if (!storedUsers || !storedPasswords) {
-        return { success: false, error: 'Données utilisateurs non trouvées' };
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        return { success: false, error: 'Nom d\'utilisateur ou mot de passe incorrect' };
       }
 
-      const usersList: User[] = JSON.parse(storedUsers);
-      const passwordsList: Record<string, string> = JSON.parse(storedPasswords);
-
-      // Vérifier si l'utilisateur existe et est actif (insensible à la casse)
-      const foundUser = usersList.find(u => u.username.toLowerCase() === username.toLowerCase() && u.isActive);
-      if (!foundUser) {
-        return { success: false, error: 'Utilisateur non trouvé ou inactif' };
-      }
-
-      // Vérifier le mot de passe (utiliser le vrai nom d'utilisateur)
-      if (passwordsList[foundUser.username] !== password) {
-        return { success: false, error: 'Mot de passe incorrect' };
-      }
-
-      // Connexion réussie
-      setUser(foundUser);
-      localStorage.setItem('aloelocation_current_user', JSON.stringify(foundUser));
-      
       toast({
         title: "Connexion réussie",
-        description: `Bienvenue ${foundUser.firstName} ${foundUser.lastName} !`,
+        description: `Bienvenue !`,
       });
 
       return { success: true };
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erreur connexion:', error);
       return { success: false, error: 'Erreur lors de la connexion' };
     }
   };
 
-  const signOut = () => {
+  const signOut = async () => {
+    await supabase.auth.signOut();
     setUser(null);
-    localStorage.removeItem('aloelocation_current_user');
+    setSession(null);
+    setProfile(null);
     toast({
       title: "Déconnexion réussie",
       description: "À bientôt !",
     });
   };
 
-  const addUser = async (username: string, firstName: string, lastName: string, email: string, password: string, role: 'admin' | 'employee' = 'employee'): Promise<{ success: boolean; error?: string }> => {
+  const addUser = async (username: string, firstName: string, lastName: string, password: string, role: 'admin' | 'employee' = 'employee'): Promise<{ success: boolean; error?: string }> => {
     try {
-      // Créer une sauvegarde avant modification importante
-      versioningSystem.createVersion(
-        `Ajout utilisateur: ${firstName} ${lastName}`,
-        [`Nouvel utilisateur: ${username} (${role})`],
-        user?.firstName + ' ' + user?.lastName || 'Système'
-      );
-      
-      const storedUsers = localStorage.getItem('aloelocation_users');
-      const storedPasswords = localStorage.getItem('aloelocation_passwords');
-      
-      if (!storedUsers || !storedPasswords) {
-        return { success: false, error: 'Erreur système' };
+      const { data, error } = await supabase.functions.invoke('create-user', {
+        body: { username, firstName, lastName, password, role }
+      });
+
+      if (error) throw error;
+      if (!data.success) {
+        return { success: false, error: data.error };
       }
-
-      const usersList: User[] = JSON.parse(storedUsers);
-      const passwordsList: Record<string, string> = JSON.parse(storedPasswords);
-
-      // Vérifier si l'utilisateur existe déjà
-      if (usersList.find(u => u.username === username)) {
-        return { success: false, error: 'Nom d\'utilisateur déjà utilisé' };
-      }
-
-      if (usersList.find(u => u.email === email)) {
-        return { success: false, error: 'Email déjà utilisé' };
-      }
-
-      // Créer le nouvel utilisateur
-      const newUser: User = {
-        id: Date.now().toString(),
-        username,
-        firstName,
-        lastName,
-        email,
-        role,
-        isActive: true,
-        createdAt: new Date().toISOString()
-      };
-
-      const updatedUsers = [...usersList, newUser];
-      const updatedPasswords = { ...passwordsList, [username]: password };
-
-      localStorage.setItem('aloelocation_users', JSON.stringify(updatedUsers));
-      localStorage.setItem('aloelocation_passwords', JSON.stringify(updatedPasswords));
-      
-      setUsers(updatedUsers);
 
       toast({
         title: "Utilisateur créé",
         description: `${firstName} ${lastName} (${username}) créé avec succès`,
       });
 
+      await fetchUsers();
       return { success: true };
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erreur création utilisateur:', error);
-      return { success: false, error: 'Erreur lors de la création' };
+      return { success: false, error: error.message || 'Erreur lors de la création' };
+    }
+  };
+
+  const fetchUsers = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('is_active', true)
+        .order('username');
+
+      if (error) throw error;
+      setUsers(data || []);
+    } catch (error) {
+      console.error('Erreur récupération utilisateurs:', error);
     }
   };
 
   const updateUserRole = async (username: string, newRole: 'admin' | 'employee'): Promise<{ success: boolean; error?: string }> => {
     try {
-      const storedUsers = localStorage.getItem('aloelocation_users');
-      if (!storedUsers) {
-        return { success: false, error: 'Erreur système' };
-      }
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ role: newRole })
+        .eq('username', username);
 
-      const usersList: User[] = JSON.parse(storedUsers);
-      const updatedUsers = usersList.map(u => 
-        u.username === username ? { ...u, role: newRole } : u
-      );
+      if (updateError) throw updateError;
 
-      localStorage.setItem('aloelocation_users', JSON.stringify(updatedUsers));
-      setUsers(updatedUsers);
-
-      // Mettre à jour l'utilisateur connecté si c'est lui
-      if (user?.username === username) {
-        const updatedUser = { ...user, role: newRole };
-        setUser(updatedUser);
-        localStorage.setItem('aloelocation_current_user', JSON.stringify(updatedUser));
+      // Mettre à jour aussi dans user_roles
+      const userProfile = users.find(u => u.username === username);
+      if (userProfile) {
+        await supabase.from('user_roles').delete().eq('user_id', userProfile.user_id);
+        await supabase.from('user_roles').insert({ user_id: userProfile.user_id, role: newRole });
       }
 
       toast({
@@ -420,71 +244,44 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         description: `Le rôle de ${username} a été mis à jour`,
       });
 
+      await fetchUsers();
       return { success: true };
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erreur modification rôle:', error);
       return { success: false, error: 'Erreur lors de la modification' };
     }
   };
 
-  const updateUser = async (username: string, updates: { username?: string; firstName?: string; lastName?: string; email?: string; role?: 'admin' | 'employee' }): Promise<{ success: boolean; error?: string }> => {
+  const updateUser = async (username: string, updates: { firstName?: string; lastName?: string; role?: 'admin' | 'employee' }): Promise<{ success: boolean; error?: string }> => {
     try {
-      const storedUsers = localStorage.getItem('aloelocation_users');
-      const storedPasswords = localStorage.getItem('aloelocation_passwords');
-      if (!storedUsers) {
-        return { success: false, error: 'Erreur système' };
-      }
+      const updateData: any = {};
+      if (updates.firstName !== undefined) updateData.first_name = updates.firstName;
+      if (updates.lastName !== undefined) updateData.last_name = updates.lastName;
+      if (updates.role !== undefined) updateData.role = updates.role;
 
-      const usersList: User[] = JSON.parse(storedUsers);
-      const passwordsList: Record<string, string> = JSON.parse(storedPasswords || '{}');
-      
-      // Vérifier si le nouvel email est déjà utilisé
-      if (updates.email) {
-        const emailExists = usersList.find(u => u.email === updates.email && u.username !== username);
-        if (emailExists) {
-          return { success: false, error: 'Email déjà utilisé' };
+      const { error } = await supabase
+        .from('profiles')
+        .update(updateData)
+        .eq('username', username);
+
+      if (error) throw error;
+
+      if (updates.role) {
+        const userProfile = users.find(u => u.username === username);
+        if (userProfile) {
+          await supabase.from('user_roles').delete().eq('user_id', userProfile.user_id);
+          await supabase.from('user_roles').insert({ user_id: userProfile.user_id, role: updates.role });
         }
-      }
-
-      // Vérifier si le nouveau nom d'utilisateur est déjà utilisé
-      if (updates.username && updates.username !== username) {
-        const usernameExists = usersList.find(u => u.username === updates.username);
-        if (usernameExists) {
-          return { success: false, error: 'Nom d\'utilisateur déjà utilisé' };
-        }
-      }
-      const updatedUsers = usersList.map(u => 
-        u.username === username ? { ...u, ...updates } : u
-      );
-
-      localStorage.setItem('aloelocation_users', JSON.stringify(updatedUsers));
-      
-      // Si le nom d'utilisateur change, mettre à jour les mots de passe
-      if (updates.username && updates.username !== username) {
-        const userPassword = passwordsList[username];
-        if (userPassword) {
-          passwordsList[updates.username] = userPassword;
-          delete passwordsList[username];
-          localStorage.setItem('aloelocation_passwords', JSON.stringify(passwordsList));
-        }
-      }
-      
-      setUsers(updatedUsers);
-
-      // Mettre à jour l'utilisateur connecté si c'est lui
-      if (user?.username === username) {
-        const updatedUser = { ...user, ...updates };
-        setUser(updatedUser);
-        localStorage.setItem('aloelocation_current_user', JSON.stringify(updatedUser));
       }
 
       toast({
         title: "Utilisateur modifié",
-        description: `${updates.firstName || ''} ${updates.lastName || ''} mis à jour`,
+        description: `Les informations de ${username} ont été mises à jour`,
       });
 
+      await fetchUsers();
       return { success: true };
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erreur modification utilisateur:', error);
       return { success: false, error: 'Erreur lors de la modification' };
     }
@@ -492,306 +289,368 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const updatePassword = async (username: string, newPassword: string): Promise<{ success: boolean; error?: string }> => {
     try {
-      const storedPasswords = localStorage.getItem('aloelocation_passwords');
-      if (!storedPasswords) {
-        return { success: false, error: 'Erreur système' };
-      }
-
-      const passwordsList: Record<string, string> = JSON.parse(storedPasswords);
-      const updatedPasswords = { ...passwordsList, [username]: newPassword };
-
-      localStorage.setItem('aloelocation_passwords', JSON.stringify(updatedPasswords));
-
+      // Note: Nécessite les privilèges admin pour modifier le mot de passe d'un autre utilisateur
+      // Cette fonctionnalité nécessiterait une edge function supplémentaire
       toast({
-        title: "Mot de passe modifié",
-        description: `Le mot de passe de ${username} a été mis à jour`,
+        title: "Fonctionnalité non disponible",
+        description: "La modification de mot de passe n'est pas encore implémentée",
+        variant: "destructive",
       });
-
-      return { success: true };
-    } catch (error) {
-      console.error('Erreur modification mot de passe:', error);
-      return { success: false, error: 'Erreur lors de la modification du mot de passe' };
+      return { success: false, error: "Non implémenté" };
+    } catch (error: any) {
+      return { success: false, error: error.message };
     }
   };
+
   const removeUser = async (username: string): Promise<{ success: boolean; error?: string }> => {
     try {
-      if (username === 'admin') {
-        return { success: false, error: 'Impossible de supprimer l\'administrateur principal' };
-      }
+      const { error } = await supabase
+        .from('profiles')
+        .update({ is_active: false })
+        .eq('username', username);
 
-      const storedUsers = localStorage.getItem('aloelocation_users');
-      const storedPasswords = localStorage.getItem('aloelocation_passwords');
-      
-      if (!storedUsers || !storedPasswords) {
-        return { success: false, error: 'Erreur système' };
-      }
-
-      const usersList: User[] = JSON.parse(storedUsers);
-      const passwordsList: Record<string, string> = JSON.parse(storedPasswords);
-
-      const updatedUsers = usersList.filter(u => u.username !== username);
-      const updatedPasswords = { ...passwordsList };
-      delete updatedPasswords[username];
-
-      localStorage.setItem('aloelocation_users', JSON.stringify(updatedUsers));
-      localStorage.setItem('aloelocation_passwords', JSON.stringify(updatedPasswords));
-      
-      setUsers(updatedUsers);
+      if (error) throw error;
 
       toast({
-        title: "Utilisateur supprimé",
-        description: `${username} a été supprimé`,
+        title: "Utilisateur désactivé",
+        description: `${username} a été désactivé`,
       });
 
+      await fetchUsers();
       return { success: true };
-    } catch (error) {
-      console.error('Erreur suppression utilisateur:', error);
-      return { success: false, error: 'Erreur lors de la suppression' };
-    }
-  };
-
-  const fetchUsers = () => {
-    try {
-      const storedUsers = localStorage.getItem('aloelocation_users');
-      if (storedUsers) {
-        setUsers(JSON.parse(storedUsers));
-      }
-    } catch (error) {
-      console.error('Erreur récupération utilisateurs:', error);
+    } catch (error: any) {
+      console.error('Erreur désactivation utilisateur:', error);
+      return { success: false, error: 'Erreur lors de la désactivation' };
     }
   };
 
   // Gestion des assurances
-  const addInsuranceType = async (name: string, commission: number): Promise<{ success: boolean; error?: string }> => {
+  const fetchInsuranceTypes = async () => {
     try {
-      const newInsurance: InsuranceType = {
-        id: Date.now().toString(),
-        name,
-        commission,
-        isActive: true,
-        createdAt: new Date().toISOString()
-      };
+      const { data, error } = await supabase
+        .from('insurance_types')
+        .select('*')
+        .eq('is_active', true)
+        .order('name');
 
-      const updatedInsurances = [...insuranceTypes, newInsurance];
-      localStorage.setItem('aloelocation_insurance_types', JSON.stringify(updatedInsurances));
-      setInsuranceTypes(updatedInsurances);
-
-      toast({
-        title: "Assurance ajoutée",
-        description: `${name} a été ajoutée avec succès`,
-      });
-
-      return { success: true };
-    } catch (error: any) {
-      return { success: false, error: error.message };
-    }
-  };
-
-  const updateInsuranceType = async (id: string, name: string, commission: number): Promise<{ success: boolean; error?: string }> => {
-    try {
-      const updatedInsurances = insuranceTypes.map(ins => 
-        ins.id === id ? { ...ins, name, commission } : ins
-      );
-
-      localStorage.setItem('aloelocation_insurance_types', JSON.stringify(updatedInsurances));
-      setInsuranceTypes(updatedInsurances);
-
-      toast({
-        title: "Assurance modifiée",
-        description: `${name} a été mise à jour`,
-      });
-
-      return { success: true };
-    } catch (error: any) {
-      return { success: false, error: error.message };
-    }
-  };
-
-  const removeInsuranceType = async (id: string): Promise<{ success: boolean; error?: string }> => {
-    try {
-      const updatedInsurances = insuranceTypes.filter(ins => ins.id !== id);
-      localStorage.setItem('aloelocation_insurance_types', JSON.stringify(updatedInsurances));
-      setInsuranceTypes(updatedInsurances);
-
-      toast({
-        title: "Assurance supprimée",
-        description: "L'assurance a été supprimée",
-      });
-
-      return { success: true };
-    } catch (error: any) {
-      return { success: false, error: error.message };
-    }
-  };
-
-  const fetchInsuranceTypes = () => {
-    try {
-      const stored = localStorage.getItem('aloelocation_insurance_types');
-      if (stored) {
-        setInsuranceTypes(JSON.parse(stored));
-      }
+      if (error) throw error;
+      
+      setInsuranceTypes((data || []).map(item => ({
+        id: item.id,
+        name: item.name,
+        commission: Number(item.commission),
+        isActive: item.is_active,
+        createdAt: item.created_at
+      })));
     } catch (error) {
       console.error('Erreur récupération assurances:', error);
     }
   };
 
+  const addInsuranceType = async (name: string, commission: number): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const { error } = await supabase
+        .from('insurance_types')
+        .insert({ name, commission, is_active: true });
+
+      if (error) throw error;
+
+      toast({
+        title: "Assurance ajoutée",
+        description: `${name} a été ajouté`,
+      });
+
+      await fetchInsuranceTypes();
+      return { success: true };
+    } catch (error: any) {
+      console.error('Erreur ajout assurance:', error);
+      return { success: false, error: 'Erreur lors de l\'ajout' };
+    }
+  };
+
+  const updateInsuranceType = async (id: string, name: string, commission: number): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const { error } = await supabase
+        .from('insurance_types')
+        .update({ name, commission })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Assurance modifiée",
+        description: `${name} a été modifié`,
+      });
+
+      await fetchInsuranceTypes();
+      return { success: true };
+    } catch (error: any) {
+      console.error('Erreur modification assurance:', error);
+      return { success: false, error: 'Erreur lors de la modification' };
+    }
+  };
+
+  const removeInsuranceType = async (id: string): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const { error } = await supabase
+        .from('insurance_types')
+        .update({ is_active: false })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Assurance désactivée",
+        description: "L'assurance a été désactivée",
+      });
+
+      await fetchInsuranceTypes();
+      return { success: true };
+    } catch (error: any) {
+      console.error('Erreur désactivation assurance:', error);
+      return { success: false, error: 'Erreur lors de la désactivation' };
+    }
+  };
+
   // Gestion des ventes
-  const addSale = async (sale: Omit<Sale, 'id' | 'createdAt'>): Promise<{ success: boolean; error?: string }> => {
+  const fetchSales = async () => {
     try {
-      // Sauvegarde automatique pour les ventes importantes
-      if (sale.commissionAmount > 50) {
-        versioningSystem.createVersion(
-          `Vente importante: ${sale.clientName}`,
-          [`Nouvelle vente: ${sale.commissionAmount}€ par ${sale.employeeName}`],
-          sale.employeeName
-        );
-      }
+      const { data, error } = await supabase
+        .from('sales')
+        .select('*')
+        .eq('status', 'active')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
       
-      const newSale: Sale = {
-        ...sale,
-        id: Date.now().toString(),
-        createdAt: new Date().toISOString()
-      };
-
-      const updatedSales = [newSale, ...sales];
-      localStorage.setItem('aloelocation_sales', JSON.stringify(updatedSales));
-      setSales(updatedSales);
-
-      toast({
-        title: "Vente enregistrée",
-        description: `Commission: ${sale.commissionAmount.toFixed(2)} €`,
-      });
-
-      return { success: true };
-    } catch (error: any) {
-      return { success: false, error: error.message };
-    }
-  };
-
-  const deleteSale = async (id: string): Promise<{ success: boolean; error?: string }> => {
-    try {
-      const updatedSales = sales.filter(sale => sale.id !== id);
-      localStorage.setItem('aloelocation_sales', JSON.stringify(updatedSales));
-      setSales(updatedSales);
-
-      toast({
-        title: "Vente supprimée",
-        description: "La vente a été supprimée",
-      });
-
-      return { success: true };
-    } catch (error: any) {
-      return { success: false, error: error.message };
-    }
-  };
-
-  const updateSale = async (id: string, updates: Partial<Omit<Sale, 'id' | 'createdAt'>>): Promise<{ success: boolean; error?: string }> => {
-    try {
-      const updatedSales = sales.map(sale => 
-        sale.id === id ? { ...sale, ...updates } : sale
-      );
-      localStorage.setItem('aloelocation_sales', JSON.stringify(updatedSales));
-      setSales(updatedSales);
-
-      toast({
-        title: "Vente modifiée",
-        description: "La vente a été mise à jour avec succès",
-      });
-
-      return { success: true };
-    } catch (error: any) {
-      return { success: false, error: error.message };
-    }
-  };
-
-  const fetchSales = () => {
-    try {
-      const stored = localStorage.getItem('aloelocation_sales');
-      if (stored) {
-        setSales(JSON.parse(stored));
-      }
+      setSales((data || []).map(sale => ({
+        id: sale.id,
+        employeeName: sale.employee_name,
+        clientName: sale.client_name,
+        clientEmail: sale.client_email,
+        clientPhone: sale.client_phone,
+        reservationNumber: sale.reservation_number,
+        insuranceTypes: [], // À implémenter avec sale_insurances
+        commissionAmount: Number(sale.commission_amount),
+        notes: sale.notes,
+        createdAt: sale.created_at
+      })));
     } catch (error) {
       console.error('Erreur récupération ventes:', error);
     }
   };
 
-  // Gestion des objectifs
-  const addObjective = async (objective: Omit<Objective, 'id' | 'createdAt'>): Promise<{ success: boolean; error?: string }> => {
+  const addSale = async (sale: Omit<Sale, 'id' | 'createdAt'>): Promise<{ success: boolean; error?: string }> => {
     try {
-      const newObjective: Objective = {
-        ...objective,
-        id: Date.now().toString(),
-        createdAt: new Date().toISOString()
-      };
+      const { data: newSale, error } = await supabase
+        .from('sales')
+        .insert({
+          employee_name: sale.employeeName,
+          client_name: sale.clientName,
+          client_email: sale.clientEmail,
+          client_phone: sale.clientPhone,
+          reservation_number: sale.reservationNumber,
+          insurance_type_id: insuranceTypes[0]?.id, // Temporaire
+          commission_amount: sale.commissionAmount,
+          notes: sale.notes,
+          status: 'active'
+        })
+        .select()
+        .single();
 
-      const updatedObjectives = [...objectives, newObjective];
-      localStorage.setItem('aloelocation_objectives', JSON.stringify(updatedObjectives));
-      setObjectives(updatedObjectives);
+      if (error) throw error;
 
       toast({
-        title: "Objectif créé",
-        description: `Objectif pour ${objective.employeeName} créé`,
+        title: "Vente ajoutée",
+        description: "La vente a été enregistrée",
       });
 
+      await fetchSales();
       return { success: true };
     } catch (error: any) {
-      return { success: false, error: error.message };
+      console.error('Erreur ajout vente:', error);
+      return { success: false, error: 'Erreur lors de l\'ajout' };
+    }
+  };
+
+  const deleteSale = async (id: string): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const { error } = await supabase
+        .from('sales')
+        .update({ status: 'archived' })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Vente supprimée",
+        description: "La vente a été archivée",
+      });
+
+      await fetchSales();
+      return { success: true };
+    } catch (error: any) {
+      console.error('Erreur suppression vente:', error);
+      return { success: false, error: 'Erreur lors de la suppression' };
+    }
+  };
+
+  const updateSale = async (id: string, updates: Partial<Omit<Sale, 'id' | 'createdAt'>>): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const updateData: any = {};
+      if (updates.notes !== undefined) updateData.notes = updates.notes;
+
+      const { error } = await supabase
+        .from('sales')
+        .update(updateData)
+        .eq('id', id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Vente modifiée",
+        description: "La vente a été mise à jour",
+      });
+
+      await fetchSales();
+      return { success: true };
+    } catch (error: any) {
+      console.error('Erreur modification vente:', error);
+      return { success: false, error: 'Erreur lors de la modification' };
+    }
+  };
+
+  // Gestion des objectifs
+  const fetchObjectives = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('employee_objectives')
+        .select('*')
+        .eq('is_active', true)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      
+      setObjectives((data || []).map(obj => ({
+        id: obj.id,
+        employeeName: obj.employee_name,
+        objectiveType: obj.objective_type === 'monthly' ? 'amount' : 'sales_count', // Simplification
+        targetAmount: Number(obj.target_amount),
+        targetSalesCount: obj.target_sales_count,
+        period: obj.objective_type,
+        startDate: obj.period_start,
+        endDate: obj.period_end,
+        description: obj.description,
+        createdAt: obj.created_at
+      })));
+    } catch (error) {
+      console.error('Erreur récupération objectifs:', error);
+    }
+  };
+
+  const addObjective = async (objective: Omit<Objective, 'id' | 'createdAt'>): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const { error } = await supabase
+        .from('employee_objectives')
+        .insert({
+          employee_name: objective.employeeName,
+          objective_type: objective.period,
+          target_amount: objective.targetAmount,
+          target_sales_count: objective.targetSalesCount,
+          period_start: objective.startDate,
+          period_end: objective.endDate,
+          description: objective.description,
+          is_active: true
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Objectif ajouté",
+        description: "L'objectif a été créé",
+      });
+
+      await fetchObjectives();
+      return { success: true };
+    } catch (error: any) {
+      console.error('Erreur ajout objectif:', error);
+      return { success: false, error: 'Erreur lors de l\'ajout' };
     }
   };
 
   const updateObjective = async (id: string, updates: Partial<Objective>): Promise<{ success: boolean; error?: string }> => {
     try {
-      const updatedObjectives = objectives.map(obj => 
-        obj.id === id ? { ...obj, ...updates } : obj
-      );
+      const updateData: any = {};
+      if (updates.targetAmount !== undefined) updateData.target_amount = updates.targetAmount;
+      if (updates.targetSalesCount !== undefined) updateData.target_sales_count = updates.targetSalesCount;
+      if (updates.description !== undefined) updateData.description = updates.description;
 
-      localStorage.setItem('aloelocation_objectives', JSON.stringify(updatedObjectives));
-      setObjectives(updatedObjectives);
+      const { error } = await supabase
+        .from('employee_objectives')
+        .update(updateData)
+        .eq('id', id);
+
+      if (error) throw error;
 
       toast({
         title: "Objectif modifié",
         description: "L'objectif a été mis à jour",
       });
 
+      await fetchObjectives();
       return { success: true };
     } catch (error: any) {
-      return { success: false, error: error.message };
+      console.error('Erreur modification objectif:', error);
+      return { success: false, error: 'Erreur lors de la modification' };
     }
   };
 
   const removeObjective = async (id: string): Promise<{ success: boolean; error?: string }> => {
     try {
-      const updatedObjectives = objectives.filter(obj => obj.id !== id);
-      localStorage.setItem('aloelocation_objectives', JSON.stringify(updatedObjectives));
-      setObjectives(updatedObjectives);
+      const { error } = await supabase
+        .from('employee_objectives')
+        .update({ is_active: false })
+        .eq('id', id);
+
+      if (error) throw error;
 
       toast({
-        title: "Objectif supprimé",
-        description: "L'objectif a été supprimé",
+        title: "Objectif désactivé",
+        description: "L'objectif a été désactivé",
       });
 
+      await fetchObjectives();
       return { success: true };
     } catch (error: any) {
-      return { success: false, error: error.message };
+      console.error('Erreur désactivation objectif:', error);
+      return { success: false, error: 'Erreur lors de la désactivation' };
     }
   };
 
-  const fetchObjectives = () => {
-    try {
-      const stored = localStorage.getItem('aloelocation_objectives');
-      if (stored) {
-        setObjectives(JSON.parse(stored));
-      }
-    } catch (error) {
-      console.error('Erreur récupération objectifs:', error);
+  // Charger les données au démarrage si l'utilisateur est connecté
+  useEffect(() => {
+    if (profile) {
+      fetchUsers();
+      fetchInsuranceTypes();
+      fetchSales();
+      fetchObjectives();
     }
-  };
+  }, [profile]);
 
   const value: AuthContextType = {
     user,
-    profile: user,
-    isAuthenticated: !!user,
-    isAdmin: user?.role === 'admin',
+    session,
+    profile: profile ? {
+      id: profile.id,
+      user_id: profile.user_id,
+      username: profile.username,
+      first_name: profile.first_name,
+      last_name: profile.last_name,
+      role: profile.role,
+      is_active: profile.is_active
+    } as any : null,
+    isAuthenticated: !!user && !!session,
+    isAdmin: profile?.role === 'admin',
     loading,
     signIn,
     signOut,
@@ -802,34 +661,27 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     fetchUsers,
     updateUser,
     updatePassword,
-    // Assurances
     insuranceTypes,
     addInsuranceType,
     updateInsuranceType,
     removeInsuranceType,
     fetchInsuranceTypes,
-    // Ventes
     sales,
     addSale,
     deleteSale,
     updateSale,
     fetchSales,
-    // Objectifs
     objectives,
     addObjective,
     updateObjective,
     removeObjective,
-    fetchObjectives
+    fetchObjectives,
   };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
-export const useAuth = (): AuthContextType => {
+export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {
     throw new Error('useAuth must be used within an AuthProvider');
