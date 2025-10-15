@@ -265,32 +265,56 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const loadUserProfile = async (userId: string) => {
     try {
+      console.log('📥 Chargement profil pour:', userId);
+      
       const supabaseClient: any = supabase;
-      const result: any = await supabaseClient
+      
+      // Charger le profil
+      const profileResult: any = await supabaseClient
         .from('profiles')
         .select('*')
         .eq('user_id', userId)
         .eq('is_active', true)
         .single();
       
-      const { data, error } = result;
+      const { data: profileData, error: profileError } = profileResult;
 
-      if (error) throw error;
+      if (profileError) {
+        console.error('❌ Erreur profil:', profileError);
+        throw profileError;
+      }
 
-      if (data) {
+      // Charger les rôles
+      const rolesResult: any = await supabaseClient
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', userId);
+      
+      const { data: rolesData, error: rolesError } = rolesResult;
+      
+      if (rolesError) {
+        console.error('⚠️ Erreur rôles:', rolesError);
+      }
+
+      // Déterminer le rôle (admin si dans user_roles, sinon employee)
+      const hasAdminRole = rolesData?.some((r: any) => r.role === 'admin');
+      const userRole = hasAdminRole ? 'admin' : 'employee';
+
+      if (profileData) {
         const userProfile: User = {
-          id: data.id,
-          username: data.username,
-          firstName: data.first_name || '',
-          lastName: data.last_name || '',
-          role: data.role as 'admin' | 'employee',
-          isActive: data.is_active,
-          createdAt: data.created_at
+          id: profileData.id,
+          username: profileData.username,
+          firstName: profileData.first_name || '',
+          lastName: profileData.last_name || '',
+          role: userRole,
+          isActive: profileData.is_active,
+          createdAt: profileData.created_at
         };
+        console.log('✅ Profil chargé:', userProfile.username, 'Role:', userRole);
         setUser(userProfile);
       }
     } catch (error) {
-      console.error('Erreur chargement profil:', error);
+      console.error('💥 Erreur chargement profil:', error);
     } finally {
       setLoading(false);
     }
