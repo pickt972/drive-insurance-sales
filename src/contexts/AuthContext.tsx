@@ -296,9 +296,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         console.error('⚠️ Erreur rôles:', rolesError);
       }
 
-      // Déterminer le rôle (admin si dans user_roles, sinon employee)
+      // Déterminer le rôle (admin si dans user_roles, sinon fallback profil)
       const hasAdminRole = rolesData?.some((r: any) => r.role === 'admin');
-      const userRole = hasAdminRole ? 'admin' : 'employee';
+      const profileSaysAdmin = profileData?.role === 'admin';
+      const userRole = (hasAdminRole || profileSaysAdmin) ? 'admin' : 'employee';
 
       if (profileData) {
         const userProfile: User = {
