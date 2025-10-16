@@ -342,6 +342,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           title: "Connexion réussie",
           description: `Bienvenue !`,
         });
+        // Forcer un rechargement immédiat du profil et des rôles juste après la connexion
+        setTimeout(() => {
+          loadUserProfile(data.user!.id);
+        }, 0);
       }
 
       return { success: true };
