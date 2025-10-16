@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { AuthPage as AuthPageComponent } from "@/components/AuthPage";
+import { AuthPage as AuthPageComponent } from "@/components/auth/AuthPage";
 import { useAuth } from "@/contexts/AuthContext";
 
 const AuthPage = () => {
