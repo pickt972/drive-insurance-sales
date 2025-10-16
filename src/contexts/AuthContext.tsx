@@ -207,14 +207,25 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   useEffect(() => {
     const initializeAdmin = async () => {
       try {
+        // 1) S'assurer qu'un compte admin de base existe
         const { data, error } = await supabase.functions.invoke('initialize-admin');
         if (error) {
           console.error('Erreur initialisation admin:', error);
         } else {
           console.log('Initialisation admin:', data);
         }
+
+        // 2) Promouvoir/assurer les rôles admin pour Stef et Nadia (idempotent)
+        const ensure = await supabase.functions.invoke('ensure-admins', {
+          body: { usernames: ['stef', 'nadia'] }
+        });
+        if (ensure.error) {
+          console.error('Erreur ensure-admins:', ensure.error);
+        } else {
+          console.log('ensure-admins:', ensure.data);
+        }
       } catch (error) {
-        console.error('Erreur appel initialize-admin:', error);
+        console.error('Erreur appel initialize/ensure-admin:', error);
       }
     };
 
