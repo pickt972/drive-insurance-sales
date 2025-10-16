@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -7,8 +6,6 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { LogIn, User, Lock, Eye, EyeOff } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
-import { createInitialUsers } from "@/lib/createInitialUsers";
-import { toast } from "@/components/ui/use-toast";
 
 export const AuthPage = () => {
   const [username, setUsername] = useState("");
@@ -16,8 +13,6 @@ export const AuthPage = () => {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
-  
-  const [initLoading, setInitLoading] = useState(false);
   
   const { isAuthenticated, signIn, loading: authLoading } = useAuth();
   const navigate = useNavigate();
@@ -46,33 +41,6 @@ export const AuthPage = () => {
     }
     
     setLoading(false);
-  };
-
-  const handleInitUsers = async () => {
-    try {
-      setInitLoading(true);
-      const res = await createInitialUsers();
-      if (res.success) {
-        toast({
-          title: "Utilisateurs initialisés",
-          description: "Les comptes par défaut ont été créés/validés.",
-        });
-      } else {
-        toast({
-          title: "Erreur d'initialisation",
-          variant: "destructive",
-          description: "Impossible de créer les comptes. Réessayez.",
-        });
-      }
-    } catch (e) {
-      toast({
-        title: "Erreur d'initialisation",
-        variant: "destructive",
-        description: "Une erreur est survenue lors de l'appel de la fonction.",
-      });
-    } finally {
-      setInitLoading(false);
-    }
   };
 
   if (authLoading) {
@@ -148,22 +116,6 @@ export const AuthPage = () => {
               </Alert>
             </div>
           )}
-
-          <div className="space-y-3">
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full"
-              onClick={handleInitUsers}
-              disabled={initLoading}
-              aria-label="Initialiser les comptes par défaut"
-            >
-              {initLoading ? "Initialisation..." : "Initialiser les comptes par défaut"}
-            </Button>
-            <p className="text-sm text-muted-foreground text-center">
-              À utiliser si la connexion échoue.
-            </p>
-          </div>
 
           <Button 
             type="submit" 
