@@ -525,15 +525,32 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       if (error) throw error;
 
-      const usersList: User[] = (data || []).map((profile: any) => ({
-        id: profile.id,
-        username: profile.username,
-        firstName: profile.first_name || '',
-        lastName: profile.last_name || '',
-        role: profile.role as 'admin' | 'employee',
-        isActive: profile.is_active,
-        createdAt: profile.created_at
-      }));
+      const usersList: User[] = await Promise.all(
+        (data || []).map(async (profile: any) => {
+          // Charger les rôles depuis user_roles pour chaque utilisateur
+          const rolesResult: any = await supabaseClient
+            .from('user_roles')
+            .select('role')
+            .eq('user_id', profile.user_id);
+          
+          const { data: rolesData } = rolesResult;
+          
+          // Déterminer le rôle (admin si dans user_roles, sinon fallback profil)
+          const hasAdminRole = rolesData?.some((r: any) => r.role === 'admin');
+          const profileSaysAdmin = profile.role === 'admin';
+          const userRole = (hasAdminRole || profileSaysAdmin) ? 'admin' : 'employee';
+
+          return {
+            id: profile.id,
+            username: profile.username,
+            firstName: profile.first_name || '',
+            lastName: profile.last_name || '',
+            role: userRole,
+            isActive: profile.is_active,
+            createdAt: profile.created_at
+          };
+        })
+      );
 
       setUsers(usersList);
     } catch (error) {
