@@ -279,32 +279,60 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       console.log('📥 Chargement profil pour:', userId);
       
       const supabaseClient: any = supabase;
-      
-      // Charger le profil
-      const profileResult: any = await supabaseClient
-        .from('profiles')
-        .select('*')
-        .eq('user_id', userId)
-        .eq('is_active', true)
-        .single();
+
+      const shouldRetry = (e: any) => {
+        const msg = String(e?.message ?? e);
+        return msg.includes('schema cache') || msg.includes('PGRST002') || msg.includes('503');
+      };
+
+      async function withRetry<T>(
+        fn: () => Promise<{ data: T; error: any }>,
+        attempts = 4,
+        baseDelay = 300
+      ): Promise<{ data: T; error: any }> {
+        let last: any = null;
+        for (let i = 0; i < attempts; i++) {
+          const res = await fn();
+          if (!res.error) return res;
+          if (shouldRetry(res.error)) {
+            await new Promise((r) => setTimeout(r, baseDelay * Math.pow(2, i)));
+            last = res.error;
+            continue;
+          }
+          return res; // non-retryable
+        }
+        return { data: null as unknown as T, error: last };
+      }
+
+      // Charger le profil avec retry
+      const profileResult: any = await withRetry(() =>
+        supabaseClient
+          .from('profiles')
+          .select('*')
+          .eq('user_id', userId)
+          .eq('is_active', true)
+          .single()
+      );
       
       const { data: profileData, error: profileError } = profileResult;
 
       if (profileError) {
-        console.error('❌ Erreur profil:', profileError);
+        console.error('❌ Erreur profil après retries:', profileError);
         throw profileError;
       }
 
-      // Charger les rôles
-      const rolesResult: any = await supabaseClient
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', userId);
+      // Charger les rôles avec retry
+      const rolesResult: any = await withRetry(() =>
+        supabaseClient
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', userId)
+      );
       
       const { data: rolesData, error: rolesError } = rolesResult;
       
-      if (rolesError) {
-        console.error('⚠️ Erreur rôles:', rolesError);
+      if (rolesError && !shouldRetry(rolesError)) {
+        console.warn('⚠️ Erreur rôles:', rolesError);
       }
 
       // Déterminer le rôle (admin si dans user_roles, sinon fallback profil)
