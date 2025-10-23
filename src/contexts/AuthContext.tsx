@@ -304,41 +304,36 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         return { data: null as unknown as T, error: last };
       }
 
-      // Charger le profil avec retry
-      const profileResult: any = await withRetry(() =>
+      // Charger le profil via RPC sécurité définer
+      const profileRpc: any = await withRetry(() =>
         supabaseClient
-          .from('profiles')
-          .select('*')
-          .eq('user_id', userId)
-          .eq('is_active', true)
-          .single()
+          .rpc('get_current_profile')
+          .maybeSingle()
       );
-      
-      const { data: profileData, error: profileError } = profileResult;
+
+      const { data: profileData, error: profileError } = profileRpc;
 
       if (profileError) {
-        console.error('❌ Erreur profil après retries:', profileError);
+        console.error('❌ Erreur get_current_profile après retries:', profileError);
         throw profileError;
       }
 
-      // Charger les rôles avec retry
-      const rolesResult: any = await withRetry(() =>
-        supabaseClient
-          .from('user_roles')
-          .select('role')
-          .eq('user_id', userId)
-      );
-      
-      const { data: rolesData, error: rolesError } = rolesResult;
-      
-      if (rolesError && !shouldRetry(rolesError)) {
-        console.warn('⚠️ Erreur rôles:', rolesError);
+      if (!profileData) {
+        throw new Error('Profil introuvable pour cet utilisateur');
       }
 
-      // Déterminer le rôle (admin si dans user_roles, sinon fallback profil)
-      const hasAdminRole = rolesData?.some((r: any) => r.role === 'admin');
-      const profileSaysAdmin = profileData?.role === 'admin';
-      const userRole = (hasAdminRole || profileSaysAdmin) ? 'admin' : 'employee';
+      // Vérifier le rôle admin via fonction has_role (évite RLS complexes)
+      const adminCheck: any = await withRetry(() =>
+        supabaseClient.rpc('has_role', { _user_id: userId, _role: 'admin' })
+      );
+
+      const { data: hasAdmin, error: adminError } = adminCheck;
+      if (adminError && !shouldRetry(adminError)) {
+        console.warn('⚠️ Erreur has_role:', adminError);
+      }
+
+      // Déterminer le rôle (admin si has_role true, sinon fallback profil.role)
+      const userRole = (hasAdmin === true || profileData?.role === 'admin') ? 'admin' : 'employee';
 
       if (profileData) {
         const userProfile: User = {
@@ -348,9 +343,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           lastName: profileData.last_name || '',
           role: userRole,
           isActive: profileData.is_active,
-          createdAt: profileData.created_at
-        };
-        console.log('✅ Profil chargé:', userProfile.username, 'Role:', userRole);
+          createdAt: profileData.created_at || new Date().toISOString(),
+        } as any;
+        console.log('✅ Profil chargé (RPC):', userProfile.username, 'Role:', userRole);
         setUser(userProfile);
       }
     } catch (error) {
