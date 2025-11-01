@@ -18,49 +18,44 @@ serve(async (req) => {
       { auth: { autoRefreshToken: false, persistSession: false } }
     )
 
-    // Vérifier si un admin existe déjà
-    const { data: existingAdmin } = await supabaseAdmin
-      .from('user_roles')
-      .select('user_id')
-      .eq('role', 'admin')
-      .maybeSingle()
-
-    if (existingAdmin) {
-      return new Response(
-        JSON.stringify({ success: true, message: 'Admin déjà existant' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
-    }
-
-    // Créer l'utilisateur admin
     const adminEmail = 'admin@aloelocation.internal'
     const adminPassword = 'admin123'
     const adminUsername = 'admin'
 
-    const { data: newUser, error: authError } = await supabaseAdmin.auth.admin.createUser({
-      email: adminEmail,
-      password: adminPassword,
-      email_confirm: true,
-      user_metadata: {
-        username: adminUsername,
-        first_name: 'Admin',
-        last_name: 'System',
-        role: 'admin'
-      }
-    })
+    // Vérifier si l'utilisateur auth existe déjà
+    const { data: existingAuthUser } = await supabaseAdmin.auth.admin.listUsers()
+    const adminAuthUser = existingAuthUser?.users?.find(u => u.email === adminEmail)
 
-    if (authError) {
-      console.error('Erreur création admin:', authError)
-      return new Response(
-        JSON.stringify({ success: false, error: authError.message }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
-      )
+    let adminId: string
+
+    if (adminAuthUser) {
+      // L'utilisateur existe déjà dans auth.users
+      adminId = adminAuthUser.id
+    } else {
+      // Créer l'utilisateur admin
+      const { data: newUser, error: authError } = await supabaseAdmin.auth.admin.createUser({
+        email: adminEmail,
+        password: adminPassword,
+        email_confirm: true,
+        user_metadata: {
+          username: adminUsername,
+          first_name: 'Admin',
+          last_name: 'System',
+          role: 'admin'
+        }
+      })
+
+      if (authError) {
+        return new Response(
+          JSON.stringify({ success: false, error: authError.message }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+        )
+      }
+
+      adminId = newUser.user.id
     }
 
-    console.log('Admin créé avec succès:', newUser.user.id)
-
-    // S'assurer que le profil et le rôle existent (au cas où le trigger n'est pas en place)
-    const adminId = newUser.user.id;
+    // S'assurer que le profil et le rôle existent (idempotent - fonctionne même si déjà créés)
 
     const { error: profileError } = await supabaseAdmin
       .from('profiles')
