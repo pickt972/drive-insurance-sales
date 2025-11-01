@@ -314,7 +314,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const { data: profileData, error: profileError } = profileRpc;
 
       if (profileError) {
-        console.error('❌ Erreur get_current_profile après retries:', profileError);
         throw profileError;
       }
 
@@ -328,12 +327,27 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       );
 
       const { data: hasAdmin, error: adminError } = adminCheck;
-      if (adminError && !shouldRetry(adminError)) {
-        console.warn('⚠️ Erreur has_role:', adminError);
-      }
 
-      // Déterminer le rôle (admin si has_role true, sinon fallback profil.role)
-      const userRole = (hasAdmin === true || profileData?.role === 'admin') ? 'admin' : 'employee';
+      // Déterminer le rôle avec fallback robuste
+      let userRole: 'admin' | 'employee' = 'employee';
+      
+      if (hasAdmin === true) {
+        userRole = 'admin';
+      } else if (profileData?.role === 'admin') {
+        userRole = 'admin';
+      } else {
+        // Fallback: vérifier directement dans user_roles si les RPC échouent
+        const { data: rolesData } = await supabaseClient
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', userId)
+          .eq('role', 'admin')
+          .maybeSingle();
+        
+        if (rolesData) {
+          userRole = 'admin';
+        }
+      }
 
       if (profileData) {
         const userProfile: User = {
@@ -345,11 +359,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           isActive: profileData.is_active,
           createdAt: profileData.created_at || new Date().toISOString(),
         } as any;
-        console.log('✅ Profil chargé (RPC):', userProfile.username, 'Role:', userRole);
         setUser(userProfile);
       }
     } catch (error) {
-      console.error('💥 Erreur chargement profil:', error);
+      // En production, utiliser un système de logging approprié
+      if (import.meta.env.DEV) {
+        console.error('Erreur chargement profil:', error);
+      }
     } finally {
       setLoading(false);
     }

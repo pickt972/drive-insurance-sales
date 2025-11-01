@@ -9,6 +9,7 @@ import { CreditCard as Edit } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useAuth } from "@/contexts/AuthContext";
 
 export const SalesHistory = () => {
@@ -184,7 +185,9 @@ export const SalesHistory = () => {
       setEditSelectedInsurances([]);
       setEditNotes("");
     } catch (error) {
-      console.error('Erreur lors de la modification de la vente:', error);
+      if (import.meta.env.DEV) {
+        console.error('Erreur lors de la modification de la vente:', error);
+      }
     } finally {
       setEditLoading(false);
     }
@@ -210,9 +213,7 @@ export const SalesHistory = () => {
   };
 
   const handleDelete = async (saleId: string) => {
-    if (window.confirm('Êtes-vous sûr de vouloir supprimer cette vente ?')) {
-      await deleteSale(saleId);
-    }
+    await deleteSale(saleId);
   };
 
   // Calculer les statistiques
@@ -532,15 +533,24 @@ export const SalesHistory = () => {
                           <Edit className="h-6 w-6" />
                           <span className="hidden lg:inline ml-2">Modifier</span>
                         </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleDelete(sale.id)}
-                          className="rounded-2xl hover:scale-105 transition-all duration-300 text-destructive hover:text-destructive h-12 w-12 lg:h-9 lg:w-auto lg:px-3"
-                        >
-                          <Trash2 className="h-6 w-6" />
-                          <span className="hidden lg:inline ml-2">Supprimer</span>
-                        </Button>
+                        <ConfirmDialog
+                          title="Supprimer cette vente ?"
+                          description={`Êtes-vous sûr de vouloir supprimer la vente de ${sale.clientName} ? Cette action est irréversible.`}
+                          onConfirm={() => handleDelete(sale.id)}
+                          confirmText="Supprimer"
+                          cancelText="Annuler"
+                          destructive={true}
+                          trigger={
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="rounded-2xl hover:scale-105 transition-all duration-300 text-destructive hover:text-destructive h-12 w-12 lg:h-9 lg:w-auto lg:px-3"
+                            >
+                              <Trash2 className="h-6 w-6" />
+                              <span className="hidden lg:inline ml-2">Supprimer</span>
+                            </Button>
+                          }
+                        />
                       </div>
                     )}
                   </div>

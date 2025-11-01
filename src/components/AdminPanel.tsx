@@ -9,6 +9,7 @@ import { Settings, Plus, Euro, Users, Trash2, CreditCard as Edit, Key, Eye, EyeO
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
 import { VersionManager } from "@/components/VersionManager";
@@ -184,9 +185,7 @@ export const AdminPanel = () => {
   };
 
   const handleRemoveUser = async (username: string) => {
-    if (window.confirm(`Êtes-vous sûr de vouloir supprimer l'utilisateur ${username} ?`)) {
-      await removeUser(username);
-    }
+    await removeUser(username);
   };
 
   // Gestion des assurances
@@ -249,9 +248,7 @@ export const AdminPanel = () => {
   };
 
   const handleRemoveInsurance = async (id: string, name: string) => {
-    if (window.confirm(`Êtes-vous sûr de vouloir supprimer l'assurance "${name}" ?`)) {
-      await removeInsuranceType(id);
-    }
+    await removeInsuranceType(id);
   };
 
   // Gestion des objectifs
@@ -298,9 +295,6 @@ export const AdminPanel = () => {
         endDate = new Date(now.getFullYear(), 11, 31);
         break;
     }
-
-    console.log('📅 Création objectif - Période:', newObjectivePeriod);
-    console.log('📅 Dates calculées:', startDate.toISOString(), 'à', endDate.toISOString());
 
     const result = await addObjective({
       employeeName: newObjectiveEmployee,
@@ -369,9 +363,7 @@ export const AdminPanel = () => {
   };
 
   const handleRemoveObjective = async (id: string, employeeName: string) => {
-    if (window.confirm(`Êtes-vous sûr de vouloir supprimer l'objectif de ${employeeName} ?`)) {
-      await removeObjective(id);
-    }
+    await removeObjective(id);
   };
 
   const handleManualSave = async () => {
@@ -436,9 +428,6 @@ export const AdminPanel = () => {
 
   // Calculer les statistiques d'objectifs
   const getObjectiveProgress = (objective: any) => {
-    console.log('🔍 Calcul progression pour:', objective.employeeName);
-    console.log('📅 Période objectif:', objective.startDate, 'à', objective.endDate);
-    
     const employeeSales = sales.filter(sale => {
       const saleDate = new Date(sale.createdAt);
       const startDate = new Date(objective.startDate);
@@ -447,25 +436,11 @@ export const AdminPanel = () => {
       const employeeMatch = sale.employeeName.toLowerCase() === objective.employeeName.toLowerCase();
       const dateMatch = saleDate >= startDate && saleDate <= endDate;
       
-      console.log('🔍 Vente:', sale.employeeName, 'vs', objective.employeeName, '=', employeeMatch);
-      console.log('📅 Date vente:', saleDate.toLocaleDateString(), 'dans période?', dateMatch);
-      console.log('📅 Période:', startDate.toLocaleDateString(), 'à', endDate.toLocaleDateString());
-      
       return employeeMatch && dateMatch;
     });
     
-    console.log('📊 Ventes trouvées pour', objective.employeeName, ':', employeeSales.length);
-    console.log('📊 Détail des ventes:', employeeSales.map(s => ({
-      client: s.clientName,
-      date: new Date(s.createdAt).toLocaleDateString(),
-      commission: s.commissionAmount
-    })));
-    
     const achievedAmount = employeeSales.reduce((sum, sale) => sum + sale.commissionAmount, 0);
     const achievedSales = employeeSales.length;
-    
-    console.log('💰 Montant atteint:', achievedAmount, '/ Objectif:', objective.targetAmount);
-    console.log('📈 Ventes atteintes:', achievedSales, '/ Objectif:', objective.targetSalesCount);
     
     let progress = 0;
     if (objective.objectiveType === 'amount') {
@@ -473,8 +448,6 @@ export const AdminPanel = () => {
     } else {
       progress = Math.min((achievedSales / objective.targetSalesCount) * 100, 100);
     }
-    
-    console.log('📊 Progression calculée:', progress, '%');
     
     return {
       achievedAmount,
@@ -776,15 +749,24 @@ export const AdminPanel = () => {
                           <span className="hidden lg:inline ml-2">MDP</span>
                         </Button>
                         {user.username !== 'admin' && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleRemoveUser(user.username)}
-                            className="rounded-2xl hover:scale-105 transition-all duration-300 text-destructive hover:text-destructive h-12 w-12 lg:h-9 lg:w-auto lg:px-3"
-                          >
-                            <Trash2 className="h-6 w-6" />
-                            <span className="hidden lg:inline ml-2">Suppr</span>
-                          </Button>
+                          <ConfirmDialog
+                            title="Supprimer cet utilisateur ?"
+                            description={`Êtes-vous sûr de vouloir supprimer l'utilisateur ${user.firstName} ${user.lastName} (${user.username}) ? Cette action est irréversible.`}
+                            onConfirm={() => handleRemoveUser(user.username)}
+                            confirmText="Supprimer"
+                            cancelText="Annuler"
+                            destructive={true}
+                            trigger={
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="rounded-2xl hover:scale-105 transition-all duration-300 text-destructive hover:text-destructive h-12 w-12 lg:h-9 lg:w-auto lg:px-3"
+                              >
+                                <Trash2 className="h-6 w-6" />
+                                <span className="hidden lg:inline ml-2">Suppr</span>
+                              </Button>
+                            }
+                          />
                         )}
                       </div>
                     </div>
@@ -865,15 +847,24 @@ export const AdminPanel = () => {
                           <Edit className="h-6 w-6" />
                           <span className="hidden lg:inline ml-2">Modifier</span>
                         </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleRemoveInsurance(insurance.id, insurance.name)}
-                          className="rounded-2xl hover:scale-105 transition-all duration-300 text-destructive hover:text-destructive h-12 w-12 lg:h-9 lg:w-auto lg:px-3"
-                        >
-                          <Trash2 className="h-6 w-6" />
-                          <span className="hidden lg:inline ml-2">Suppr</span>
-                        </Button>
+                        <ConfirmDialog
+                          title="Supprimer cette assurance ?"
+                          description={`Êtes-vous sûr de vouloir supprimer l'assurance "${insurance.name}" ? Cette action est irréversible.`}
+                          onConfirm={() => handleRemoveInsurance(insurance.id, insurance.name)}
+                          confirmText="Supprimer"
+                          cancelText="Annuler"
+                          destructive={true}
+                          trigger={
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="rounded-2xl hover:scale-105 transition-all duration-300 text-destructive hover:text-destructive h-12 w-12 lg:h-9 lg:w-auto lg:px-3"
+                            >
+                              <Trash2 className="h-6 w-6" />
+                              <span className="hidden lg:inline ml-2">Suppr</span>
+                            </Button>
+                          }
+                        />
                       </div>
                     </div>
                   </div>
@@ -1015,15 +1006,24 @@ export const AdminPanel = () => {
                             <Edit className="h-6 w-6" />
                             <span className="hidden lg:inline ml-2">Modifier</span>
                           </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleRemoveObjective(objective.id, objective.employeeName)}
-                            className="rounded-2xl hover:scale-105 transition-all duration-300 text-destructive hover:text-destructive h-12 w-12 lg:h-9 lg:w-auto lg:px-3"
-                          >
-                            <Trash2 className="h-6 w-6" />
-                            <span className="hidden lg:inline ml-2">Suppr</span>
-                          </Button>
+                          <ConfirmDialog
+                            title="Supprimer cet objectif ?"
+                            description={`Êtes-vous sûr de vouloir supprimer l'objectif de ${objective.employeeName} ? Cette action est irréversible.`}
+                            onConfirm={() => handleRemoveObjective(objective.id, objective.employeeName)}
+                            confirmText="Supprimer"
+                            cancelText="Annuler"
+                            destructive={true}
+                            trigger={
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="rounded-2xl hover:scale-105 transition-all duration-300 text-destructive hover:text-destructive h-12 w-12 lg:h-9 lg:w-auto lg:px-3"
+                              >
+                                <Trash2 className="h-6 w-6" />
+                                <span className="hidden lg:inline ml-2">Suppr</span>
+                              </Button>
+                            }
+                          />
                         </div>
                       </div>
                       
