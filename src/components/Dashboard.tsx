@@ -145,7 +145,24 @@ export const Dashboard = () => {
         <div className="stat-card animate-gentle-fade-in" style={{ animationDelay: '0.3s' }}>
           <div className="flex items-center justify-between mb-4">
             <div className="icon-wrapper p-1.5 lg:p-3">
-              <Users className="h-6 w-6 text-warning" />
+              <Users className="h-6 w-6 text-info" />
+            </div>
+            <div className="text-right">
+              <p className="text-xl lg:text-3xl font-bold text-info">
+                {totalSales > 0 ? formatCurrency(totalCommission / totalSales) : '0.00 €'}
+              </p>
+              <p className="text-xs lg:text-sm text-muted-foreground">Commission Moyenne</p>
+            </div>
+          </div>
+          <div className="h-2 bg-muted rounded-full overflow-hidden">
+            <div className="h-full bg-gradient-to-r from-info to-purple rounded-full animate-gentle-pulse" style={{ width: '70%' }}></div>
+          </div>
+        </div>
+
+        <div className="stat-card animate-gentle-fade-in" style={{ animationDelay: '0.4s' }}>
+          <div className="flex items-center justify-between mb-4">
+            <div className="icon-wrapper p-1.5 lg:p-3">
+              <Calendar className="h-6 w-6 text-warning" />
             </div>
             <div className="text-right">
               <p className="text-xl lg:text-3xl font-bold text-warning">{salesThisWeek}</p>
@@ -156,32 +173,11 @@ export const Dashboard = () => {
             <div className="h-full bg-gradient-to-r from-warning to-orange rounded-full animate-gentle-pulse" style={{ width: '60%' }}></div>
           </div>
         </div>
-
-        <div className="stat-card animate-gentle-fade-in" style={{ animationDelay: '0.4s' }}>
-          <div className="flex items-center justify-between mb-4">
-            <div className="icon-wrapper p-1.5 lg:p-3">
-              <Trophy className="h-6 w-6 text-primary" />
-            </div>
-            <div className="text-right">
-              <p className="text-lg lg:text-2xl font-bold text-primary">
-                {isAdmin 
-                  ? (sellerStats[0]?.name.split(' ')[0] || 'Aucun')
-                  : `${employeeStats.findIndex(emp => emp.username === profile?.username) + 1}${
-                      employeeStats.findIndex(emp => emp.username === profile?.username) === 0 ? 'er' : 
-                      employeeStats.findIndex(emp => emp.username === profile?.username) === 1 ? 'nd' : 'ème'
-                    }`
-                }
-              </p>
-              <p className="text-xs lg:text-sm text-muted-foreground">{isAdmin ? 'Top Vendeur' : 'Mon Rang'}</p>
-            </div>
-          </div>
-          <div className="h-2 bg-muted rounded-full overflow-hidden">
-            <div className="h-full bg-gradient-to-r from-primary to-purple rounded-full animate-gentle-pulse" style={{ width: '90%' }}></div>
-          </div>
-        </div>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 lg:gap-8 w-full overflow-x-hidden">
+      {/* Podium - affichage pour tous */}
+      {employeeStats.length > 0 && (
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 lg:gap-8 w-full overflow-x-hidden">
         {/* Section Mes Objectifs (pour les employés) */}
         {!isAdmin && (
           <div className="xl:col-span-2 modern-card animate-smooth-scale-in" style={{ animationDelay: '0.4s' }}>
@@ -552,6 +548,7 @@ export const Dashboard = () => {
           </div>
         </div>
       </div>
+      )}
     </div>
   );
 };

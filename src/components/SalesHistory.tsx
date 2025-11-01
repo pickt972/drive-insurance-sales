@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Clock, Trash2, User, FileText, TrendingUp, Euro, Target, Phone, Mail, Filter, Download, Calendar, ChevronLeft, ChevronRight } from "lucide-react";
+import { Clock, Trash2, User, FileText, TrendingUp, Euro, Target, Phone, Mail, Filter, Download, Calendar, ChevronLeft, ChevronRight, Search, X } from "lucide-react";
 import { CreditCard as Edit } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -30,6 +30,7 @@ export const SalesHistory = () => {
   const [filterEndDate, setFilterEndDate] = useState("");
   const [filterInsurance, setFilterInsurance] = useState("");
   const [showFilters, setShowFilters] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   // États pour la pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -51,7 +52,14 @@ export const SalesHistory = () => {
       const matchEndDate = !filterEndDate || new Date(sale.createdAt) <= new Date(filterEndDate + 'T23:59:59');
       const matchInsurance = !filterInsurance || sale.insuranceTypes.includes(filterInsurance);
       
-      return matchEmployee && matchStartDate && matchEndDate && matchInsurance;
+      // Recherche texte (nom client, numéro réservation, email)
+      const matchSearch = !searchQuery || 
+        sale.clientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        sale.reservationNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (sale.clientEmail && sale.clientEmail.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (sale.clientPhone && sale.clientPhone.includes(searchQuery));
+      
+      return matchEmployee && matchStartDate && matchEndDate && matchInsurance && matchSearch;
     });
   };
 
@@ -71,7 +79,7 @@ export const SalesHistory = () => {
   // Réinitialiser la page quand les filtres changent
   React.useEffect(() => {
     setCurrentPage(1);
-  }, [filterEmployee, filterStartDate, filterEndDate, filterInsurance]);
+  }, [filterEmployee, filterStartDate, filterEndDate, filterInsurance, searchQuery]);
 
   // Fonction pour changer de page avec scroll vers le haut
   const handlePageChange = (page: number) => {
@@ -185,6 +193,7 @@ export const SalesHistory = () => {
     setFilterStartDate("");
     setFilterEndDate("");
     setFilterInsurance("");
+    setSearchQuery("");
   };
 
   // Obtenir toutes les assurances uniques
@@ -300,6 +309,35 @@ export const SalesHistory = () => {
       {/* Filtres et Export */}
       <div className="modern-card animate-gentle-fade-in max-w-7xl mx-auto w-full overflow-x-hidden">
         <div className="p-4 lg:p-8">
+          {/* Barre de recherche principale */}
+          <div className="mb-6">
+            <div className="relative">
+              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder="🔍 Rechercher par nom client, n° réservation, email ou téléphone..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="friendly-input pl-12 pr-12 h-12 text-sm lg:text-base"
+              />
+              {searchQuery && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-2 top-1/2 transform -translate-y-1/2 h-8 w-8 rounded-xl hover:bg-muted/50"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
+            {searchQuery && (
+              <p className="text-sm text-muted-foreground mt-2 ml-1">
+                {filteredSales.length} résultat(s) trouvé(s) pour "{searchQuery}"
+              </p>
+            )}
+          </div>
+
           <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-6 gap-4 lg:gap-0">
             <div className="flex items-center gap-3">
               <div className="icon-wrapper">
