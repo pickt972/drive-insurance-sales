@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Clock, Trash2, User, FileText, TrendingUp, Euro, Target, Phone, Mail, Filter, Download, Calendar, ChevronLeft, ChevronRight, Search, X } from "lucide-react";
+import { Clock, Trash2, User, FileText, TrendingUp, Euro, Target, Phone, Mail, Filter, Download, Calendar as CalendarIcon, ChevronLeft, ChevronRight, Search, X } from "lucide-react";
 import { CreditCard as Edit } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -20,14 +20,19 @@ import {
   PaginationPrevious,
   PaginationEllipsis
 } from "@/components/ui/pagination";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { format } from "date-fns";
+import { fr } from "date-fns/locale";
+import { cn } from "@/lib/utils";
 
 export const SalesHistory = () => {
   const { isAdmin, sales, users, objectives, deleteSale, updateSale, insuranceTypes, profile } = useAuth();
   
   // États pour les filtres
   const [filterEmployee, setFilterEmployee] = useState("");
-  const [filterStartDate, setFilterStartDate] = useState("");
-  const [filterEndDate, setFilterEndDate] = useState("");
+  const [filterStartDate, setFilterStartDate] = useState<Date | undefined>();
+  const [filterEndDate, setFilterEndDate] = useState<Date | undefined>();
   const [filterInsurance, setFilterInsurance] = useState("");
   const [showFilters, setShowFilters] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -48,8 +53,8 @@ export const SalesHistory = () => {
   const getFilteredSales = () => {
     return sales.filter(sale => {
       const matchEmployee = !filterEmployee || sale.employeeName === filterEmployee;
-      const matchStartDate = !filterStartDate || new Date(sale.createdAt) >= new Date(filterStartDate);
-      const matchEndDate = !filterEndDate || new Date(sale.createdAt) <= new Date(filterEndDate + 'T23:59:59');
+      const matchStartDate = !filterStartDate || new Date(sale.createdAt) >= filterStartDate;
+      const matchEndDate = !filterEndDate || new Date(sale.createdAt) <= new Date(filterEndDate.getTime() + 86400000 - 1); // Fin de journée
       const matchInsurance = !filterInsurance || sale.insuranceTypes.includes(filterInsurance);
       
       // Recherche texte (nom client, numéro réservation, email)
@@ -190,8 +195,8 @@ export const SalesHistory = () => {
   // Réinitialiser les filtres
   const resetFilters = () => {
     setFilterEmployee("");
-    setFilterStartDate("");
-    setFilterEndDate("");
+    setFilterStartDate(undefined);
+    setFilterEndDate(undefined);
     setFilterInsurance("");
     setSearchQuery("");
   };
@@ -396,24 +401,54 @@ export const SalesHistory = () => {
                   </select>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="filterStartDate" className="text-sm font-semibold">Date de début</Label>
-                  <Input
-                    id="filterStartDate"
-                    type="date"
-                    value={filterStartDate}
-                    onChange={(e) => setFilterStartDate(e.target.value)}
-                    className="friendly-input text-sm"
-                  />
+                  <Label htmlFor="filterStartDate" className="text-sm font-bold">📅 Date de début</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "w-full justify-start text-left font-normal friendly-input h-11",
+                          !filterStartDate && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {filterStartDate ? format(filterStartDate, "PPP", { locale: fr }) : <span>Choisir une date</span>}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0 bg-background" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={filterStartDate}
+                        onSelect={setFilterStartDate}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="filterEndDate" className="text-sm font-semibold">Date de fin</Label>
-                  <Input
-                    id="filterEndDate"
-                    type="date"
-                    value={filterEndDate}
-                    onChange={(e) => setFilterEndDate(e.target.value)}
-                    className="friendly-input text-sm"
-                  />
+                  <Label htmlFor="filterEndDate" className="text-sm font-bold">📅 Date de fin</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "w-full justify-start text-left font-normal friendly-input h-11",
+                          !filterEndDate && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {filterEndDate ? format(filterEndDate, "PPP", { locale: fr }) : <span>Choisir une date</span>}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0 bg-background" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={filterEndDate}
+                        onSelect={setFilterEndDate}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="filterInsurance" className="text-sm font-semibold">Assurance</Label>
