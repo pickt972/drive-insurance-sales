@@ -91,32 +91,32 @@ export const SalesForm = ({ onSaleAdded }: SalesFormProps) => {
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
           <div className="space-y-2">
-            <Label htmlFor="clientName" className="text-sm lg:text-base font-semibold text-foreground">👤 Nom du client *</Label>
+            <Label htmlFor="clientName" className="text-sm lg:text-base font-bold text-foreground">👤 Nom du client <span className="text-destructive">*</span></Label>
             <Input
               id="clientName"
               value={clientName}
               onChange={(e) => setClientName(e.target.value)}
               placeholder="Nom du client"
-              className="friendly-input text-sm lg:text-base"
+              className="friendly-input text-sm lg:text-base h-11"
               required
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="reservationNumber" className="text-sm lg:text-base font-semibold text-foreground">🎫 N° de réservation *</Label>
+            <Label htmlFor="reservationNumber" className="text-sm lg:text-base font-bold text-foreground">🎫 N° de réservation <span className="text-destructive">*</span></Label>
             <Input
               id="reservationNumber"
               value={reservationNumber}
               onChange={(e) => setReservationNumber(e.target.value)}
               placeholder="Ex: LOC-2024-001"
-              className="friendly-input text-sm lg:text-base"
+              className="friendly-input text-sm lg:text-base h-11"
               required
             />
           </div>
         </div>
 
         <div className="space-y-4">
-          <Label className="text-sm lg:text-base font-semibold text-foreground">🛡️ Assurances souscrites *</Label>
+          <Label className="text-sm lg:text-base font-bold text-foreground">🛡️ Assurances souscrites <span className="text-destructive">*</span></Label>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 lg:gap-4">
               {insuranceTypes.filter(ins => ins.isActive).map((insurance) => (
               <div key={insurance.id} className="modern-card p-3 lg:p-4 cursor-pointer hover:scale-105 transition-all duration-300 group">
@@ -145,13 +145,13 @@ export const SalesForm = ({ onSaleAdded }: SalesFormProps) => {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="notes" className="text-sm lg:text-base font-semibold text-foreground">📝 Notes (optionnel)</Label>
+          <Label htmlFor="notes" className="text-sm lg:text-base font-bold text-foreground">📝 Notes (optionnel)</Label>
             <Input
               id="notes"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Informations complémentaires..."
-              className="friendly-input text-sm lg:text-base"
+              className="friendly-input text-sm lg:text-base h-11"
             />
         </div>
 
@@ -171,7 +171,7 @@ export const SalesForm = ({ onSaleAdded }: SalesFormProps) => {
 
         <Button 
           type="submit" 
-          className="modern-button w-full py-3 lg:py-4 text-base lg:text-lg font-bold" 
+          className="modern-button w-full h-12 lg:h-14 text-base lg:text-lg font-bold" 
           disabled={loading}
         >
           {loading ? "🔄 Enregistrement..." : "🚀 Enregistrer la vente"}

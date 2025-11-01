@@ -54,8 +54,9 @@ const HomePage: React.FC = () => {
           <div className="flex items-center justify-between">
             {/* Mobile menu button */}
             <button
-              className="lg:hidden p-2 rounded-xl hover:bg-muted/50 transition-colors"
+              className="lg:hidden p-3 rounded-xl hover:bg-muted/50 transition-colors h-12 w-12 flex items-center justify-center"
               onClick={() => setSidebarOpen(!sidebarOpen)}
+              aria-label="Menu"
             >
               <div className="w-6 h-6 flex flex-col justify-center gap-1">
                 <div className={`h-0.5 bg-foreground transition-all duration-300 ${sidebarOpen ? 'rotate-45 translate-y-1.5' : 'w-6'}`} />
@@ -78,7 +79,7 @@ const HomePage: React.FC = () => {
                 <span className="text-xs opacity-80 hidden lg:inline">({profile?.role})</span>
               </div>
               <VersionBadge />
-              <Button variant="outline" size="sm" onClick={signOut} className="rounded-2xl hover:scale-105 transition-all duration-300">
+              <Button variant="outline" size="sm" onClick={signOut} className="rounded-2xl hover:scale-105 transition-all duration-300 h-11 lg:h-10">
                 <LogOut className="h-4 w-4 lg:mr-2" />
                 <span className="hidden lg:inline">Déconnexion</span>
               </Button>
@@ -104,9 +105,10 @@ const HomePage: React.FC = () => {
                 </div>
                 <button
                   onClick={() => setSidebarOpen(false)}
-                  className="p-2 rounded-xl hover:bg-muted/50 transition-colors"
+                  className="p-3 rounded-xl hover:bg-muted/50 transition-colors h-11 w-11 flex items-center justify-center"
+                  aria-label="Fermer le menu"
                 >
-                  <div className="w-5 h-5 flex items-center justify-center">
+                  <div className="w-5 h-5 flex items-center justify-center relative">
                     <div className="w-4 h-0.5 bg-foreground rotate-45 absolute" />
                     <div className="w-4 h-0.5 bg-foreground -rotate-45 absolute" />
                   </div>
@@ -137,7 +139,7 @@ const HomePage: React.FC = () => {
           {/* Overlay pour mobile */}
           {sidebarOpen && (
             <div 
-              className="lg:hidden fixed inset-0 bg-black/50 z-30 transition-opacity duration-300"
+              className="lg:hidden fixed inset-0 bg-black/30 z-30 transition-opacity duration-300"
               onClick={() => setSidebarOpen(false)}
             />
           )}
