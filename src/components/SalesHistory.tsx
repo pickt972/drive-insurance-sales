@@ -1,16 +1,25 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Clock, Trash2, User, FileText, TrendingUp, Euro, Target, Phone, Mail, Filter, Download, Calendar } from "lucide-react";
+import { Clock, Trash2, User, FileText, TrendingUp, Euro, Target, Phone, Mail, Filter, Download, Calendar, ChevronLeft, ChevronRight } from "lucide-react";
 import { CreditCard as Edit } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useAuth } from "@/contexts/AuthContext";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+  PaginationEllipsis
+} from "@/components/ui/pagination";
 
 export const SalesHistory = () => {
   const { isAdmin, sales, users, objectives, deleteSale, updateSale, insuranceTypes, profile } = useAuth();
@@ -21,6 +30,10 @@ export const SalesHistory = () => {
   const [filterEndDate, setFilterEndDate] = useState("");
   const [filterInsurance, setFilterInsurance] = useState("");
   const [showFilters, setShowFilters] = useState(false);
+
+  // États pour la pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 20;
 
   // États pour l'édition de vente
   const [editingSale, setEditingSale] = useState<any>(null);
@@ -43,6 +56,28 @@ export const SalesHistory = () => {
   };
 
   const filteredSales = getFilteredSales();
+
+  // Calculs de pagination
+  const totalSales = filteredSales.length;
+  const totalPages = Math.ceil(totalSales / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = Math.min(startIndex + ITEMS_PER_PAGE, totalSales);
+  
+  // Ventes paginées
+  const paginatedSales = useMemo(() => {
+    return filteredSales.slice(startIndex, endIndex);
+  }, [filteredSales, startIndex, endIndex]);
+
+  // Réinitialiser la page quand les filtres changent
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [filterEmployee, filterStartDate, filterEndDate, filterInsurance]);
+
+  // Fonction pour changer de page avec scroll vers le haut
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   // Fonction d'export CSV
   const exportToCSV = () => {
@@ -217,7 +252,6 @@ export const SalesHistory = () => {
   };
 
   // Calculer les statistiques
-  const totalSales = filteredSales.length;
   const totalCommission = filteredSales.reduce((sum, sale) => sum + sale.commissionAmount, 0);
   const thisMonth = new Date();
   const monthStart = new Date(thisMonth.getFullYear(), thisMonth.getMonth(), 1);
@@ -448,11 +482,20 @@ export const SalesHistory = () => {
       {/* Historique détaillé */}
       <div className="modern-card animate-smooth-scale-in max-w-7xl mx-auto" style={{ animationDelay: '0.5s' }}>
         <div className="p-4 lg:p-8">
-          <div className="flex items-center gap-3 mb-6 lg:mb-8">
-            <div className="icon-wrapper">
-              <Clock className="h-6 w-6 text-primary" />
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-6 lg:mb-8 gap-4">
+            <div className="flex items-center gap-3">
+              <div className="icon-wrapper">
+                <Clock className="h-6 w-6 text-primary" />
+              </div>
+              <h2 className="text-lg lg:text-2xl font-bold gradient-text">📋 Historique Détaillé ({filteredSales.length})</h2>
             </div>
-            <h2 className="text-lg lg:text-2xl font-bold gradient-text">📋 Historique Détaillé ({filteredSales.length})</h2>
+            
+            {filteredSales.length > 0 && (
+              <div className="text-sm text-muted-foreground">
+                Affichage {startIndex + 1}-{endIndex} sur {totalSales} ventes
+                {totalPages > 1 && ` • Page ${currentPage}/${totalPages}`}
+              </div>
+            )}
           </div>
           
           {filteredSales.length === 0 ? (
@@ -465,8 +508,9 @@ export const SalesHistory = () => {
               </p>
             </div>
           ) : (
-            <div className="space-y-3 lg:space-y-4">
-              {filteredSales.map((sale, index) => (
+            <>
+              <div className="space-y-3 lg:space-y-4">
+                {paginatedSales.map((sale, index) => (
                 <div key={sale.id} className="modern-card p-4 lg:p-6 animate-elegant-slide" style={{ animationDelay: `${0.6 + index * 0.05}s` }}>
                   <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 lg:gap-0">
                     <div className="flex-1">
@@ -556,7 +600,91 @@ export const SalesHistory = () => {
                   </div>
                 </div>
               ))}
-            </div>
+              </div>
+
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="mt-8 flex flex-col items-center gap-4">
+                  <Pagination>
+                    <PaginationContent className="flex-wrap gap-1">
+                      <PaginationItem>
+                        <PaginationPrevious 
+                          onClick={() => currentPage > 1 && handlePageChange(currentPage - 1)}
+                          className={`cursor-pointer ${currentPage === 1 ? 'pointer-events-none opacity-50' : 'hover:bg-accent'}`}
+                        />
+                      </PaginationItem>
+                      
+                      {/* Première page */}
+                      <PaginationItem>
+                        <PaginationLink
+                          onClick={() => handlePageChange(1)}
+                          isActive={currentPage === 1}
+                          className="cursor-pointer"
+                        >
+                          1
+                        </PaginationLink>
+                      </PaginationItem>
+
+                      {/* Ellipsis si nécessaire */}
+                      {currentPage > 3 && totalPages > 4 && (
+                        <PaginationItem>
+                          <PaginationEllipsis />
+                        </PaginationItem>
+                      )}
+
+                      {/* Pages du milieu */}
+                      {Array.from({ length: totalPages }, (_, i) => i + 1)
+                        .filter(page => {
+                          if (page === 1 || page === totalPages) return false;
+                          return Math.abs(currentPage - page) <= 1;
+                        })
+                        .map(page => (
+                          <PaginationItem key={page}>
+                            <PaginationLink
+                              onClick={() => handlePageChange(page)}
+                              isActive={currentPage === page}
+                              className="cursor-pointer"
+                            >
+                              {page}
+                            </PaginationLink>
+                          </PaginationItem>
+                        ))}
+
+                      {/* Ellipsis si nécessaire */}
+                      {currentPage < totalPages - 2 && totalPages > 4 && (
+                        <PaginationItem>
+                          <PaginationEllipsis />
+                        </PaginationItem>
+                      )}
+
+                      {/* Dernière page */}
+                      {totalPages > 1 && (
+                        <PaginationItem>
+                          <PaginationLink
+                            onClick={() => handlePageChange(totalPages)}
+                            isActive={currentPage === totalPages}
+                            className="cursor-pointer"
+                          >
+                            {totalPages}
+                          </PaginationLink>
+                        </PaginationItem>
+                      )}
+
+                      <PaginationItem>
+                        <PaginationNext 
+                          onClick={() => currentPage < totalPages && handlePageChange(currentPage + 1)}
+                          className={`cursor-pointer ${currentPage === totalPages ? 'pointer-events-none opacity-50' : 'hover:bg-accent'}`}
+                        />
+                      </PaginationItem>
+                    </PaginationContent>
+                  </Pagination>
+                  
+                  <div className="text-sm text-muted-foreground">
+                    Page {currentPage} sur {totalPages}
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>
