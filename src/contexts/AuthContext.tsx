@@ -202,6 +202,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [insuranceTypes, setInsuranceTypes] = useState<InsuranceType[]>([]);
   const [sales, setSales] = useState<Sale[]>([]);
   const [objectives, setObjectives] = useState<Objective[]>([]);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   // Initialiser l'admin au premier lancement
   useEffect(() => {
@@ -320,11 +321,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       // Déterminer le rôle avec fallback robuste
       let userRole: 'admin' | 'employee' = 'employee';
+      let isUserAdmin = false;
       
       if (hasAdmin === true) {
         userRole = 'admin';
+        isUserAdmin = true;
       } else if (profileData?.role === 'admin') {
         userRole = 'admin';
+        isUserAdmin = true;
       } else {
         // Fallback: vérifier directement dans user_roles si les RPC échouent
         const { data: rolesData } = await supabaseClient
@@ -336,7 +340,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         
         if (rolesData) {
           userRole = 'admin';
+          isUserAdmin = true;
         }
+      }
+
+      // Mettre à jour l'état isAdmin
+      setIsAdmin(isUserAdmin);
+      
+      if (import.meta.env.DEV) {
+        console.log(`✅ Admin status checked: ${isUserAdmin} for user ${profileData.username}`);
       }
 
       if (profileData) {
@@ -395,6 +407,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setUser(null);
     setSupabaseUser(null);
     setSession(null);
+    setIsAdmin(false);
     toast({
       title: "Déconnexion réussie",
       description: "À bientôt !",
@@ -931,7 +944,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     user,
     profile: user,
     isAuthenticated: !!session,
-    isAdmin: user?.role === 'admin',
+    isAdmin: isAdmin,
     loading,
     signIn,
     signOut,
