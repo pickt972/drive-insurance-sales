@@ -47,7 +47,9 @@ interface AuthContextType {
   updateObjective: (id: string, updates: Partial<Objective>) => Promise<{ success: boolean; error?: string }>;
   removeObjective: (id: string) => Promise<{ success: boolean; error?: string }>;
   fetchObjectives: () => void;
+  checkAdminStatus: (userId: string) => Promise<void>;
 }
+
 
 interface InsuranceType {
   id: string;
@@ -204,6 +206,38 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [objectives, setObjectives] = useState<Objective[]>([]);
   const [isAdmin, setIsAdmin] = useState(false);
 
+  // Vérification explicite du rôle admin avec logs visibles
+  const checkAdminStatus = async (userId: string): Promise<void> => {
+    try {
+      if (!userId) {
+        setIsAdmin(false);
+        console.warn('⚠️ checkAdminStatus appelé sans userId');
+        return;
+      }
+      console.log('🔍 Vérification admin pour:', userId);
+
+      const supabaseClient: any = supabase;
+      const { data, error } = await supabaseClient
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', userId);
+
+      if (error) {
+        console.error('❌ Erreur query user_roles:', error);
+        setIsAdmin(false);
+        return;
+      }
+
+      const hasAdminRole = Array.isArray(data) && data.some((row: any) => row.role === 'admin');
+      console.log('📋 Rôles trouvés:', data);
+      console.log(`✅ Admin status checked: ${hasAdminRole}`);
+      setIsAdmin(!!hasAdminRole);
+    } catch (err) {
+      console.error('❌ Erreur exception checkAdminStatus:', err);
+      setIsAdmin(false);
+    }
+  };
+
   // Initialiser l'admin au premier lancement
   useEffect(() => {
     const initializeAdmin = async () => {
@@ -237,6 +271,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         if (session?.user) {
           setTimeout(() => {
             loadUserProfile(session.user.id);
+            checkAdminStatus(session.user.id);
           }, 0);
         } else {
           setUser(null);
@@ -249,7 +284,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setSession(session);
       setSupabaseUser(session?.user ?? null);
       if (session?.user) {
-        loadUserProfile(session.user.id);
+        setTimeout(() => {
+          loadUserProfile(session.user.id);
+          checkAdminStatus(session.user.id);
+        }, 0);
       } else {
         setLoading(false);
       }
@@ -393,6 +431,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         });
         setTimeout(() => {
           loadUserProfile(data.user!.id);
+          checkAdminStatus(data.user!.id);
         }, 0);
       }
 
@@ -970,7 +1009,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     updateObjective,
     removeObjective,
     fetchObjectives,
+    checkAdminStatus,
   };
+
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
