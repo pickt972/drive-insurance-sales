@@ -61,8 +61,8 @@ const HomePage: React.FC = () => {
       {/* 🔴 DEBUG BOX TEMPORAIRE */}
       <div style={{
         position: 'fixed',
-        top: '10px',
-        right: '10px',
+        bottom: '10px',
+        left: '10px',
         background: 'rgba(0, 0, 0, 0.9)',
         color: '#0f0',
         padding: '12px',
