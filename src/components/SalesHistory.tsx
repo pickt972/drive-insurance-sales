@@ -27,7 +27,7 @@ import { fr } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 
 export const SalesHistory = () => {
-  const { isAdmin, sales, users, objectives, deleteSale, updateSale, insuranceTypes, profile } = useAuth();
+  const { isAdmin, sales, users, objectives, deleteSale, updateSale, insuranceTypes, profile, fetchSales } = useAuth();
   
   // États pour les filtres
   const [filterEmployee, setFilterEmployee] = useState("");
@@ -49,15 +49,19 @@ export const SalesHistory = () => {
   const [editNotes, setEditNotes] = useState("");
   const [editLoading, setEditLoading] = useState(false);
 
-  // Fonction de filtrage
+  // Recharger les ventes à l'initialisation
+  React.useEffect(() => {
+    fetchSales();
+  }, []);
+
+  // Fonction de filtrage (côté client pour maintenir la compatibilité)
   const getFilteredSales = () => {
     return sales.filter(sale => {
       const matchEmployee = !filterEmployee || sale.employeeName === filterEmployee;
       const matchStartDate = !filterStartDate || new Date(sale.createdAt) >= filterStartDate;
-      const matchEndDate = !filterEndDate || new Date(sale.createdAt) <= new Date(filterEndDate.getTime() + 86400000 - 1); // Fin de journée
+      const matchEndDate = !filterEndDate || new Date(sale.createdAt) <= new Date(filterEndDate.getTime() + 86400000 - 1);
       const matchInsurance = !filterInsurance || sale.insuranceTypes.includes(filterInsurance);
       
-      // Recherche texte (nom client, numéro réservation, email)
       const matchSearch = !searchQuery || 
         sale.clientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
         sale.reservationNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -86,7 +90,7 @@ export const SalesHistory = () => {
     setCurrentPage(1);
   }, [filterEmployee, filterStartDate, filterEndDate, filterInsurance, searchQuery]);
 
-  // Fonction pour changer de page avec scroll vers le haut
+  // Fonction pour changer de page avec scroll
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -752,7 +756,9 @@ export const SalesHistory = () => {
                     </PaginationContent>
                   </Pagination>
                   
-                  <div className="text-sm text-muted-foreground">
+                  <div className="text-sm text-muted-foreground text-center">
+                    Affichage {startIndex + 1}-{endIndex} sur {totalSales} ventes
+                    <span className="mx-2">•</span>
                     Page {currentPage} sur {totalPages}
                   </div>
                 </div>
