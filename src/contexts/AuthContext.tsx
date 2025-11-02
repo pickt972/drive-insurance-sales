@@ -206,18 +206,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [objectives, setObjectives] = useState<Objective[]>([]);
   const [isAdmin, setIsAdmin] = useState(false);
 
-  // Vérification explicite du rôle admin avec logs visibles + RETRY
+  // Vérification explicite du rôle admin avec retry
   const checkAdminStatus = async (userId: string): Promise<void> => {
     try {
       if (!userId) {
         setIsAdmin(false);
-        console.warn('⚠️ checkAdminStatus appelé sans userId');
         return;
       }
-      console.log('🔍 Vérification admin pour:', userId);
 
       const supabaseClient: any = supabase;
-      
+
       // Retry avec délai pour schema cache
       let lastError: any = null;
       for (let attempt = 0; attempt < 3; attempt++) {
@@ -228,31 +226,34 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
         if (!error) {
           const hasAdminRole = Array.isArray(data) && data.some((row: any) => row.role === 'admin');
-          console.log('📋 Rôles trouvés:', data);
-          console.log(`✅ Admin status checked: ${hasAdminRole}`);
           setIsAdmin(!!hasAdminRole);
           return;
         }
 
         lastError = error;
         const isRetryable = error?.code === 'PGRST002' || error?.message?.includes('schema cache');
-        
+
         if (isRetryable && attempt < 2) {
           const delay = 500 * Math.pow(2, attempt);
-          console.warn(`⏳ Retry ${attempt + 1}/3 après ${delay}ms (schema cache error)`);
           await new Promise(r => setTimeout(r, delay));
           continue;
         }
-        
-        console.error('❌ Erreur query user_roles:', error);
+
+        if (import.meta.env.DEV) {
+          console.error('Erreur query user_roles:', error);
+        }
         setIsAdmin(false);
         return;
       }
-      
-      console.error('❌ Échec après 3 tentatives:', lastError);
+
+      if (import.meta.env.DEV) {
+        console.error('Échec après 3 tentatives:', lastError);
+      }
       setIsAdmin(false);
     } catch (err) {
-      console.error('❌ Erreur exception checkAdminStatus:', err);
+      if (import.meta.env.DEV) {
+        console.error('Erreur exception checkAdminStatus:', err);
+      }
       setIsAdmin(false);
     }
   };
@@ -666,26 +667,45 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   // Gestion des assurances
-  const fetchInsuranceTypes = () => {
-    const stored = localStorage.getItem('aloelocation_insurance_types');
-    if (stored) {
-      setInsuranceTypes(JSON.parse(stored));
+  const fetchInsuranceTypes = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('insurance_types')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      if (data) {
+        const mappedTypes: InsuranceType[] = data.map((type: any) => ({
+          id: type.id,
+          name: type.name,
+          commission: type.commission,
+          isActive: type.is_active,
+          createdAt: type.created_at
+        }));
+        setInsuranceTypes(mappedTypes);
+      }
+    } catch (error: any) {
+      console.error('Erreur récupération types assurance:', error);
     }
   };
 
   const addInsuranceType = async (name: string, commission: number): Promise<{ success: boolean; error?: string }> => {
     try {
-      const newType: InsuranceType = {
-        id: Date.now().toString(),
-        name,
-        commission,
-        isActive: true,
-        createdAt: new Date().toISOString()
-      };
+      const { data, error } = await supabase
+        .from('insurance_types')
+        .insert([{
+          name,
+          commission,
+          is_active: true
+        }])
+        .select()
+        .single();
 
-      const updated = [...insuranceTypes, newType];
-      localStorage.setItem('aloelocation_insurance_types', JSON.stringify(updated));
-      setInsuranceTypes(updated);
+      if (error) throw error;
+
+      await fetchInsuranceTypes();
 
       toast({
         title: "Assurance ajoutée",
@@ -695,18 +715,23 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       return { success: true };
     } catch (error: any) {
       console.error('Erreur ajout assurance:', error);
-      return { success: false, error: 'Erreur lors de l\'ajout' };
+      return { success: false, error: error.message || 'Erreur lors de l\'ajout' };
     }
   };
 
   const updateInsuranceType = async (id: string, name: string, commission: number): Promise<{ success: boolean; error?: string }> => {
     try {
-      const updated = insuranceTypes.map(t => 
-        t.id === id ? { ...t, name, commission } : t
-      );
+      const { error } = await supabase
+        .from('insurance_types')
+        .update({
+          name,
+          commission
+        })
+        .eq('id', id);
 
-      localStorage.setItem('aloelocation_insurance_types', JSON.stringify(updated));
-      setInsuranceTypes(updated);
+      if (error) throw error;
+
+      await fetchInsuranceTypes();
 
       toast({
         title: "Assurance modifiée",
@@ -716,18 +741,20 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       return { success: true };
     } catch (error: any) {
       console.error('Erreur modification assurance:', error);
-      return { success: false, error: 'Erreur lors de la modification' };
+      return { success: false, error: error.message || 'Erreur lors de la modification' };
     }
   };
 
   const removeInsuranceType = async (id: string): Promise<{ success: boolean; error?: string }> => {
     try {
-      const updated = insuranceTypes.map(t => 
-        t.id === id ? { ...t, isActive: false } : t
-      );
+      const { error } = await supabase
+        .from('insurance_types')
+        .update({ is_active: false })
+        .eq('id', id);
 
-      localStorage.setItem('aloelocation_insurance_types', JSON.stringify(updated));
-      setInsuranceTypes(updated);
+      if (error) throw error;
+
+      await fetchInsuranceTypes();
 
       toast({
         title: "Assurance désactivée",
@@ -737,7 +764,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       return { success: true };
     } catch (error: any) {
       console.error('Erreur désactivation assurance:', error);
-      return { success: false, error: 'Erreur lors de la désactivation' };
+      return { success: false, error: error.message || 'Erreur lors de la désactivation' };
     }
   };
 
@@ -929,24 +956,55 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   // Gestion des objectifs
-  const fetchObjectives = () => {
-    const stored = localStorage.getItem('aloelocation_objectives');
-    if (stored) {
-      setObjectives(JSON.parse(stored));
+  const fetchObjectives = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('objectives')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      if (data) {
+        const mappedObjectives: Objective[] = data.map((obj: any) => ({
+          id: obj.id,
+          employeeName: obj.employee_name,
+          objectiveType: obj.objective_type,
+          targetAmount: obj.target_amount,
+          targetSalesCount: obj.target_sales_count,
+          period: obj.period,
+          startDate: obj.start_date,
+          endDate: obj.end_date,
+          description: obj.description,
+          createdAt: obj.created_at
+        }));
+        setObjectives(mappedObjectives);
+      }
+    } catch (error: any) {
+      console.error('Erreur récupération objectifs:', error);
     }
   };
 
   const addObjective = async (objective: Omit<Objective, 'id' | 'createdAt'>): Promise<{ success: boolean; error?: string }> => {
     try {
-      const newObjective: Objective = {
-        ...objective,
-        id: Date.now().toString(),
-        createdAt: new Date().toISOString()
-      };
+      const { data, error } = await supabase
+        .from('objectives')
+        .insert([{
+          employee_name: objective.employeeName,
+          objective_type: objective.objectiveType,
+          target_amount: objective.targetAmount,
+          target_sales_count: objective.targetSalesCount,
+          period: objective.period,
+          start_date: objective.startDate,
+          end_date: objective.endDate,
+          description: objective.description
+        }])
+        .select()
+        .single();
 
-      const updated = [...objectives, newObjective];
-      localStorage.setItem('aloelocation_objectives', JSON.stringify(updated));
-      setObjectives(updated);
+      if (error) throw error;
+
+      await fetchObjectives();
 
       toast({
         title: "Objectif ajouté",
@@ -956,18 +1014,30 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       return { success: true };
     } catch (error: any) {
       console.error('Erreur ajout objectif:', error);
-      return { success: false, error: 'Erreur lors de l\'ajout' };
+      return { success: false, error: error.message || 'Erreur lors de l\'ajout' };
     }
   };
 
   const updateObjective = async (id: string, updates: Partial<Objective>): Promise<{ success: boolean; error?: string }> => {
     try {
-      const updated = objectives.map(o => 
-        o.id === id ? { ...o, ...updates } : o
-      );
+      const dbUpdates: any = {};
+      if (updates.employeeName !== undefined) dbUpdates.employee_name = updates.employeeName;
+      if (updates.objectiveType !== undefined) dbUpdates.objective_type = updates.objectiveType;
+      if (updates.targetAmount !== undefined) dbUpdates.target_amount = updates.targetAmount;
+      if (updates.targetSalesCount !== undefined) dbUpdates.target_sales_count = updates.targetSalesCount;
+      if (updates.period !== undefined) dbUpdates.period = updates.period;
+      if (updates.startDate !== undefined) dbUpdates.start_date = updates.startDate;
+      if (updates.endDate !== undefined) dbUpdates.end_date = updates.endDate;
+      if (updates.description !== undefined) dbUpdates.description = updates.description;
 
-      localStorage.setItem('aloelocation_objectives', JSON.stringify(updated));
-      setObjectives(updated);
+      const { error } = await supabase
+        .from('objectives')
+        .update(dbUpdates)
+        .eq('id', id);
+
+      if (error) throw error;
+
+      await fetchObjectives();
 
       toast({
         title: "Objectif modifié",
@@ -977,15 +1047,20 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       return { success: true };
     } catch (error: any) {
       console.error('Erreur modification objectif:', error);
-      return { success: false, error: 'Erreur lors de la modification' };
+      return { success: false, error: error.message || 'Erreur lors de la modification' };
     }
   };
 
   const removeObjective = async (id: string): Promise<{ success: boolean; error?: string }> => {
     try {
-      const updated = objectives.filter(o => o.id !== id);
-      localStorage.setItem('aloelocation_objectives', JSON.stringify(updated));
-      setObjectives(updated);
+      const { error } = await supabase
+        .from('objectives')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      await fetchObjectives();
 
       toast({
         title: "Objectif supprimé",
@@ -995,7 +1070,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       return { success: true };
     } catch (error: any) {
       console.error('Erreur suppression objectif:', error);
-      return { success: false, error: 'Erreur lors de la suppression' };
+      return { success: false, error: error.message || 'Erreur lors de la suppression' };
     }
   };
 
