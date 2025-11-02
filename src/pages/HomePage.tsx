@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from "@/components/ui/button";
 import { LogOut, ChartBar as BarChart3, Plus, Clock, Settings } from "lucide-react";
@@ -10,9 +10,19 @@ import { VersionBadge } from "@/components/ui/version-badge";
 import aloeLogo from "@/assets/aloelocation-logo.png";
 
 const HomePage: React.FC = () => {
-  const { profile, isAdmin, signOut } = useAuth();
+  const { profile, isAdmin, signOut, user } = useAuth();
   const [currentTab, setCurrentTab] = useState('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // 🔴 DEBUG LOGS
+  useEffect(() => {
+    console.log('=== 🏠 HomePage RENDER ===');
+    console.log('user:', user);
+    console.log('profile:', profile);
+    console.log('isAdmin:', isAdmin);
+    console.log('user?.id:', user?.id);
+  }, [user, profile, isAdmin]);
+
 
   const handleTabChange = (tab: string) => {
     setCurrentTab(tab);
@@ -48,6 +58,33 @@ const HomePage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondary/5 overflow-x-hidden">
+      {/* 🔴 DEBUG BOX TEMPORAIRE */}
+      <div style={{
+        position: 'fixed',
+        top: '10px',
+        right: '10px',
+        background: 'rgba(0, 0, 0, 0.9)',
+        color: '#0f0',
+        padding: '12px',
+        fontSize: '11px',
+        zIndex: 9999,
+        maxWidth: '280px',
+        borderRadius: '8px',
+        fontFamily: 'monospace',
+        border: '1px solid #0f0'
+      }}>
+        <div style={{ marginBottom: '8px', fontWeight: 'bold', color: '#ff0' }}>🔍 DEBUG AUTH</div>
+        <div>Email: {user?.username || 'N/A'}</div>
+        <div style={{ color: isAdmin ? '#0f0' : '#f00', fontWeight: 'bold' }}>
+          isAdmin: {isAdmin ? '✅ TRUE' : '❌ FALSE'}
+        </div>
+        <div>user?.id: {user?.id?.slice(0, 12)}...</div>
+        <div>profile?.role: {profile?.role}</div>
+        <div style={{ marginTop: '8px', fontSize: '9px', opacity: 0.7 }}>
+          Tabs count: {tabs.length}
+        </div>
+      </div>
+      
       {/* Header */}
       <header className="glass-header p-4 lg:p-6">
         <div className="modern-container">

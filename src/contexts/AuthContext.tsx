@@ -206,7 +206,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [objectives, setObjectives] = useState<Objective[]>([]);
   const [isAdmin, setIsAdmin] = useState(false);
 
-  // Vérification explicite du rôle admin avec logs visibles
+  // Vérification explicite du rôle admin avec logs visibles + RETRY
   const checkAdminStatus = async (userId: string): Promise<void> => {
     try {
       if (!userId) {
@@ -217,26 +217,46 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       console.log('🔍 Vérification admin pour:', userId);
 
       const supabaseClient: any = supabase;
-      const { data, error } = await supabaseClient
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', userId);
+      
+      // Retry avec délai pour schema cache
+      let lastError: any = null;
+      for (let attempt = 0; attempt < 3; attempt++) {
+        const { data, error } = await supabaseClient
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', userId);
 
-      if (error) {
+        if (!error) {
+          const hasAdminRole = Array.isArray(data) && data.some((row: any) => row.role === 'admin');
+          console.log('📋 Rôles trouvés:', data);
+          console.log(`✅ Admin status checked: ${hasAdminRole}`);
+          setIsAdmin(!!hasAdminRole);
+          return;
+        }
+
+        lastError = error;
+        const isRetryable = error?.code === 'PGRST002' || error?.message?.includes('schema cache');
+        
+        if (isRetryable && attempt < 2) {
+          const delay = 500 * Math.pow(2, attempt);
+          console.warn(`⏳ Retry ${attempt + 1}/3 après ${delay}ms (schema cache error)`);
+          await new Promise(r => setTimeout(r, delay));
+          continue;
+        }
+        
         console.error('❌ Erreur query user_roles:', error);
         setIsAdmin(false);
         return;
       }
-
-      const hasAdminRole = Array.isArray(data) && data.some((row: any) => row.role === 'admin');
-      console.log('📋 Rôles trouvés:', data);
-      console.log(`✅ Admin status checked: ${hasAdminRole}`);
-      setIsAdmin(!!hasAdminRole);
+      
+      console.error('❌ Échec après 3 tentatives:', lastError);
+      setIsAdmin(false);
     } catch (err) {
       console.error('❌ Erreur exception checkAdminStatus:', err);
       setIsAdmin(false);
     }
   };
+
 
   // Initialiser l'admin au premier lancement
   useEffect(() => {
