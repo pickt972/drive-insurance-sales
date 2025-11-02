@@ -670,24 +670,94 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   // Gestion des ventes
-  const fetchSales = () => {
-    const stored = localStorage.getItem('aloelocation_sales');
-    if (stored) {
-      setSales(JSON.parse(stored));
+  const fetchSales = async () => {
+    try {
+      const supabaseClient: any = supabase;
+      const { data: salesData, error } = await supabaseClient
+        .from('sales')
+        .select(`
+          *,
+          sale_insurances (
+            insurance_type:insurance_types (
+              id,
+              name,
+              commission
+            )
+          )
+        `)
+        .eq('status', 'active')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      // Transformer les données Supabase en format local
+      const transformedSales: Sale[] = (salesData || []).map((sale: any) => ({
+        id: sale.id,
+        employeeName: sale.employee_name,
+        clientName: sale.client_name,
+        clientEmail: sale.client_email,
+        clientPhone: sale.client_phone,
+        reservationNumber: sale.reservation_number,
+        insuranceTypes: sale.sale_insurances?.map((si: any) => si.insurance_type?.name).filter(Boolean) || [],
+        commissionAmount: parseFloat(sale.commission_amount || 0),
+        notes: sale.notes,
+        createdAt: sale.created_at
+      }));
+
+      setSales(transformedSales);
+    } catch (error: any) {
+      console.error('Erreur récupération ventes:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de charger les ventes",
+        variant: "destructive",
+      });
     }
   };
 
   const addSale = async (sale: Omit<Sale, 'id' | 'createdAt'>): Promise<{ success: boolean; error?: string }> => {
     try {
-      const newSale: Sale = {
-        ...sale,
-        id: Date.now().toString(),
-        createdAt: new Date().toISOString()
-      };
+      const supabaseClient: any = supabase;
+      // 1. Créer la vente principale
+      const { data: saleData, error: saleError } = await supabaseClient
+        .from('sales')
+        .insert({
+          employee_name: sale.employeeName,
+          client_name: sale.clientName,
+          client_email: sale.clientEmail,
+          client_phone: sale.clientPhone,
+          reservation_number: sale.reservationNumber,
+          commission_amount: sale.commissionAmount,
+          notes: sale.notes,
+          status: 'active',
+          // Utiliser la première assurance comme référence (temporaire)
+          insurance_type_id: insuranceTypes.find(it => it.name === sale.insuranceTypes[0])?.id || insuranceTypes[0]?.id
+        })
+        .select()
+        .single();
 
-      const updated = [newSale, ...sales];
-      localStorage.setItem('aloelocation_sales', JSON.stringify(updated));
-      setSales(updated);
+      if (saleError) throw saleError;
+      if (!saleData) throw new Error('Aucune donnée retournée');
+
+      // 2. Créer les liens sale_insurances
+      const saleInsurances = sale.insuranceTypes.map(insuranceName => {
+        const insurance = insuranceTypes.find(it => it.name === insuranceName);
+        return {
+          sale_id: saleData.id,
+          insurance_type_id: insurance?.id,
+          commission_amount: insurance?.commission || 0
+        };
+      }).filter(si => si.insurance_type_id);
+
+      if (saleInsurances.length > 0) {
+        const { error: insurancesError } = await supabaseClient
+          .from('sale_insurances')
+          .insert(saleInsurances);
+
+        if (insurancesError) throw insurancesError;
+      }
+
+      await fetchSales();
 
       toast({
         title: "Vente ajoutée",
@@ -697,15 +767,22 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       return { success: true };
     } catch (error: any) {
       console.error('Erreur ajout vente:', error);
-      return { success: false, error: 'Erreur lors de l\'ajout' };
+      return { success: false, error: error.message || 'Erreur lors de l\'ajout' };
     }
   };
 
   const deleteSale = async (id: string): Promise<{ success: boolean; error?: string }> => {
     try {
-      const updated = sales.filter(s => s.id !== id);
-      localStorage.setItem('aloelocation_sales', JSON.stringify(updated));
-      setSales(updated);
+      const supabaseClient: any = supabase;
+      // Supprimer les sale_insurances (cascade devrait le faire automatiquement)
+      const { error } = await supabaseClient
+        .from('sales')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      await fetchSales();
 
       toast({
         title: "Vente supprimée",
@@ -715,18 +792,57 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       return { success: true };
     } catch (error: any) {
       console.error('Erreur suppression vente:', error);
-      return { success: false, error: 'Erreur lors de la suppression' };
+      return { success: false, error: error.message || 'Erreur lors de la suppression' };
     }
   };
 
   const updateSale = async (id: string, updates: Partial<Omit<Sale, 'id' | 'createdAt'>>): Promise<{ success: boolean; error?: string }> => {
     try {
-      const updated = sales.map(s => 
-        s.id === id ? { ...s, ...updates } : s
-      );
+      const supabaseClient: any = supabase;
+      // 1. Mettre à jour la vente principale
+      const updateData: any = {};
+      if (updates.clientName) updateData.client_name = updates.clientName;
+      if (updates.clientEmail !== undefined) updateData.client_email = updates.clientEmail;
+      if (updates.clientPhone !== undefined) updateData.client_phone = updates.clientPhone;
+      if (updates.reservationNumber) updateData.reservation_number = updates.reservationNumber;
+      if (updates.commissionAmount !== undefined) updateData.commission_amount = updates.commissionAmount;
+      if (updates.notes !== undefined) updateData.notes = updates.notes;
 
-      localStorage.setItem('aloelocation_sales', JSON.stringify(updated));
-      setSales(updated);
+      const { error: saleError } = await supabaseClient
+        .from('sales')
+        .update(updateData)
+        .eq('id', id);
+
+      if (saleError) throw saleError;
+
+      // 2. Si les assurances ont changé, mettre à jour sale_insurances
+      if (updates.insuranceTypes) {
+        // Supprimer les anciennes
+        await supabaseClient
+          .from('sale_insurances')
+          .delete()
+          .eq('sale_id', id);
+
+        // Ajouter les nouvelles
+        const saleInsurances = updates.insuranceTypes.map(insuranceName => {
+          const insurance = insuranceTypes.find(it => it.name === insuranceName);
+          return {
+            sale_id: id,
+            insurance_type_id: insurance?.id,
+            commission_amount: insurance?.commission || 0
+          };
+        }).filter(si => si.insurance_type_id);
+
+        if (saleInsurances.length > 0) {
+          const { error: insurancesError } = await supabaseClient
+            .from('sale_insurances')
+            .insert(saleInsurances);
+
+          if (insurancesError) throw insurancesError;
+        }
+      }
+
+      await fetchSales();
 
       toast({
         title: "Vente modifiée",
@@ -736,7 +852,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       return { success: true };
     } catch (error: any) {
       console.error('Erreur modification vente:', error);
-      return { success: false, error: 'Erreur lors de la modification' };
+      return { success: false, error: error.message || 'Erreur lors de la modification' };
     }
   };
 
