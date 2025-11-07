@@ -27,7 +27,22 @@ import { fr } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 
 export const SalesHistory = () => {
-  const { isAdmin, sales, users, objectives, deleteSale, updateSale, insuranceTypes, profile, fetchSales } = useAuth();
+  const { 
+    isAdmin, 
+    sales, 
+    users, 
+    objectives, 
+    deleteSale, 
+    updateSale, 
+    insuranceTypes, 
+    profile, 
+    fetchSales,
+    totalSalesCount,
+    currentSalesPage,
+    salesTotalPages,
+    nextSalesPage,
+    prevSalesPage
+  } = useAuth();
   
   // États pour les filtres
   const [filterEmployee, setFilterEmployee] = useState("");
@@ -36,10 +51,6 @@ export const SalesHistory = () => {
   const [filterInsurance, setFilterInsurance] = useState("");
   const [showFilters, setShowFilters] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-
-  // États pour la pagination
-  const [currentPage, setCurrentPage] = useState(1);
-  const ITEMS_PER_PAGE = 20;
 
   // États pour l'édition de vente
   const [editingSale, setEditingSale] = useState<any>(null);
@@ -54,7 +65,9 @@ export const SalesHistory = () => {
     fetchSales();
   }, []);
 
-  // Fonction de filtrage (côté client pour maintenir la compatibilité)
+
+  // Fonction de filtrage (côté client - uniquement pour recherche et filtres)
+  // La pagination est maintenant côté serveur
   const getFilteredSales = () => {
     return sales.filter(sale => {
       const matchEmployee = !filterEmployee || sale.employeeName === filterEmployee;
@@ -72,29 +85,10 @@ export const SalesHistory = () => {
     });
   };
 
-  const filteredSales = getFilteredSales();
+  // Pour l'instant on utilise les ventes déjà paginées côté serveur
+  // Les filtres locaux s'appliquent uniquement sur la page courante
+  const displayedSales = getFilteredSales();
 
-  // Calculs de pagination
-  const totalSales = filteredSales.length;
-  const totalPages = Math.ceil(totalSales / ITEMS_PER_PAGE);
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const endIndex = Math.min(startIndex + ITEMS_PER_PAGE, totalSales);
-  
-  // Ventes paginées
-  const paginatedSales = useMemo(() => {
-    return filteredSales.slice(startIndex, endIndex);
-  }, [filteredSales, startIndex, endIndex]);
-
-  // Réinitialiser la page quand les filtres changent
-  React.useEffect(() => {
-    setCurrentPage(1);
-  }, [filterEmployee, filterStartDate, filterEndDate, filterInsurance, searchQuery]);
-
-  // Fonction pour changer de page avec scroll
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
 
   // Fonction d'export CSV
   const exportToCSV = () => {
@@ -110,7 +104,7 @@ export const SalesHistory = () => {
       'Notes'
     ];
     
-    const csvData = filteredSales.map(sale => [
+    const csvData = displayedSales.map(sale => [
       new Date(sale.createdAt).toLocaleDateString('fr-FR'),
       `${users.find(u => u.username === sale.employeeName)?.firstName || ''} ${users.find(u => u.username === sale.employeeName)?.lastName || ''}`,
       sale.clientName,
@@ -156,8 +150,8 @@ export const SalesHistory = () => {
           <h1>Rapport de Ventes - Aloe Location</h1>
           <div class="summary">
             <h3>Résumé</h3>
-            <p><strong>Nombre de ventes:</strong> ${filteredSales.length}</p>
-            <p><strong>Commission totale:</strong> ${filteredSales.reduce((sum, sale) => sum + sale.commissionAmount, 0).toFixed(2)} €</p>
+            <p><strong>Nombre de ventes:</strong> ${displayedSales.length}</p>
+            <p><strong>Commission totale:</strong> ${displayedSales.reduce((sum, sale) => sum + sale.commissionAmount, 0).toFixed(2)} €</p>
             <p><strong>Date d'export:</strong> ${new Date().toLocaleDateString('fr-FR')}</p>
           </div>
           <table>
@@ -172,7 +166,7 @@ export const SalesHistory = () => {
               </tr>
             </thead>
             <tbody>
-              ${filteredSales.map(sale => `
+              ${displayedSales.map(sale => `
                 <tr>
                   <td>${new Date(sale.createdAt).toLocaleDateString('fr-FR')}</td>
                   <td>${users.find(u => u.username === sale.employeeName)?.firstName || ''} ${users.find(u => u.username === sale.employeeName)?.lastName || ''}</td>
@@ -269,21 +263,21 @@ export const SalesHistory = () => {
     await deleteSale(saleId);
   };
 
-  // Calculer les statistiques
-  const totalCommission = filteredSales.reduce((sum, sale) => sum + sale.commissionAmount, 0);
+  // Calculer les statistiques (basées sur toutes les ventes du mois, pas seulement la page)
+  const totalCommission = sales.reduce((sum, sale) => sum + sale.commissionAmount, 0);
   const thisMonth = new Date();
   const monthStart = new Date(thisMonth.getFullYear(), thisMonth.getMonth(), 1);
-  const salesThisMonth = filteredSales.filter(sale => new Date(sale.createdAt) >= monthStart);
+  const salesThisMonth = sales.filter(sale => new Date(sale.createdAt) >= monthStart);
   
   // Statistiques par employé
   const employeeStats = users.filter(u => u.role === 'employee').map(user => {
-    const userSales = filteredSales.filter(sale => sale.employeeName === user.username);
+    const userSales = sales.filter(sale => sale.employeeName === user.username);
     const userCommission = userSales.reduce((sum, sale) => sum + sale.commissionAmount, 0);
     const userObjective = objectives.find(obj => obj.employeeName === user.username);
     
     let progressPercentage = 0;
     if (userObjective) {
-      const objectiveSales = filteredSales.filter(sale => 
+      const objectiveSales = sales.filter(sale => 
         sale.employeeName === user.username &&
         new Date(sale.createdAt) >= new Date(userObjective.startDate) &&
         new Date(sale.createdAt) <= new Date(userObjective.endDate)
@@ -296,7 +290,7 @@ export const SalesHistory = () => {
         progressPercentage = Math.min((objectiveSales.length / userObjective.targetSalesCount) * 100, 100);
       }
     }
-    
+
     return {
       ...user,
       salesCount: userSales.length,
@@ -342,7 +336,7 @@ export const SalesHistory = () => {
             </div>
             {searchQuery && (
               <p className="text-sm text-muted-foreground mt-2 ml-1">
-                {filteredSales.length} résultat(s) trouvé(s) pour "{searchQuery}"
+                {displayedSales.length} résultat(s) trouvé(s) pour "{searchQuery}"
               </p>
             )}
           </div>
@@ -482,7 +476,7 @@ export const SalesHistory = () => {
               </div>
               <div className="modern-card p-3 lg:p-4 bg-gradient-to-r from-info/10 to-info/5 border-info/30">
                 <div className="text-sm lg:text-base text-info font-semibold">
-                  📊 <strong>Résultats filtrés:</strong> {filteredSales.length} vente(s) • 
+                  📊 <strong>Résultats filtrés:</strong> {displayedSales.length} vente(s) • 
                   <strong> Commission totale:</strong> {totalCommission.toFixed(2)} €
                 </div>
               </div>
@@ -499,7 +493,7 @@ export const SalesHistory = () => {
               <TrendingUp className="h-6 w-6 text-primary" />
             </div>
             <div className="text-right">
-              <p className="text-xl lg:text-3xl font-bold text-primary">{totalSales}</p>
+              <p className="text-xl lg:text-3xl font-bold text-primary">{totalSalesCount}</p>
               <p className="text-xs lg:text-sm text-muted-foreground">Total Ventes</p>
             </div>
           </div>
@@ -564,18 +558,17 @@ export const SalesHistory = () => {
               <div className="icon-wrapper">
                 <Clock className="h-6 w-6 text-primary" />
               </div>
-              <h2 className="text-lg lg:text-2xl font-bold gradient-text">📋 Historique Détaillé ({filteredSales.length})</h2>
+              <h2 className="text-lg lg:text-2xl font-bold gradient-text">📋 Historique Détaillé ({displayedSales.length})</h2>
             </div>
             
-            {filteredSales.length > 0 && (
+            {totalSalesCount > 0 && (
               <div className="text-sm text-muted-foreground">
-                Affichage {startIndex + 1}-{endIndex} sur {totalSales} ventes
-                {totalPages > 1 && ` • Page ${currentPage}/${totalPages}`}
+                Page {currentSalesPage + 1} sur {salesTotalPages} • {totalSalesCount} vente(s) au total
               </div>
             )}
           </div>
           
-          {filteredSales.length === 0 ? (
+          {displayedSales.length === 0 ? (
             <div className="text-center py-8 lg:py-16">
               <div className="icon-wrapper mx-auto mb-6 opacity-50">
                 <FileText className="h-12 lg:h-16 w-12 lg:w-16" />
@@ -587,7 +580,7 @@ export const SalesHistory = () => {
           ) : (
             <>
               <div className="space-y-3 lg:space-y-4">
-                {paginatedSales.map((sale, index) => (
+                {displayedSales.map((sale, index) => (
                 <div key={sale.id} className="modern-card p-4 lg:p-6 animate-elegant-slide" style={{ animationDelay: `${0.6 + index * 0.05}s` }}>
                   <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 lg:gap-0">
                     <div className="flex-1">
@@ -680,86 +673,34 @@ export const SalesHistory = () => {
               </div>
 
               {/* Pagination */}
-              {totalPages > 1 && (
+              {salesTotalPages > 1 && (
                 <div className="mt-8 flex flex-col items-center gap-4">
-                  <Pagination>
-                    <PaginationContent className="flex-wrap gap-1">
-                      <PaginationItem>
-                        <PaginationPrevious 
-                          onClick={() => currentPage > 1 && handlePageChange(currentPage - 1)}
-                          className={`cursor-pointer ${currentPage === 1 ? 'pointer-events-none opacity-50' : 'hover:bg-accent'}`}
-                        />
-                      </PaginationItem>
-                      
-                      {/* Première page */}
-                      <PaginationItem>
-                        <PaginationLink
-                          onClick={() => handlePageChange(1)}
-                          isActive={currentPage === 1}
-                          className="cursor-pointer"
-                        >
-                          1
-                        </PaginationLink>
-                      </PaginationItem>
-
-                      {/* Ellipsis si nécessaire */}
-                      {currentPage > 3 && totalPages > 4 && (
-                        <PaginationItem>
-                          <PaginationEllipsis />
-                        </PaginationItem>
-                      )}
-
-                      {/* Pages du milieu */}
-                      {Array.from({ length: totalPages }, (_, i) => i + 1)
-                        .filter(page => {
-                          if (page === 1 || page === totalPages) return false;
-                          return Math.abs(currentPage - page) <= 1;
-                        })
-                        .map(page => (
-                          <PaginationItem key={page}>
-                            <PaginationLink
-                              onClick={() => handlePageChange(page)}
-                              isActive={currentPage === page}
-                              className="cursor-pointer"
-                            >
-                              {page}
-                            </PaginationLink>
-                          </PaginationItem>
-                        ))}
-
-                      {/* Ellipsis si nécessaire */}
-                      {currentPage < totalPages - 2 && totalPages > 4 && (
-                        <PaginationItem>
-                          <PaginationEllipsis />
-                        </PaginationItem>
-                      )}
-
-                      {/* Dernière page */}
-                      {totalPages > 1 && (
-                        <PaginationItem>
-                          <PaginationLink
-                            onClick={() => handlePageChange(totalPages)}
-                            isActive={currentPage === totalPages}
-                            className="cursor-pointer"
-                          >
-                            {totalPages}
-                          </PaginationLink>
-                        </PaginationItem>
-                      )}
-
-                      <PaginationItem>
-                        <PaginationNext 
-                          onClick={() => currentPage < totalPages && handlePageChange(currentPage + 1)}
-                          className={`cursor-pointer ${currentPage === totalPages ? 'pointer-events-none opacity-50' : 'hover:bg-accent'}`}
-                        />
-                      </PaginationItem>
-                    </PaginationContent>
-                  </Pagination>
-                  
-                  <div className="text-sm text-muted-foreground text-center">
-                    Affichage {startIndex + 1}-{endIndex} sur {totalSales} ventes
-                    <span className="mx-2">•</span>
-                    Page {currentPage} sur {totalPages}
+                  <div className="flex items-center gap-2">
+                    <Button
+                      onClick={prevSalesPage}
+                      disabled={currentSalesPage === 0}
+                      variant="outline"
+                      size="sm"
+                      className="gap-1"
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                      Précédent
+                    </Button>
+                    
+                    <div className="px-4 py-2 text-sm font-medium">
+                      Page {currentSalesPage + 1} sur {salesTotalPages}
+                    </div>
+                    
+                    <Button
+                      onClick={nextSalesPage}
+                      disabled={currentSalesPage >= salesTotalPages - 1}
+                      variant="outline"
+                      size="sm"
+                      className="gap-1"
+                    >
+                      Suivant
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
                   </div>
                 </div>
               )}

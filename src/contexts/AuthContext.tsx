@@ -35,12 +35,17 @@ interface AuthContextType {
   updateInsuranceType: (id: string, name: string, commission: number) => Promise<{ success: boolean; error?: string }>;
   removeInsuranceType: (id: string) => Promise<{ success: boolean; error?: string }>;
   fetchInsuranceTypes: () => void;
-  // Gestion des ventes
+  // Gestion des ventes avec pagination
   sales: Sale[];
+  totalSalesCount: number;
+  currentSalesPage: number;
+  salesTotalPages: number;
   addSale: (sale: Omit<Sale, 'id' | 'createdAt'>) => Promise<{ success: boolean; error?: string }>;
   deleteSale: (id: string) => Promise<{ success: boolean; error?: string }>;
   updateSale: (id: string, updates: Partial<Omit<Sale, 'id' | 'createdAt'>>) => Promise<{ success: boolean; error?: string }>;
-  fetchSales: () => void;
+  fetchSales: (page?: number) => void;
+  nextSalesPage: () => void;
+  prevSalesPage: () => void;
   // Gestion des objectifs
   objectives: Objective[];
   addObjective: (objective: Omit<Objective, 'id' | 'createdAt'>) => Promise<{ success: boolean; error?: string }>;
@@ -205,6 +210,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [sales, setSales] = useState<Sale[]>([]);
   const [objectives, setObjectives] = useState<Objective[]>([]);
   const [isAdmin, setIsAdmin] = useState(false);
+  
+  // États pour la pagination des ventes
+  const [currentSalesPage, setCurrentSalesPage] = useState(0);
+  const [totalSalesCount, setTotalSalesCount] = useState(0);
+  const PAGE_SIZE = 20;
+  const salesTotalPages = Math.ceil(totalSalesCount / PAGE_SIZE);
 
   // Vérification explicite du rôle admin avec logs visibles + RETRY
   const checkAdminStatus = async (userId: string): Promise<void> => {
@@ -742,9 +753,23 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   // Gestion des ventes
-  const fetchSales = async () => {
+  const fetchSales = async (page: number = currentSalesPage) => {
     try {
       const supabaseClient: any = supabase;
+      
+      // 1. Compter le nombre total de ventes
+      const { count, error: countError } = await supabaseClient
+        .from('sales')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'active');
+      
+      if (countError) throw countError;
+      setTotalSalesCount(count || 0);
+      
+      // 2. Récupérer les ventes avec pagination
+      const start = page * PAGE_SIZE;
+      const end = start + PAGE_SIZE - 1;
+      
       const { data: salesData, error } = await supabaseClient
         .from('sales')
         .select(`
@@ -758,7 +783,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           )
         `)
         .eq('status', 'active')
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .range(start, end);
 
       if (error) throw error;
 
@@ -777,6 +803,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }));
 
       setSales(transformedSales);
+      setCurrentSalesPage(page);
     } catch (error: any) {
       console.error('Erreur récupération ventes:', error);
       toast({
@@ -784,6 +811,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         description: "Impossible de charger les ventes",
         variant: "destructive",
       });
+    }
+  };
+  
+  const nextSalesPage = () => {
+    if (currentSalesPage < salesTotalPages - 1) {
+      fetchSales(currentSalesPage + 1);
+    }
+  };
+  
+  const prevSalesPage = () => {
+    if (currentSalesPage > 0) {
+      fetchSales(currentSalesPage - 1);
     }
   };
 
@@ -1020,10 +1059,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     removeInsuranceType,
     fetchInsuranceTypes,
     sales,
+    totalSalesCount,
+    currentSalesPage,
+    salesTotalPages,
     addSale,
     deleteSale,
     updateSale,
     fetchSales,
+    nextSalesPage,
+    prevSalesPage,
     objectives,
     addObjective,
     updateObjective,
