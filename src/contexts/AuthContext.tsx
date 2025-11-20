@@ -222,10 +222,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     try {
       if (!userId) {
         setIsAdmin(false);
-        console.warn('⚠️ checkAdminStatus appelé sans userId');
         return;
       }
-      console.log('🔍 Vérification admin pour:', userId);
 
       const supabaseClient: any = supabase;
       
@@ -239,8 +237,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
         if (!error) {
           const hasAdminRole = Array.isArray(data) && data.some((row: any) => row.role === 'admin');
-          console.log('📋 Rôles trouvés:', data);
-          console.log(`✅ Admin status checked: ${hasAdminRole}`);
           setIsAdmin(!!hasAdminRole);
           return;
         }
@@ -250,20 +246,25 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         
         if (isRetryable && attempt < 2) {
           const delay = 500 * Math.pow(2, attempt);
-          console.warn(`⏳ Retry ${attempt + 1}/3 après ${delay}ms (schema cache error)`);
           await new Promise(r => setTimeout(r, delay));
           continue;
         }
         
-        console.error('❌ Erreur query user_roles:', error);
+        if (import.meta.env.DEV) {
+          console.error('Erreur query user_roles:', error);
+        }
         setIsAdmin(false);
         return;
       }
       
-      console.error('❌ Échec après 3 tentatives:', lastError);
+      if (import.meta.env.DEV) {
+        console.error('Échec après 3 tentatives:', lastError);
+      }
       setIsAdmin(false);
     } catch (err) {
-      console.error('❌ Erreur exception checkAdminStatus:', err);
+      if (import.meta.env.DEV) {
+        console.error('Erreur exception checkAdminStatus:', err);
+      }
       setIsAdmin(false);
     }
   };
