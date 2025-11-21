@@ -1,8 +1,10 @@
 import { useMemo } from 'react';
 import { useSales } from '@/hooks/useSales';
 import { useUsers } from '@/hooks/useUsers';
+import { exportEmployeeStatsPDF } from '@/utils/pdfExport';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { TrendingUp, DollarSign, Users as UsersIcon, Award } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { TrendingUp, DollarSign, Users as UsersIcon, Award, FileText } from 'lucide-react';
 import {
   BarChart,
   Bar,
@@ -194,8 +196,19 @@ export function AdminStats() {
       {/* Tableau classement */}
       <Card>
         <CardHeader>
-          <CardTitle>Classement détaillé</CardTitle>
-          <CardDescription>Tous les vendeurs du mois</CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Classement détaillé</CardTitle>
+              <CardDescription>Tous les vendeurs du mois</CardDescription>
+            </div>
+            <Button 
+              variant="outline" 
+              onClick={() => exportEmployeeStatsPDF(employeeStats, 'Classement du mois')}
+            >
+              <FileText className="mr-2 h-4 w-4" />
+              Exporter PDF
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
