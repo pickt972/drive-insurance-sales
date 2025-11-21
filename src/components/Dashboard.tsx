@@ -1,6 +1,9 @@
 import { useAuth } from '@/hooks/useAuth';
+import { useRealtimeSales } from '@/hooks/useRealtimeSales';
 import { StatsCards } from '@/components/Dashboard/StatsCards';
 import { SalesChart } from '@/components/Dashboard/SalesChart';
+import { InsuranceTypesChart } from '@/components/Dashboard/InsuranceTypesChart';
+import { ComparisonChart } from '@/components/Dashboard/ComparisonChart';
 import { Button } from '@/components/ui/button';
 import { PlusCircle } from 'lucide-react';
 import { useState } from 'react';
@@ -11,6 +14,11 @@ export const Dashboard = () => {
   const { profile } = useAuth();
   const [showForm, setShowForm] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+
+  // Écouter les nouvelles ventes en temps réel
+  useRealtimeSales(() => {
+    setRefreshKey(prev => prev + 1);
+  });
 
   const username = profile?.full_name || profile?.email?.split('@')[0] || '';
 
@@ -43,6 +51,12 @@ export const Dashboard = () => {
 
       {/* Graphique */}
       <SalesChart />
+
+      {/* Graphiques avancés */}
+      <div className="grid gap-6 md:grid-cols-2">
+        <InsuranceTypesChart />
+        <ComparisonChart />
+      </div>
 
       {/* Historique */}
       <SalesHistory key={refreshKey} />
