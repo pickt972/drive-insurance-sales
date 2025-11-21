@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { versioningSystem } from '@/lib/versioning';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 
 /**
  * Hook pour la sauvegarde automatique intelligente

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TrendingUp, Users, DollarSign, Trophy, Car, Target, Calendar } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/useAuth";
 
 export const Dashboard = () => {
   const { sales, users, insuranceTypes, objectives, profile, isAdmin } = useAuth();
