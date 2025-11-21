@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,6 +6,8 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Plus } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { useSales } from "@/hooks/useSales";
+import { useInsuranceTypes, InsuranceType } from "@/hooks/useInsuranceTypes";
 import { toast } from "@/hooks/use-toast";
 import { CelebrationPopup } from "@/components/ui/celebration-popup";
 
@@ -18,11 +20,24 @@ export const SalesForm = ({ onSaleAdded }: SalesFormProps) => {
   const [reservationNumber, setReservationNumber] = useState("");
   const [selectedInsurances, setSelectedInsurances] = useState<string[]>([]);
   const [notes, setNotes] = useState("");
-  const [loading, setLoading] = useState(false);
   const [showCelebration, setShowCelebration] = useState(false);
   const [lastSaleAmount, setLastSaleAmount] = useState(0);
+  const [insuranceTypes, setInsuranceTypes] = useState<InsuranceType[]>([]);
   
-  const { profile, insuranceTypes, addSale } = useAuth();
+  const { profile } = useAuth();
+  const { createSale, loading: saleLoading } = useSales();
+  const { getInsuranceTypes, loading: insuranceLoading } = useInsuranceTypes();
+
+  const loading = saleLoading || insuranceLoading;
+
+  // Charger les types d'assurance au montage
+  useEffect(() => {
+    const loadInsuranceTypes = async () => {
+      const types = await getInsuranceTypes(true);
+      setInsuranceTypes(types);
+    };
+    loadInsuranceTypes();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,46 +51,43 @@ export const SalesForm = ({ onSaleAdded }: SalesFormProps) => {
       return;
     }
 
-    setLoading(true);
-
     try {
       const totalCommission = selectedInsurances.reduce((sum, insuranceName) => {
         const insurance = insuranceTypes.find(ins => ins.name === insuranceName);
         return sum + (insurance?.commission || 0);
       }, 0);
 
-      const result = await addSale({
-        employeeName: profile?.username || '',
-        clientName,
-        reservationNumber,
-        insuranceTypes: selectedInsurances,
-        commissionAmount: totalCommission,
-        notes: notes || undefined
+      // Créer la vente via le nouveau hook
+      await createSale({
+        sale_date: new Date().toISOString().split('T')[0],
+        employee_id: profile?.id || '',
+        employee_name: profile?.full_name || '',
+        insurance_type: selectedInsurances[0], // Première assurance sélectionnée
+        contract_number: reservationNumber,
+        amount: totalCommission * 6.67, // Commission = 15% du montant, donc montant = commission / 0.15
+        commission: totalCommission,
+        customer_name: clientName,
+        vehicle_type: null,
+        rental_duration_days: 1,
+        notes: notes || null,
       });
 
-      if (result.success) {
-        // Déclencher l'animation de célébration
-        setLastSaleAmount(totalCommission);
-        setShowCelebration(true);
-        
-        // Réinitialiser le formulaire après un délai
-        setTimeout(() => {
-          setClientName("");
-          setReservationNumber("");
-          setSelectedInsurances([]);
-          setNotes("");
-          onSaleAdded();
-        }, 6200); // Attendre que l'animation se termine
-      }
+      // Déclencher l'animation de célébration
+      setLastSaleAmount(totalCommission);
+      setShowCelebration(true);
+      
+      // Réinitialiser le formulaire après un délai
+      setTimeout(() => {
+        setClientName("");
+        setReservationNumber("");
+        setSelectedInsurances([]);
+        setNotes("");
+        onSaleAdded();
+      }, 6200); // Attendre que l'animation se termine
 
     } catch (error) {
-      toast({
-        title: "Erreur",
-        description: "Impossible d'enregistrer la vente",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
+      console.error('Error creating sale:', error);
+      // Le toast d'erreur est déjà géré dans useSales
     }
   };
 
@@ -118,7 +130,7 @@ export const SalesForm = ({ onSaleAdded }: SalesFormProps) => {
         <div className="space-y-4">
           <Label className="text-sm lg:text-base font-bold text-foreground">🛡️ Assurances souscrites <span className="text-destructive">*</span></Label>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 lg:gap-4">
-              {insuranceTypes.filter(ins => ins.isActive).map((insurance) => (
+              {insuranceTypes.filter(ins => ins.is_active).map((insurance) => (
               <div key={insurance.id} className="modern-card p-3 lg:p-4 cursor-pointer hover:scale-105 transition-all duration-300 group">
                 <div className="flex items-center space-x-3 lg:space-x-4">
                   <Checkbox

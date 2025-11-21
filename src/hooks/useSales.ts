@@ -3,6 +3,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 
+// Temporary workaround for Supabase types during migration
+const supabaseAny = supabase as any;
+
 export interface Sale {
   id: string;
   sale_date: string;
@@ -32,7 +35,7 @@ export function useSales() {
     try {
       setLoading(true);
 
-      const { data, error } = await supabase
+      const { data, error } = await supabaseAny
         .from('insurance_sales')
         .insert({
           ...saleData,
@@ -78,7 +81,7 @@ export function useSales() {
     try {
       setLoading(true);
 
-      let query = supabase
+      let query = supabaseAny
         .from('insurance_sales')
         .select('*')
         .eq('is_deleted', false);
@@ -132,7 +135,7 @@ export function useSales() {
     try {
       setLoading(true);
 
-      const { data, error } = await supabase
+      const { data, error } = await supabaseAny
         .from('insurance_sales')
         .update(updates)
         .eq('id', id)
@@ -164,7 +167,7 @@ export function useSales() {
     try {
       setLoading(true);
 
-      const { error } = await supabase
+      const { error } = await supabaseAny
         .from('insurance_sales')
         .update({ is_deleted: true })
         .eq('id', id);
