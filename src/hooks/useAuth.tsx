@@ -32,11 +32,13 @@ export function useAuth() {
   // Fonction pour charger le profil utilisateur
   const loadProfile = async (userId: string): Promise<Profile | null> => {
     try {
-      const { data, error } = await supabase
+      // Temporary workaround until Supabase types are regenerated
+      const supabaseAny = supabase as any;
+      const { data, error } = await supabaseAny
         .from('profiles')
         .select('*')
         .eq('id', userId)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
       
