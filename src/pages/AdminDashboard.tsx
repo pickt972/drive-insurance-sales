@@ -1,65 +1,41 @@
-import { useState } from 'react';
 import { AdminLayout } from '@/components/layouts/AdminLayout';
-import { Dashboard } from '@/components/Dashboard';
-import { SalesHistory } from '@/components/SalesHistory';
-import { AdminPanel } from '@/components/AdminPanel';
+import { AdminStats } from '@/components/Admin/AdminStats';
+import { AllSalesTable } from '@/components/Admin/AllSalesTable';
+import { UserManagement } from '@/components/Admin/UserManagement';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { BarChart3, Users, FileText } from 'lucide-react';
 
 export function AdminDashboard() {
-  const [activeTab, setActiveTab] = useState('dashboard');
-
-  const renderContent = () => {
-    switch (activeTab) {
-      case 'dashboard':
-        return <Dashboard />;
-      case 'sales':
-        return <SalesHistory />;
-      case 'users':
-        return <AdminPanel />;
-      default:
-        return <Dashboard />;
-    }
-  };
-
   return (
     <AdminLayout>
-      <div className="space-y-8">
-        {/* Navigation tabs */}
-        <div className="flex gap-4 border-b border-border pb-2">
-          <button
-            onClick={() => setActiveTab('dashboard')}
-            className={`px-4 py-2 font-semibold transition-colors ${
-              activeTab === 'dashboard'
-                ? 'text-red-600 border-b-2 border-red-600'
-                : 'text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            Dashboard
-          </button>
-          <button
-            onClick={() => setActiveTab('sales')}
-            className={`px-4 py-2 font-semibold transition-colors ${
-              activeTab === 'sales'
-                ? 'text-red-600 border-b-2 border-red-600'
-                : 'text-muted-foreground hover:text-foreground'
-            }`}
-          >
+      <Tabs defaultValue="stats" className="space-y-6">
+        <TabsList>
+          <TabsTrigger value="stats">
+            <BarChart3 className="mr-2 h-4 w-4" />
+            Statistiques
+          </TabsTrigger>
+          <TabsTrigger value="sales">
+            <FileText className="mr-2 h-4 w-4" />
             Toutes les ventes
-          </button>
-          <button
-            onClick={() => setActiveTab('users')}
-            className={`px-4 py-2 font-semibold transition-colors ${
-              activeTab === 'users'
-                ? 'text-red-600 border-b-2 border-red-600'
-                : 'text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            Gestion des utilisateurs
-          </button>
-        </div>
+          </TabsTrigger>
+          <TabsTrigger value="users">
+            <Users className="mr-2 h-4 w-4" />
+            Utilisateurs
+          </TabsTrigger>
+        </TabsList>
 
-        {/* Content */}
-        {renderContent()}
-      </div>
+        <TabsContent value="stats">
+          <AdminStats />
+        </TabsContent>
+
+        <TabsContent value="sales">
+          <AllSalesTable />
+        </TabsContent>
+
+        <TabsContent value="users">
+          <UserManagement />
+        </TabsContent>
+      </Tabs>
     </AdminLayout>
   );
 }
