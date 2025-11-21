@@ -22,22 +22,18 @@ export const SalesForm = ({ onSaleAdded }: SalesFormProps) => {
   const [notes, setNotes] = useState("");
   const [showCelebration, setShowCelebration] = useState(false);
   const [lastSaleAmount, setLastSaleAmount] = useState(0);
-  const [insuranceTypes, setInsuranceTypes] = useState<InsuranceType[]>([]);
+  const [insuranceTypesLocal, setInsuranceTypesLocal] = useState<InsuranceType[]>([]);
   
   const { profile } = useAuth();
-  const { createSale, loading: saleLoading } = useSales();
-  const { getInsuranceTypes, loading: insuranceLoading } = useInsuranceTypes();
+  const { addSale, loading: saleLoading } = useSales();
+  const { insuranceTypes, loading: insuranceLoading } = useInsuranceTypes();
 
   const loading = saleLoading || insuranceLoading;
 
   // Charger les types d'assurance au montage
   useEffect(() => {
-    const loadInsuranceTypes = async () => {
-      const types = await getInsuranceTypes(true);
-      setInsuranceTypes(types);
-    };
-    loadInsuranceTypes();
-  }, []);
+    setInsuranceTypesLocal(insuranceTypes);
+  }, [insuranceTypes]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,18 +49,18 @@ export const SalesForm = ({ onSaleAdded }: SalesFormProps) => {
 
     try {
       const totalCommission = selectedInsurances.reduce((sum, insuranceName) => {
-        const insurance = insuranceTypes.find(ins => ins.name === insuranceName);
+        const insurance = insuranceTypesLocal.find(ins => ins.name === insuranceName);
         return sum + (insurance?.commission || 0);
       }, 0);
 
-      // Créer la vente via le nouveau hook
-      await createSale({
+      // Créer la vente via le hook
+      await addSale({
         sale_date: new Date().toISOString().split('T')[0],
         employee_id: profile?.id || '',
         employee_name: profile?.full_name || '',
         insurance_type: selectedInsurances[0], // Première assurance sélectionnée
         contract_number: reservationNumber,
-        amount: totalCommission * 6.67, // Commission = 15% du montant, donc montant = commission / 0.15
+        amount: totalCommission * 6.67, // Commission = 15% du montant
         commission: totalCommission,
         customer_name: clientName,
         vehicle_type: null,
@@ -130,7 +126,7 @@ export const SalesForm = ({ onSaleAdded }: SalesFormProps) => {
         <div className="space-y-4">
           <Label className="text-sm lg:text-base font-bold text-foreground">🛡️ Assurances souscrites <span className="text-destructive">*</span></Label>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 lg:gap-4">
-              {insuranceTypes.filter(ins => ins.is_active).map((insurance) => (
+              {insuranceTypesLocal.filter(ins => ins.is_active).map((insurance) => (
               <div key={insurance.id} className="modern-card p-3 lg:p-4 cursor-pointer hover:scale-105 transition-all duration-300 group">
                 <div className="flex items-center space-x-3 lg:space-x-4">
                   <Checkbox
@@ -173,7 +169,7 @@ export const SalesForm = ({ onSaleAdded }: SalesFormProps) => {
               <span className="text-base lg:text-lg font-semibold text-success">💰 Commission totale</span>
               <span className="text-xl lg:text-2xl font-bold text-success">
                 {selectedInsurances.reduce((sum, insuranceName) => {
-                  const insurance = insuranceTypes.find(ins => ins.name === insuranceName);
+                  const insurance = insuranceTypesLocal.find(ins => ins.name === insuranceName);
                   return sum + (insurance?.commission || 0);
                 }, 0).toFixed(2)} €
               </span>
