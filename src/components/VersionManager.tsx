@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Save, Download, Upload, History, Trash2, RefreshCw, Settings, Shield, Clock, Database, FileText, TriangleAlert as AlertTriangle, CircleCheck as CheckCircle, GitBranch, Archive } from "lucide-react";
 import { versioningSystem, AppVersion } from "@/lib/versioning";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
