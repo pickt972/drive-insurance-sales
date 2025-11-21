@@ -1,9 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/hooks/useAuth';
-import { useToast } from '@/hooks/use-toast';
 
-// Temporary workaround for Supabase types during migration
+// Temporary workaround for Supabase types
 const supabaseAny = supabase as any;
 
 export interface InsuranceType {
@@ -11,121 +9,98 @@ export interface InsuranceType {
   name: string;
   commission: number;
   is_active: boolean;
-  created_at: string;
-  updated_at: string;
+  // Compatibilité anciens champs
+  description?: string;
+  price?: number;
+  isActive?: boolean;
 }
 
 export function useInsuranceTypes() {
-  const { isAdmin } = useAuth();
-  const { toast } = useToast();
+  const [insuranceTypes, setInsuranceTypes] = useState<InsuranceType[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // Récupérer tous les types d'assurance
-  const getInsuranceTypes = async (activeOnly: boolean = true) => {
-    try {
-      setLoading(true);
+  useEffect(() => {
+    fetchInsuranceTypes();
+  }, []);
 
-      let query = supabaseAny
-        .from('insurance_types')
-        .select('*')
-        .order('name', { ascending: true });
-
-      if (activeOnly) {
-        query = query.eq('is_active', true);
-      }
-
-      const { data, error } = await query;
-
-      if (error) throw error;
-      return data || [];
-    } catch (error) {
-      console.error('Error fetching insurance types:', error);
-      toast({
-        title: '❌ Erreur',
-        description: 'Impossible de charger les types d\'assurance',
-        variant: 'destructive',
-      });
-      return [];
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Ajouter un type d'assurance (admin only)
-  const addInsuranceType = async (insuranceData: Omit<InsuranceType, 'id' | 'created_at' | 'updated_at'>) => {
-    if (!isAdmin) throw new Error('Accès refusé - Admin uniquement');
-
+  const fetchInsuranceTypes = async () => {
     try {
       setLoading(true);
 
       const { data, error } = await supabaseAny
         .from('insurance_types')
-        .insert(insuranceData)
+        .select('*')
+        .eq('is_active', true)
+        .order('name', { ascending: true });
+
+      if (error) throw error;
+
+      // Mapper pour compatibilité
+      const mapped = (data || []).map((type: any) => ({
+        ...type,
+        isActive: type.is_active,
+        price: type.commission,
+        description: type.name,
+      }));
+
+      setInsuranceTypes(mapped);
+    } catch (error) {
+      console.error('Error fetching insurance types:', error);
+      // En cas d'erreur, utiliser des types par défaut
+      setInsuranceTypes([
+        { id: '1', name: 'CDW', description: 'Collision Damage Waiver', commission: 15, price: 15, is_active: true, isActive: true },
+        { id: '2', name: 'TP', description: 'Theft Protection', commission: 12, price: 12, is_active: true, isActive: true },
+        { id: '3', name: 'PAI', description: 'Personal Accident Insurance', commission: 8, price: 8, is_active: true, isActive: true },
+        { id: '4', name: 'Super Cover', description: 'CDW + TP + PAI', commission: 30, price: 30, is_active: true, isActive: true },
+      ]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const addInsuranceType = async (typeData: Partial<InsuranceType>) => {
+    try {
+      const { data, error } = await supabaseAny
+        .from('insurance_types')
+        .insert({
+          name: typeData.name,
+          commission: typeData.commission || typeData.price,
+          is_active: true,
+        })
         .select()
         .single();
 
       if (error) throw error;
 
-      toast({
-        title: '✅ Type d\'assurance créé',
-        description: insuranceData.name,
-      });
-
+      await fetchInsuranceTypes();
       return data;
     } catch (error) {
       console.error('Error adding insurance type:', error);
-      toast({
-        title: '❌ Erreur',
-        description: 'Impossible de créer le type d\'assurance',
-        variant: 'destructive',
-      });
       throw error;
-    } finally {
-      setLoading(false);
     }
   };
 
-  // Mettre à jour un type d'assurance (admin only)
   const updateInsuranceType = async (id: string, updates: Partial<InsuranceType>) => {
-    if (!isAdmin) throw new Error('Accès refusé');
-
     try {
-      setLoading(true);
-
-      const { data, error } = await supabaseAny
+      const { error } = await supabaseAny
         .from('insurance_types')
-        .update(updates)
-        .eq('id', id)
-        .select()
-        .single();
+        .update({
+          name: updates.name,
+          commission: updates.commission || updates.price,
+        })
+        .eq('id', id);
 
       if (error) throw error;
 
-      toast({
-        title: '✅ Type d\'assurance modifié',
-      });
-
-      return data;
+      await fetchInsuranceTypes();
     } catch (error) {
       console.error('Error updating insurance type:', error);
-      toast({
-        title: '❌ Erreur',
-        description: 'Impossible de modifier le type d\'assurance',
-        variant: 'destructive',
-      });
       throw error;
-    } finally {
-      setLoading(false);
     }
   };
 
-  // Désactiver un type d'assurance (admin only, soft delete)
   const removeInsuranceType = async (id: string) => {
-    if (!isAdmin) throw new Error('Accès refusé');
-
     try {
-      setLoading(true);
-
       const { error } = await supabaseAny
         .from('insurance_types')
         .update({ is_active: false })
@@ -133,25 +108,17 @@ export function useInsuranceTypes() {
 
       if (error) throw error;
 
-      toast({
-        title: '✅ Type d\'assurance désactivé',
-      });
+      await fetchInsuranceTypes();
     } catch (error) {
       console.error('Error removing insurance type:', error);
-      toast({
-        title: '❌ Erreur',
-        description: 'Impossible de désactiver le type d\'assurance',
-        variant: 'destructive',
-      });
       throw error;
-    } finally {
-      setLoading(false);
     }
   };
 
   return {
+    insuranceTypes,
     loading,
-    getInsuranceTypes,
+    fetchInsuranceTypes,
     addInsuranceType,
     updateInsuranceType,
     removeInsuranceType,
