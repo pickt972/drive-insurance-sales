@@ -2,6 +2,9 @@ import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 
+// Temporary workaround for Supabase types during migration
+const supabaseAny = supabase as any;
+
 export interface Stats {
   totalAmount: number;
   totalCommission: number;
@@ -35,7 +38,7 @@ export function useStats() {
     try {
       setLoading(true);
 
-      let query = supabase
+      let query = supabaseAny
         .from('insurance_sales')
         .select('*')
         .eq('employee_id', user.id)
@@ -63,7 +66,7 @@ export function useStats() {
     try {
       setLoading(true);
 
-      let query = supabase
+      let query = supabaseAny
         .from('insurance_sales')
         .select('*')
         .eq('is_deleted', false);
@@ -90,7 +93,7 @@ export function useStats() {
     try {
       setLoading(true);
 
-      let query = supabase
+      let query = supabaseAny
         .from('insurance_sales')
         .select('employee_id, employee_name, amount, commission')
         .eq('is_deleted', false);

@@ -3,6 +3,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 
+// Temporary workaround for Supabase types during migration
+const supabaseAny = supabase as any;
+
 export interface UserProfile {
   id: string;
   email: string;
@@ -26,7 +29,7 @@ export function useUsers() {
     try {
       setLoading(true);
 
-      const { data, error } = await supabase
+      const { data, error } = await supabaseAny
         .from('profiles')
         .select('*')
         .order('created_at', { ascending: false });
@@ -53,7 +56,7 @@ export function useUsers() {
     try {
       setLoading(true);
 
-      const { error } = await supabase
+      const { error } = await supabaseAny
         .from('profiles')
         .update({ role: newRole })
         .eq('id', userId);
@@ -84,7 +87,7 @@ export function useUsers() {
     try {
       setLoading(true);
 
-      const { error } = await supabase
+      const { error } = await supabaseAny
         .from('profiles')
         .update({ is_active: isActive })
         .eq('id', userId);

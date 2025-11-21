@@ -85,7 +85,7 @@ export const VersionManager = () => {
       versioningSystem.createVersion(
         newVersionDescription.trim(),
         changes,
-        `${profile?.firstName} ${profile?.lastName}` || 'Utilisateur'
+        profile?.full_name || 'Utilisateur'
       );
 
       setNewVersionDescription("");
