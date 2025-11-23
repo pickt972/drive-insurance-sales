@@ -157,6 +157,7 @@ export function useAuth() {
   // Fonction de connexion
   const signIn = async (email: string, password: string) => {
     try {
+      console.log('🔐 Attempting sign in with:', email);
       setState(prev => ({ ...prev, loading: true, error: null }));
 
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -164,30 +165,44 @@ export function useAuth() {
         password,
       });
 
-      if (error) throw error;
+      console.log('🔐 Sign in response:', { data, error });
 
-      if (data.user) {
-        const profile = await loadProfile(data.user.id);
-        
-        setState({
-          user: data.user,
-          profile,
-          isAdmin: profile?.role === 'admin',
-          loading: false,
-          error: null,
-        });
-
-        toast({
-          title: '✅ Connexion réussie',
-          description: `Bienvenue ${profile?.full_name || email}`,
-        });
-
-        return { success: true, isAdmin: profile?.role === 'admin' };
-      }
-    } catch (error: any) {
-      if (import.meta.env.DEV) {
+      if (error) {
         console.error('❌ Sign in error:', error);
+        throw error;
       }
+
+      if (!data.user) {
+        console.error('❌ No user data returned');
+        throw new Error('Aucun utilisateur retourné');
+      }
+
+      console.log('✅ User signed in:', data.user.email);
+      const profile = await loadProfile(data.user.id);
+      console.log('✅ Profile loaded:', profile);
+      
+      if (!profile) {
+        console.error('❌ No profile found for user');
+        throw new Error('Profil utilisateur introuvable');
+      }
+
+      setState({
+        user: data.user,
+        profile,
+        isAdmin: profile.role === 'admin',
+        loading: false,
+        error: null,
+      });
+
+      toast({
+        title: '✅ Connexion réussie',
+        description: `Bienvenue ${profile.full_name || email}`,
+      });
+
+      console.log('✅ Sign in successful, returning:', { success: true, isAdmin: profile.role === 'admin' });
+      return { success: true, isAdmin: profile.role === 'admin' };
+    } catch (error: any) {
+      console.error('❌ Sign in error:', error);
       
       setState(prev => ({ 
         ...prev, 
