@@ -12,79 +12,61 @@ export function UserLayout({ children }: UserLayoutProps) {
   const [activeTab, setActiveTab] = useState('dashboard');
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header User */}
-      <header className="bg-blue-600 text-white shadow-md">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold">ALOELOCATION</h1>
-              <p className="text-sm text-blue-100">
-                Bienvenue, {profile?.full_name}
-              </p>
+    <div className="min-h-screen bg-gradient-to-br from-background via-primary-light/30 to-background">
+      {/* Header User - Design moderne avec gradient */}
+      <header className="glass-header border-b-2 border-primary/20 animate-gentle-fade-in">
+        <div className="modern-container">
+          <div className="flex items-center justify-between py-5">
+            <div className="space-y-1">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-gradient-to-br from-primary to-primary-variant shadow-lg animate-float-gentle">
+                  <Home className="h-6 w-6 text-primary-foreground" />
+                </div>
+                <div>
+                  <h1 className="text-2xl font-bold bg-gradient-to-r from-primary via-info to-primary-variant bg-clip-text text-transparent">
+                    ALOELOCATION
+                  </h1>
+                  <p className="text-xs font-medium text-muted-foreground">
+                    Bienvenue, {profile?.full_name} 👋
+                  </p>
+                </div>
+              </div>
             </div>
-            <Button
-              variant="outline"
-              onClick={signOut}
-              className="bg-white text-blue-600 hover:bg-blue-50"
-            >
-              <LogOut className="mr-2 h-4 w-4" />
-              Déconnexion
-            </Button>
+            <div className="flex items-center gap-4">
+              <div className="text-right hidden sm:block">
+                <p className="text-sm font-semibold text-foreground">{profile?.full_name}</p>
+                <p className="text-xs text-muted-foreground">{profile?.email}</p>
+              </div>
+              <Button
+                variant="outline"
+                onClick={signOut}
+                className="border-primary/30 text-primary hover:bg-primary hover:text-primary-foreground transition-all duration-300 hover:shadow-lg hover:scale-105"
+              >
+                <LogOut className="mr-2 h-4 w-4" />
+                Déconnexion
+              </Button>
+            </div>
           </div>
         </div>
       </header>
 
-      {/* Navigation User */}
-      <nav className="bg-white border-b">
-        <div className="container mx-auto px-4">
-          <div className="flex space-x-1">
-            <button
-              onClick={() => setActiveTab('dashboard')}
-              className={`flex items-center px-4 py-3 border-b-2 font-medium text-sm ${
-                activeTab === 'dashboard'
-                  ? 'border-blue-600 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              <Home className="mr-2 h-4 w-4" />
-              Tableau de bord
-            </button>
-            <button
-              onClick={() => setActiveTab('create')}
-              className={`flex items-center px-4 py-3 border-b-2 font-medium text-sm ${
-                activeTab === 'create'
-                  ? 'border-blue-600 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              <PlusCircle className="mr-2 h-4 w-4" />
-              Nouvelle vente
-            </button>
-            <button
-              onClick={() => setActiveTab('stats')}
-              className={`flex items-center px-4 py-3 border-b-2 font-medium text-sm ${
-                activeTab === 'stats'
-                  ? 'border-blue-600 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              <BarChart className="mr-2 h-4 w-4" />
-              Mes statistiques
-            </button>
-          </div>
-        </div>
-      </nav>
-
-      {/* Contenu */}
-      <main className="container mx-auto px-4 py-8">
+      {/* Contenu avec animation */}
+      <main className="modern-container py-8 animate-smooth-scale-in">
         {children}
       </main>
 
-      {/* Footer */}
-      <footer className="bg-white border-t mt-auto py-4">
-        <div className="container mx-auto px-4 text-center text-sm text-gray-500">
-          © 2025 ALOELOCATION - Martinique
+      {/* Footer moderne */}
+      <footer className="border-t bg-card/50 backdrop-blur-sm mt-auto py-6">
+        <div className="modern-container">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <p className="text-sm text-muted-foreground">
+              © 2025 ALOELOCATION - Martinique 🏝️
+            </p>
+            <div className="flex items-center gap-2">
+              <div className="h-2 w-2 rounded-full bg-success animate-pulse"></div>
+              <p className="text-xs text-muted-foreground">Système opérationnel</p>
+            </div>
+          </div>
         </div>
       </footer>
     </div>
