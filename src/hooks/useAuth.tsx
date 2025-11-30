@@ -29,30 +29,41 @@ export function useAuth() {
   });
   const { toast } = useToast();
 
-  // Fonction pour charger le profil utilisateur
-  const loadProfile = async (userId: string): Promise<Profile | null> => {
-    try {
-      console.log('🔍 [1/4] Loading profile for user:', userId);
-      
-      // Temporary workaround until Supabase types are regenerated
-      const supabaseAny = supabase as any;
-      const { data, error } = await supabaseAny
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .maybeSingle();
+  // Fonction pour charger le profil utilisateur avec retry logic
+  const loadProfile = async (userId: string, retries = 3): Promise<Profile | null> => {
+    for (let attempt = 1; attempt <= retries; attempt++) {
+      try {
+        console.log(`🔍 [${attempt}/${retries}] Loading profile for user:`, userId);
+        
+        // Temporary workaround until Supabase types are regenerated
+        const supabaseAny = supabase as any;
+        const { data, error } = await supabaseAny
+          .from('profiles')
+          .select('id, email, full_name, role, is_active')
+          .eq('id', userId)
+          .single();
 
-      if (error) {
-        console.error('❌ [2/4] Error loading profile:', error);
-        throw error;
+        if (error) {
+          // Si c'est une erreur de cache et qu'il reste des tentatives, on réessaie
+          if (error.code === 'PGRST002' && attempt < retries) {
+            console.warn(`⚠️ [${attempt}/${retries}] Schema cache error, retrying in ${attempt * 500}ms...`);
+            await new Promise(resolve => setTimeout(resolve, attempt * 500));
+            continue;
+          }
+          console.error(`❌ [${attempt}/${retries}] Error loading profile:`, error);
+          throw error;
+        }
+        
+        console.log(`✅ [${attempt}/${retries}] Profile loaded successfully:`, data);
+        return data;
+      } catch (error) {
+        if (attempt === retries) {
+          console.error(`❌ [${attempt}/${retries}] All attempts failed:`, error);
+          return null;
+        }
       }
-      
-      console.log('✅ [3/4] Profile loaded successfully:', data);
-      return data;
-    } catch (error) {
-      console.error('❌ [4/4] Exception in loadProfile:', error);
-      return null;
     }
+    return null;
   };
 
   // Initialisation et écoute des changements d'auth
