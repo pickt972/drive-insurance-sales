@@ -23,9 +23,9 @@ export function ProtectedRoute({ children, requireAdmin = false }: ProtectedRout
     });
   }, [user, profile, isAdmin, loading, location, requireAdmin]);
 
-  // Afficher loader pendant la vérification ET si profil pas encore chargé
-  if (loading || (user && !profile)) {
-    console.log('⏳ ProtectedRoute: Waiting for profile to load...');
+  // Afficher loader pendant la vérification
+  if (loading) {
+    console.log('⏳ ProtectedRoute: Loading...');
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center space-y-4">

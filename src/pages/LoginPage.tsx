@@ -45,34 +45,34 @@ export function LoginPage() {
       if (data.user) {
         console.log('✅ [LOGIN] Connexion réussie pour:', data.user.email);
         
-        // Laisser useAuth charger le profil avec retry logic
-        // Attendre un peu plus longtemps pour que le profil se charge
-        setTimeout(async () => {
-          try {
-            // Temporary workaround until Supabase types are regenerated
-            const supabaseAny = supabase as any;
-            const { data: profile } = await supabaseAny
-              .from('profiles')
-              .select('role')
-              .eq('id', data.user.id)
-              .single();
+        try {
+          // Charger le profil immédiatement
+          const supabaseAny = supabase as any;
+          const { data: profile, error: profileError } = await supabaseAny
+            .from('profiles')
+            .select('role')
+            .eq('id', data.user.id)
+            .single();
 
-            console.log('🎯 [LOGIN] Profil chargé:', profile);
-            console.log('🎯 [LOGIN] Rôle détecté:', profile?.role);
-            
-            const isAdmin = profile?.role === 'admin';
-            const targetRoute = isAdmin ? '/admin' : '/dashboard';
-            
-            console.log('➡️ [LOGIN] Redirection vers:', targetRoute);
-            console.log('🔑 [LOGIN] isAdmin:', isAdmin);
-            
-            navigate(targetRoute, { replace: true });
-          } catch (err) {
-            console.error('❌ [LOGIN] Erreur chargement profil:', err);
-            // Fallback: rediriger vers dashboard par défaut
-            navigate('/dashboard', { replace: true });
+          if (profileError) {
+            console.error('❌ [LOGIN] Erreur chargement profil:', profileError);
+            throw profileError;
           }
-        }, 500); // Délai augmenté à 500ms
+
+          console.log('🎯 [LOGIN] Profil chargé:', profile);
+          console.log('🎯 [LOGIN] Rôle détecté:', profile?.role);
+          
+          const isAdmin = profile?.role === 'admin';
+          const targetRoute = isAdmin ? '/admin' : '/dashboard';
+          
+          console.log('➡️ [LOGIN] Redirection vers:', targetRoute);
+          console.log('🔑 [LOGIN] isAdmin:', isAdmin);
+          
+          navigate(targetRoute, { replace: true });
+        } catch (err) {
+          console.error('❌ [LOGIN] Erreur chargement profil:', err);
+          setError('Erreur lors du chargement du profil');
+        }
       }
     } catch (error: any) {
       setError('Identifiant ou mot de passe incorrect');
