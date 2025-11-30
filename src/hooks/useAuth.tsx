@@ -29,22 +29,46 @@ export function useAuth() {
   });
   const { toast } = useToast();
 
-  // Fonction pour charger le profil utilisateur avec retry logic et fallback sur user_metadata
+  // Fonction pour vérifier si un utilisateur a le rôle admin via la table user_roles sécurisée
+  const checkAdminRole = async (userId: string): Promise<boolean> => {
+    try {
+      console.log('🔐 Checking admin role for user:', userId);
+      const supabaseAny = supabase as any;
+      const { data, error } = await supabaseAny
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', userId)
+        .eq('role', 'admin')
+        .maybeSingle();
+
+      if (error && error.code !== 'PGRST116') { // PGRST116 = no rows found
+        console.error('❌ Error checking admin role:', error);
+        return false;
+      }
+
+      const isAdmin = !!data;
+      console.log('✅ Admin role check result:', isAdmin);
+      return isAdmin;
+    } catch (error) {
+      console.error('❌ Exception checking admin role:', error);
+      return false;
+    }
+  };
+
+  // Fonction pour charger le profil utilisateur avec retry logic
   const loadProfile = async (userId: string, retries = 2): Promise<Profile | null> => {
     for (let attempt = 1; attempt <= retries; attempt++) {
       try {
         console.log(`🔍 [${attempt}/${retries}] Loading profile for user:`, userId);
         
-        // Temporary workaround until Supabase types are regenerated
         const supabaseAny = supabase as any;
         const { data, error } = await supabaseAny
           .from('profiles')
-          .select('id, email, full_name, role, is_active')
+          .select('id, email, full_name, is_active')
           .eq('id', userId)
           .maybeSingle();
 
         if (error) {
-          // Si c'est une erreur de cache et qu'il reste des tentatives, on réessaie avec délai court
           if (error.code === 'PGRST002' && attempt < retries) {
             const delay = 500;
             console.warn(`⚠️ [${attempt}/${retries}] Schema cache error (PGRST002), retrying in ${delay}ms...`);
@@ -52,36 +76,13 @@ export function useAuth() {
             continue;
           }
           
-          // Si tous les retries échouent avec PGRST002, utiliser user_metadata comme fallback
-          if (error.code === 'PGRST002' && attempt === retries) {
-            console.warn(`⚠️ Cache Supabase indisponible après ${retries} tentatives - Fallback sur user_metadata`);
-            const { data: { user } } = await supabase.auth.getUser();
-            
-            if (user && user.user_metadata) {
-              const fallbackProfile: Profile = {
-                id: user.id,
-                email: user.email || '',
-                full_name: user.user_metadata.full_name || user.email?.split('@')[0] || 'Utilisateur',
-                role: (user.user_metadata.role as 'user' | 'admin') || 'user',
-                is_active: true,
-              };
-              
-              console.log('✅ Profil fallback créé depuis user_metadata:', fallbackProfile.email, 'Role:', fallbackProfile.role);
-              toast({
-                title: '⚠️ Mode dégradé',
-                description: 'Service temporairement ralenti. Fonctionnalités limitées.',
-                variant: 'default',
-              });
-              return fallbackProfile;
-            }
-          }
-          
           console.error(`❌ [${attempt}/${retries}] Error loading profile:`, error);
           throw error;
         }
         
         console.log(`✅ [${attempt}/${retries}] Profile loaded successfully:`, data);
-        return data;
+        // Note: role is no longer stored in profiles, it's in user_roles table
+        return data ? { ...data, role: 'user' } as Profile : null;
       } catch (error) {
         if (attempt === retries) {
           console.error(`❌ [${attempt}/${retries}] All attempts failed:`, error);
@@ -120,18 +121,20 @@ export function useAuth() {
             console.log('✅ [AUTH] Step 2 SUCCESS: Profile loaded');
           }
           
+          // Check admin role from secure user_roles table
+          const isAdmin = await checkAdminRole(session.user.id);
+          
           setState({
             user: session.user,
             profile,
-            isAdmin: profile?.role === 'admin',
+            isAdmin,
             loading: false,
             error: null,
           });
 
           console.log('✅ [AUTH] Auth initialized:', {
             user: session.user.email,
-            role: profile?.role,
-            isAdmin: profile?.role === 'admin',
+            isAdmin,
           });
         } else if (isMounted) {
           console.log('ℹ️ [AUTH] No session found - user not logged in');
@@ -167,11 +170,12 @@ export function useAuth() {
         if (event === 'SIGNED_IN' && session?.user && isMounted) {
           console.log('🔑 [AUTH] SIGNED_IN event - loading profile');
           const profile = await loadProfile(session.user.id);
+          const isAdmin = await checkAdminRole(session.user.id);
           
           setState({
             user: session.user,
             profile,
-            isAdmin: profile?.role === 'admin',
+            isAdmin,
             loading: false,
             error: null,
           });
@@ -188,12 +192,13 @@ export function useAuth() {
         } else if (event === 'TOKEN_REFRESHED' && session?.user && isMounted) {
           console.log('🔄 [AUTH] TOKEN_REFRESHED - updating profile');
           const profile = await loadProfile(session.user.id);
+          const isAdmin = await checkAdminRole(session.user.id);
           
           setState(prev => ({
             ...prev,
             user: session.user,
             profile,
-            isAdmin: profile?.role === 'admin',
+            isAdmin,
           }));
         }
       }
@@ -237,10 +242,13 @@ export function useAuth() {
         throw new Error('Profil utilisateur introuvable');
       }
 
+      // Check admin role from secure user_roles table
+      const isAdmin = await checkAdminRole(data.user.id);
+
       setState({
         user: data.user,
         profile,
-        isAdmin: profile.role === 'admin',
+        isAdmin,
         loading: false,
         error: null,
       });
@@ -250,8 +258,8 @@ export function useAuth() {
         description: `Bienvenue ${profile.full_name || email}`,
       });
 
-      console.log('✅ Sign in successful, returning:', { success: true, isAdmin: profile.role === 'admin' });
-      return { success: true, isAdmin: profile.role === 'admin' };
+      console.log('✅ Sign in successful, returning:', { success: true, isAdmin });
+      return { success: true, isAdmin };
     } catch (error: any) {
       console.error('❌ Sign in error:', error);
       
