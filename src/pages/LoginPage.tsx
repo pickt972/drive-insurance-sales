@@ -83,15 +83,17 @@ export function LoginPage() {
                 <Input
                   id="username"
                   type="text"
-                  placeholder="admin"
+                  placeholder="stef"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   className="pl-10 h-12 text-base"
                   required
                   disabled={isLoading}
                   autoFocus
+                  autoComplete="username"
                 />
               </div>
+              <p className="text-xs text-muted-foreground">Utilisez votre nom d'utilisateur (ex: stef, admin, julie...)</p>
             </div>
 
             <div className="space-y-2">
@@ -139,8 +141,9 @@ export function LoginPage() {
           </form>
 
           <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-100">
-            <p className="text-sm text-blue-800 text-center">💡 Utilisez votre identifiant et mot de passe</p>
-            <p className="text-xs text-blue-600 text-center mt-1">Exemple : <span className="font-mono font-semibold">admin</span></p>
+            <p className="text-sm text-blue-800 text-center font-medium">💡 Connexion par nom d'utilisateur</p>
+            <p className="text-xs text-blue-600 text-center mt-2">Exemples d'identifiants valides :</p>
+            <p className="text-xs text-blue-700 text-center mt-1 font-mono font-semibold">admin • stef • julie • nadia</p>
           </div>
         </CardContent>
 
