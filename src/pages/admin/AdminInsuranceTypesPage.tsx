@@ -1,0 +1,322 @@
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Plus, Edit, Trash2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
+
+interface InsuranceType {
+  id: string;
+  name: string;
+  code: string;
+  description: string;
+  base_price: number;
+  commission_rate: number;
+  is_active: boolean;
+  display_order: number;
+}
+
+export function AdminInsuranceTypesPage() {
+  const [types, setTypes] = useState<InsuranceType[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [editingType, setEditingType] = useState<InsuranceType | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const { toast } = useToast();
+  const { user } = useAuth();
+
+  const [formData, setFormData] = useState({
+    name: '',
+    code: '',
+    description: '',
+    base_price: 0,
+    commission_rate: 15,
+    display_order: 0,
+  });
+
+  useEffect(() => {
+    loadTypes();
+  }, []);
+
+  const loadTypes = async () => {
+    try {
+      const supabaseAny = supabase as any;
+      const { data, error } = await supabaseAny
+        .from('insurance_types')
+        .select('*')
+        .order('display_order');
+
+      if (error) throw error;
+      setTypes(data || []);
+    } catch (error) {
+      console.error('Error loading types:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    try {
+      const supabaseAny = supabase as any;
+      
+      if (editingType) {
+        const { error } = await supabaseAny
+          .from('insurance_types')
+          .update({
+            ...formData,
+            base_price: Number(formData.base_price),
+            commission_rate: Number(formData.commission_rate),
+            display_order: Number(formData.display_order),
+          })
+          .eq('id', editingType.id);
+
+        if (error) throw error;
+        
+        toast({
+          title: 'Succès',
+          description: 'Type d\'assurance modifié',
+        });
+      } else {
+        const { error } = await supabaseAny
+          .from('insurance_types')
+          .insert({
+            ...formData,
+            base_price: Number(formData.base_price),
+            commission_rate: Number(formData.commission_rate),
+            display_order: Number(formData.display_order),
+            created_by: user?.id,
+            is_active: true,
+          });
+
+        if (error) throw error;
+        
+        toast({
+          title: 'Succès',
+          description: 'Type d\'assurance créé',
+        });
+      }
+
+      setIsDialogOpen(false);
+      setEditingType(null);
+      setFormData({
+        name: '',
+        code: '',
+        description: '',
+        base_price: 0,
+        commission_rate: 15,
+        display_order: 0,
+      });
+      loadTypes();
+    } catch (error) {
+      console.error('Error saving type:', error);
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de sauvegarder',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const toggleActive = async (id: string, isActive: boolean) => {
+    try {
+      const supabaseAny = supabase as any;
+      const { error } = await supabaseAny
+        .from('insurance_types')
+        .update({ is_active: !isActive })
+        .eq('id', id);
+
+      if (error) throw error;
+      
+      toast({
+        title: 'Succès',
+        description: `Type ${!isActive ? 'activé' : 'désactivé'}`,
+      });
+      
+      loadTypes();
+    } catch (error) {
+      console.error('Error toggling type:', error);
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de modifier le statut',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const startEdit = (type: InsuranceType) => {
+    setEditingType(type);
+    setFormData({
+      name: type.name,
+      code: type.code,
+      description: type.description || '',
+      base_price: type.base_price,
+      commission_rate: type.commission_rate,
+      display_order: type.display_order,
+    });
+    setIsDialogOpen(true);
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-3xl font-bold text-gray-900">Types d'assurance</h2>
+          <p className="text-gray-600">Gérer les produits d'assurance</p>
+        </div>
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogTrigger asChild>
+            <Button className="bg-red-600 hover:bg-red-700" onClick={() => {
+              setEditingType(null);
+              setFormData({
+                name: '',
+                code: '',
+                description: '',
+                base_price: 0,
+                commission_rate: 15,
+                display_order: 0,
+              });
+            }}>
+              <Plus className="h-4 w-4 mr-2" />
+              Nouveau type
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <form onSubmit={handleSubmit}>
+              <DialogHeader>
+                <DialogTitle>
+                  {editingType ? 'Modifier' : 'Nouveau'} type d'assurance
+                </DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <div>
+                  <Label htmlFor="name">Nom *</Label>
+                  <Input
+                    id="name"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="code">Code *</Label>
+                  <Input
+                    id="code"
+                    value={formData.code}
+                    onChange={(e) => setFormData({ ...formData, code: e.target.value })}
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="description">Description</Label>
+                  <Textarea
+                    id="description"
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    rows={3}
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="base_price">Prix de base (€)</Label>
+                    <Input
+                      id="base_price"
+                      type="number"
+                      step="0.01"
+                      value={formData.base_price}
+                      onChange={(e) => setFormData({ ...formData, base_price: parseFloat(e.target.value) })}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="commission_rate">Taux commission (%)</Label>
+                    <Input
+                      id="commission_rate"
+                      type="number"
+                      step="0.01"
+                      value={formData.commission_rate}
+                      onChange={(e) => setFormData({ ...formData, commission_rate: parseFloat(e.target.value) })}
+                      required
+                    />
+                  </div>
+                </div>
+                <div>
+                  <Label htmlFor="display_order">Ordre d'affichage</Label>
+                  <Input
+                    id="display_order"
+                    type="number"
+                    value={formData.display_order}
+                    onChange={(e) => setFormData({ ...formData, display_order: parseInt(e.target.value) })}
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+                  Annuler
+                </Button>
+                <Button type="submit" className="bg-red-600 hover:bg-red-700">
+                  {editingType ? 'Modifier' : 'Créer'}
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      <Card>
+        <CardContent className="pt-6">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Ordre</TableHead>
+                <TableHead>Code</TableHead>
+                <TableHead>Nom</TableHead>
+                <TableHead>Prix de base</TableHead>
+                <TableHead>Commission</TableHead>
+                <TableHead>Statut</TableHead>
+                <TableHead>Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {types.map((type) => (
+                <TableRow key={type.id}>
+                  <TableCell>{type.display_order}</TableCell>
+                  <TableCell className="font-mono text-sm">{type.code}</TableCell>
+                  <TableCell className="font-medium">{type.name}</TableCell>
+                  <TableCell>{type.base_price.toFixed(2)} €</TableCell>
+                  <TableCell>{type.commission_rate}%</TableCell>
+                  <TableCell>
+                    <Badge variant={type.is_active ? 'default' : 'secondary'}>
+                      {type.is_active ? 'Actif' : 'Inactif'}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex gap-2">
+                      <Button variant="ghost" size="sm" onClick={() => startEdit(type)}>
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => toggleActive(type.id, type.is_active)}
+                      >
+                        {type.is_active ? 'Désactiver' : 'Activer'}
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
