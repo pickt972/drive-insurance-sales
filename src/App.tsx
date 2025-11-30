@@ -4,7 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { LoginPage } from '@/pages/LoginPage';
 import { UserDashboard } from '@/pages/UserDashboard';
 import AdminLayout from '@/layouts/AdminLayout';
-import { AdminDashboardPage } from '@/pages/admin/AdminDashboardPage';
+import AdminDashboard from '@/pages/admin/AdminDashboard';
 import { AdminSalesPage } from '@/pages/admin/AdminSalesPage';
 import { AdminUsersPage } from '@/pages/admin/AdminUsersPage';
 import { AdminInsuranceTypesPage } from '@/pages/admin/AdminInsuranceTypesPage';
@@ -36,13 +36,16 @@ const App = () => {
             </ProtectedRoute>
           }
         >
-          <Route index element={<AdminDashboardPage />} />
+          <Route index element={<AdminDashboard />} />
+          <Route path="dashboard" element={<AdminDashboard />} />
           <Route path="sales" element={<AdminSalesPage />} />
           <Route path="users" element={<AdminUsersPage />} />
           <Route path="insurance-types" element={<AdminInsuranceTypesPage />} />
           <Route path="objectives" element={<div className="p-8 text-center text-gray-500">Page Objectifs - En cours de développement</div>} />
-          <Route path="bonuses" element={<div className="p-8 text-center text-gray-500">Page Bonus - En cours de développement</div>} />
-          <Route path="audit-logs" element={<div className="p-8 text-center text-gray-500">Page Logs d'audit - En cours de développement</div>} />
+          <Route path="bonuses" element={<div className="p-8 text-center text-gray-500">Page Primes & Bonus - En cours de développement</div>} />
+          <Route path="bonus-rules" element={<div className="p-8 text-center text-gray-500">Page Règles de bonus - En cours de développement</div>} />
+          <Route path="reports" element={<div className="p-8 text-center text-gray-500">Page Rapports - En cours de développement</div>} />
+          <Route path="audit-logs" element={<div className="p-8 text-center text-gray-500">Page Journal d'audit - En cours de développement</div>} />
           <Route path="settings" element={<div className="p-8 text-center text-gray-500">Page Paramètres - En cours de développement</div>} />
         </Route>
         
