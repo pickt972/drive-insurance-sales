@@ -29,7 +29,7 @@ export function useAuth() {
   });
   const { toast } = useToast();
 
-  // Fonction pour charger le profil utilisateur avec retry logic réduit
+  // Fonction pour charger le profil utilisateur avec retry logic et fallback sur user_metadata
   const loadProfile = async (userId: string, retries = 2): Promise<Profile | null> => {
     for (let attempt = 1; attempt <= retries; attempt++) {
       try {
@@ -41,16 +41,41 @@ export function useAuth() {
           .from('profiles')
           .select('id, email, full_name, role, is_active')
           .eq('id', userId)
-          .single();
+          .maybeSingle();
 
         if (error) {
           // Si c'est une erreur de cache et qu'il reste des tentatives, on réessaie avec délai court
           if (error.code === 'PGRST002' && attempt < retries) {
-            const delay = 500; // Délai fixe de 500ms
-            console.warn(`⚠️ [${attempt}/${retries}] Schema cache error, retrying in ${delay}ms...`);
+            const delay = 500;
+            console.warn(`⚠️ [${attempt}/${retries}] Schema cache error (PGRST002), retrying in ${delay}ms...`);
             await new Promise(resolve => setTimeout(resolve, delay));
             continue;
           }
+          
+          // Si tous les retries échouent avec PGRST002, utiliser user_metadata comme fallback
+          if (error.code === 'PGRST002' && attempt === retries) {
+            console.warn(`⚠️ Cache Supabase indisponible après ${retries} tentatives - Fallback sur user_metadata`);
+            const { data: { user } } = await supabase.auth.getUser();
+            
+            if (user && user.user_metadata) {
+              const fallbackProfile: Profile = {
+                id: user.id,
+                email: user.email || '',
+                full_name: user.user_metadata.full_name || user.email?.split('@')[0] || 'Utilisateur',
+                role: (user.user_metadata.role as 'user' | 'admin') || 'user',
+                is_active: true,
+              };
+              
+              console.log('✅ Profil fallback créé depuis user_metadata:', fallbackProfile.email, 'Role:', fallbackProfile.role);
+              toast({
+                title: '⚠️ Mode dégradé',
+                description: 'Service temporairement ralenti. Fonctionnalités limitées.',
+                variant: 'default',
+              });
+              return fallbackProfile;
+            }
+          }
+          
           console.error(`❌ [${attempt}/${retries}] Error loading profile:`, error);
           throw error;
         }
@@ -62,7 +87,6 @@ export function useAuth() {
           console.error(`❌ [${attempt}/${retries}] All attempts failed:`, error);
           return null;
         }
-        // Continue to next iteration
       }
     }
     return null;
