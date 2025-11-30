@@ -13,15 +13,13 @@ export function ProtectedRoute({ children, requireAdmin = false }: ProtectedRout
   const location = useLocation();
 
   useEffect(() => {
-    if (import.meta.env.DEV) {
-      console.log('🛡️ ProtectedRoute check:', {
-        path: location.pathname,
-        requireAdmin,
-        user: user?.email,
-        isAdmin,
-        loading,
-      });
-    }
+    console.log('🛡️ ProtectedRoute check:', {
+      path: location.pathname,
+      requireAdmin,
+      user: user?.email,
+      isAdmin,
+      loading,
+    });
   }, [user, isAdmin, loading, location, requireAdmin]);
 
   // Afficher loader pendant la vérification

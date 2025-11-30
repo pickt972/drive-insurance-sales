@@ -11,10 +11,12 @@ export function AdminLayout() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!isAdmin) {
+    console.log('🏢 [AdminLayout] Check:', { isAdmin, user: user?.email, profile });
+    if (!isAdmin && user) {
+      console.log('⚠️ [AdminLayout] User is not admin, redirecting to dashboard');
       navigate('/dashboard');
     }
-  }, [isAdmin, navigate]);
+  }, [isAdmin, navigate, user, profile]);
 
   return (
     <SidebarProvider>

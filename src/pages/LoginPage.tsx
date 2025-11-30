@@ -51,8 +51,17 @@ export function LoginPage() {
           .eq('id', data.user.id)
           .maybeSingle();
 
+        console.log('🔍 [LOGIN] Profile récupéré:', profile);
+        console.log('🔍 [LOGIN] Role détecté:', profile?.role);
+        
         const isAdmin = profile?.role === 'admin';
-        navigate(isAdmin ? '/admin' : '/dashboard', { replace: true });
+        console.log('🔍 [LOGIN] isAdmin:', isAdmin);
+        console.log('🔍 [LOGIN] Redirection vers:', isAdmin ? '/admin' : '/dashboard');
+        
+        // Petit délai pour laisser le temps à useAuth de se mettre à jour
+        setTimeout(() => {
+          navigate(isAdmin ? '/admin' : '/dashboard', { replace: true });
+        }, 100);
       }
     } catch (error: any) {
       setError('Identifiant ou mot de passe incorrect');
