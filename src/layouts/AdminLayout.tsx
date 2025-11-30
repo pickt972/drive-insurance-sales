@@ -1,63 +1,225 @@
-import { Outlet, useNavigate } from 'react-router-dom';
-import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
-import { AdminSidebar } from '@/components/admin/AdminSidebar';
+import { useState } from 'react';
+import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { cn } from '@/lib/utils';
+import {
+  LayoutDashboard,
+  ShoppingCart,
+  Users,
+  Shield,
+  Target,
+  Gift,
+  Settings as SettingsIcon,
+  FileText,
+  ClipboardList,
+  LogOut,
+  Menu,
+  X,
+  ChevronDown,
+  Bell,
+  Car
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { LogOut, User } from 'lucide-react';
-import { useEffect } from 'react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 
-export function AdminLayout() {
-  const { user, profile, signOut, isAdmin } = useAuth();
+const navigation = [
+  { name: 'Tableau de bord', href: '/admin/dashboard', icon: LayoutDashboard },
+  { name: 'Ventes', href: '/admin/sales', icon: ShoppingCart },
+  { name: 'Utilisateurs', href: '/admin/users', icon: Users },
+  { name: 'Types d\'assurances', href: '/admin/insurance-types', icon: Shield },
+  { name: 'Objectifs', href: '/admin/objectives', icon: Target },
+  { name: 'Primes & Bonus', href: '/admin/bonuses', icon: Gift },
+  { name: 'Règles de bonus', href: '/admin/bonus-rules', icon: ClipboardList },
+  { name: 'Rapports', href: '/admin/reports', icon: FileText },
+  { name: 'Journal d\'audit', href: '/admin/audit-logs', icon: ClipboardList },
+  { name: 'Paramètres', href: '/admin/settings', icon: SettingsIcon },
+];
+
+export default function AdminLayout() {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { profile, signOut } = useAuth();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    console.log('🏢 [AdminLayout] Check:', { isAdmin, user: user?.email, profile });
-    if (!isAdmin && user) {
-      console.log('⚠️ [AdminLayout] User is not admin, redirecting to dashboard');
-      navigate('/dashboard');
-    }
-  }, [isAdmin, navigate, user, profile]);
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/login');
+  };
+
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map(n => n[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+  };
 
   return (
-    <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-gray-50">
-        <AdminSidebar />
-        
-        <div className="flex-1 flex flex-col">
-          {/* Header */}
-          <header className="h-16 border-b bg-white flex items-center justify-between px-6">
-            <div className="flex items-center gap-4">
-              <SidebarTrigger />
-              <h1 className="text-lg font-semibold text-gray-900">Administration ALOELOCATION</h1>
+    <div className="min-h-screen bg-gray-100">
+      {/* Sidebar Mobile */}
+      <div
+        className={cn(
+          'fixed inset-0 z-50 lg:hidden',
+          sidebarOpen ? 'block' : 'hidden'
+        )}
+      >
+        <div className="fixed inset-0 bg-gray-900/80" onClick={() => setSidebarOpen(false)} />
+        <div className="fixed inset-y-0 left-0 w-72 bg-white shadow-xl">
+          <div className="flex items-center justify-between h-16 px-6 border-b">
+            <div className="flex items-center gap-2">
+              <Car className="h-8 w-8 text-blue-600" />
+              <span className="text-xl font-bold text-gray-900">ALOELOCATION</span>
             </div>
-            
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <User className="h-5 w-5 text-red-600" />
-                <div className="text-sm">
-                  <p className="font-medium text-gray-900">{profile?.full_name}</p>
-                  <p className="text-xs text-red-600">Administrateur</p>
-                </div>
-              </div>
-              
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={signOut}
-                className="text-red-600 hover:text-red-700 hover:bg-red-50"
+            <button onClick={() => setSidebarOpen(false)}>
+              <X className="h-6 w-6 text-gray-500" />
+            </button>
+          </div>
+          <nav className="px-4 py-4 space-y-1">
+            {navigation.map((item) => (
+              <NavLink
+                key={item.name}
+                to={item.href}
+                onClick={() => setSidebarOpen(false)}
+                className={({ isActive }) =>
+                  cn(
+                    'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
+                    isActive
+                      ? 'bg-blue-50 text-blue-700'
+                      : 'text-gray-700 hover:bg-gray-100'
+                  )
+                }
               >
-                <LogOut className="h-4 w-4 mr-2" />
-                Déconnexion
-              </Button>
-            </div>
-          </header>
-
-          {/* Main Content */}
-          <main className="flex-1 p-6 overflow-auto">
-            <Outlet />
-          </main>
+                <item.icon className="h-5 w-5" />
+                {item.name}
+              </NavLink>
+            ))}
+          </nav>
         </div>
       </div>
-    </SidebarProvider>
+
+      {/* Sidebar Desktop */}
+      <div className="hidden lg:fixed lg:inset-y-0 lg:flex lg:w-72 lg:flex-col">
+        <div className="flex flex-col flex-grow bg-white border-r border-gray-200">
+          {/* Logo */}
+          <div className="flex items-center h-16 px-6 border-b border-gray-200">
+            <Car className="h-8 w-8 text-blue-600" />
+            <span className="ml-2 text-xl font-bold text-gray-900">ALOELOCATION</span>
+          </div>
+
+          {/* Navigation */}
+          <nav className="flex-1 px-4 py-4 space-y-1 overflow-y-auto">
+            {navigation.map((item) => (
+              <NavLink
+                key={item.name}
+                to={item.href}
+                className={({ isActive }) =>
+                  cn(
+                    'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
+                    isActive
+                      ? 'bg-blue-50 text-blue-700 border-l-4 border-blue-700 -ml-1 pl-4'
+                      : 'text-gray-700 hover:bg-gray-100'
+                  )
+                }
+              >
+                <item.icon className="h-5 w-5" />
+                {item.name}
+              </NavLink>
+            ))}
+          </nav>
+
+          {/* User info bottom */}
+          <div className="p-4 border-t border-gray-200">
+            <div className="flex items-center gap-3">
+              <Avatar className="h-10 w-10">
+                <AvatarFallback className="bg-blue-100 text-blue-700">
+                  {profile?.full_name ? getInitials(profile.full_name) : 'AD'}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-gray-900 truncate">
+                  {profile?.full_name || 'Administrateur'}
+                </p>
+                <p className="text-xs text-gray-500 truncate">{profile?.email}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Main content */}
+      <div className="lg:pl-72">
+        {/* Header */}
+        <header className="sticky top-0 z-40 bg-white border-b border-gray-200">
+          <div className="flex items-center justify-between h-16 px-4 sm:px-6 lg:px-8">
+            <button
+              className="lg:hidden p-2 -ml-2 text-gray-500 hover:text-gray-700"
+              onClick={() => setSidebarOpen(true)}
+            >
+              <Menu className="h-6 w-6" />
+            </button>
+
+            <div className="flex-1 lg:flex-none" />
+
+            <div className="flex items-center gap-4">
+              {/* Notifications */}
+              <Button variant="ghost" size="icon" className="relative">
+                <Bell className="h-5 w-5 text-gray-500" />
+                <span className="absolute top-1 right-1 h-2 w-2 bg-red-500 rounded-full" />
+              </Button>
+
+              {/* User menu */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="flex items-center gap-2">
+                    <Avatar className="h-8 w-8">
+                      <AvatarFallback className="bg-blue-100 text-blue-700 text-sm">
+                        {profile?.full_name ? getInitials(profile.full_name) : 'AD'}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="hidden sm:block text-sm font-medium">
+                      {profile?.full_name}
+                    </span>
+                    <ChevronDown className="h-4 w-4 text-gray-500" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuLabel>
+                    <div className="flex flex-col">
+                      <span>{profile?.full_name}</span>
+                      <span className="text-xs font-normal text-gray-500">
+                        Administrateur
+                      </span>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => navigate('/admin/settings')}>
+                    <SettingsIcon className="mr-2 h-4 w-4" />
+                    Paramètres
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleSignOut} className="text-red-600">
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Déconnexion
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </div>
+        </header>
+
+        {/* Page content */}
+        <main className="p-4 sm:p-6 lg:p-8">
+          <Outlet />
+        </main>
+      </div>
+    </div>
   );
 }

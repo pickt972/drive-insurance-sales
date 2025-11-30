@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { LoginPage } from '@/pages/LoginPage';
 import { UserDashboard } from '@/pages/UserDashboard';
-import { AdminLayout } from '@/layouts/AdminLayout';
+import AdminLayout from '@/layouts/AdminLayout';
 import { AdminDashboardPage } from '@/pages/admin/AdminDashboardPage';
 import { AdminSalesPage } from '@/pages/admin/AdminSalesPage';
 import { AdminUsersPage } from '@/pages/admin/AdminUsersPage';
