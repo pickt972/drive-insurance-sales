@@ -45,56 +45,15 @@ export function LoginPage() {
       if (data.user) {
         console.log('✅ [LOGIN] Connexion réussie pour:', data.user.email);
         
-        // Charger le profil avec retry logic pour gérer PGRST002
-        const loadProfileWithRetry = async (retries = 2): Promise<any> => {
-          for (let attempt = 1; attempt <= retries; attempt++) {
-            try {
-              console.log(`🔍 [LOGIN] Tentative ${attempt}/${retries} de chargement profil`);
-              
-              const supabaseAny = supabase as any;
-              const { data: profile, error: profileError } = await supabaseAny
-                .from('profiles')
-                .select('role')
-                .eq('id', data.user.id)
-                .maybeSingle();
-
-              if (profileError && profileError.code === 'PGRST002' && attempt < retries) {
-                console.warn(`⚠️ [LOGIN] Erreur cache, retry dans 500ms...`);
-                await new Promise(resolve => setTimeout(resolve, 500));
-                continue;
-              }
-
-              if (profileError) {
-                console.error('❌ [LOGIN] Erreur chargement profil:', profileError);
-                throw profileError;
-              }
-
-              if (!profile) {
-                console.error('❌ [LOGIN] Aucun profil trouvé');
-                throw new Error('Profil introuvable');
-              }
-
-              console.log('✅ [LOGIN] Profil chargé:', profile);
-              return profile;
-            } catch (err) {
-              if (attempt === retries) throw err;
-            }
-          }
-        };
-
-        try {
-          const profile = await loadProfileWithRetry();
-          
-          console.log('🎯 [LOGIN] Rôle détecté:', profile?.role);
-          const isAdmin = profile?.role === 'admin';
-          const targetRoute = isAdmin ? '/admin' : '/dashboard';
-          
-          console.log('➡️ [LOGIN] Redirection vers:', targetRoute);
-          navigate(targetRoute, { replace: true });
-        } catch (err) {
-          console.error('❌ [LOGIN] Erreur finale:', err);
-          setError('Erreur lors du chargement du profil. Veuillez réessayer.');
-        }
+        // Utiliser directement user_metadata pour la redirection (plus fiable que profiles table)
+        const userRole = data.user.user_metadata?.role || 'user';
+        console.log('🎯 [LOGIN] Rôle depuis user_metadata:', userRole);
+        
+        const isAdmin = userRole === 'admin';
+        const targetRoute = isAdmin ? '/admin' : '/dashboard';
+        
+        console.log('➡️ [LOGIN] Redirection immédiate vers:', targetRoute);
+        navigate(targetRoute, { replace: true });
       }
     } catch (error: any) {
       setError('Identifiant ou mot de passe incorrect');
