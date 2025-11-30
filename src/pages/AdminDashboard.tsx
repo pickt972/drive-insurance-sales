@@ -8,9 +8,11 @@ import { InsuranceTypesManagement } from '@/components/Admin/InsuranceTypesManag
 import { BonusManagement } from '@/components/Admin/BonusManagement';
 import { AdvancedAnalytics } from '@/components/Admin/AdvancedAnalytics';
 import { QuickActions } from '@/components/Admin/QuickActions';
+import { AuditLogViewer } from '@/components/Admin/AuditLogViewer';
+import { SystemSettings } from '@/components/Admin/SystemSettings';
 import { useRealtimeSales } from '@/hooks/useRealtimeSales';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { BarChart3, Users, FileText, Target, Shield, TrendingUp, Award } from 'lucide-react';
+import { BarChart3, Users, FileText, Target, Shield, TrendingUp, Award, Settings } from 'lucide-react';
 
 export function AdminDashboard() {
   const [refreshKey, setRefreshKey] = useState(0);
@@ -26,7 +28,7 @@ export function AdminDashboard() {
       <QuickActions />
 
       <Tabs defaultValue="stats" className="space-y-6 animate-gentle-fade-in">
-        <TabsList className="grid w-full grid-cols-7 h-12">
+        <TabsList className="grid w-full grid-cols-9 h-12 lg:grid-cols-9">
           <TabsTrigger value="stats" className="gap-2">
             <BarChart3 className="h-4 w-4" />
             <span className="hidden sm:inline">Stats</span>
@@ -54,6 +56,14 @@ export function AdminDashboard() {
           <TabsTrigger value="bonus" className="gap-2">
             <Award className="h-4 w-4" />
             <span className="hidden sm:inline">Bonus</span>
+          </TabsTrigger>
+          <TabsTrigger value="audit" className="gap-2">
+            <Shield className="h-4 w-4" />
+            <span className="hidden sm:inline">Audit</span>
+          </TabsTrigger>
+          <TabsTrigger value="settings" className="gap-2">
+            <Settings className="h-4 w-4" />
+            <span className="hidden sm:inline">Paramètres</span>
           </TabsTrigger>
         </TabsList>
 
@@ -83,6 +93,14 @@ export function AdminDashboard() {
 
         <TabsContent value="bonus" className="animate-smooth-scale-in">
           <BonusManagement />
+        </TabsContent>
+
+        <TabsContent value="audit" className="animate-smooth-scale-in">
+          <AuditLogViewer />
+        </TabsContent>
+
+        <TabsContent value="settings" className="animate-smooth-scale-in">
+          <SystemSettings />
         </TabsContent>
       </Tabs>
     </AdminLayout>

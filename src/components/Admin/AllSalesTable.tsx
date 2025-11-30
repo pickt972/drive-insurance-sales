@@ -14,9 +14,11 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Search, Download, FileText } from 'lucide-react';
+import { Search, Download, FileText, FileSpreadsheet } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { exportSalesPDF } from '@/utils/pdfExport';
+import { exportSalesExcel } from '@/utils/excelExport';
 
 export function AllSalesTable() {
   const { sales } = useSales();
@@ -105,14 +107,32 @@ export function AllSalesTable() {
               </CardDescription>
             </div>
           </div>
-          <Button 
-            variant="outline" 
-            onClick={handleExportCSV}
-            className="hover:bg-primary/10 hover:text-primary hover:scale-105 transition-all duration-300"
-          >
-            <Download className="mr-2 h-4 w-4" />
-            Exporter
-          </Button>
+          <div className="flex gap-2">
+            <Button 
+              variant="outline" 
+              onClick={handleExportCSV}
+              className="hover:bg-primary/10 hover:text-primary hover:scale-105 transition-all duration-300"
+            >
+              <Download className="mr-2 h-4 w-4" />
+              CSV
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={() => exportSalesExcel(filteredSales, 'ventes-globales')}
+              className="hover:bg-success/10 hover:text-success hover:scale-105 transition-all duration-300"
+            >
+              <FileSpreadsheet className="mr-2 h-4 w-4" />
+              Excel
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={() => exportSalesPDF(filteredSales, 'Rapport global des ventes')}
+              className="hover:bg-destructive/10 hover:text-destructive hover:scale-105 transition-all duration-300"
+            >
+              <FileText className="mr-2 h-4 w-4" />
+              PDF
+            </Button>
+          </div>
         </div>
       </CardHeader>
       <CardContent>
