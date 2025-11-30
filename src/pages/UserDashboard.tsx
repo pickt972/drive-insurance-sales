@@ -1,35 +1,14 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState } from 'react';
 import { UserLayout } from '@/components/layouts/UserLayout';
 import { Dashboard } from '@/components/Dashboard';
 import { SalesForm } from '@/components/SalesForm';
 import { SalesHistory } from '@/components/SalesHistory';
-import { useAuth } from '@/hooks/useAuth';
 import { Home, PlusCircle, BarChart } from 'lucide-react';
-import { Loader2 } from 'lucide-react';
 
 export function UserDashboard() {
   const [activeTab, setActiveTab] = useState('dashboard');
-  const { isAdmin, loading } = useAuth();
-  const navigate = useNavigate();
-
-  // Rediriger les admins vers l'interface admin
-  useEffect(() => {
-    console.log('👤 [UserDashboard] Check:', { isAdmin, loading });
-    if (!loading && isAdmin) {
-      console.log('⚠️ [UserDashboard] Admin détecté, redirection vers /admin');
-      navigate('/admin', { replace: true });
-    }
-  }, [isAdmin, loading, navigate]);
-
-  // Afficher un loader pendant la vérification
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
-  }
+  
+  // Plus besoin de redirection ici, ProtectedRoute dans App.tsx s'en charge
 
   const handleSaleAdded = () => {
     setActiveTab('dashboard');

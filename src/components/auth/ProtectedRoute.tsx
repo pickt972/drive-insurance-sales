@@ -9,7 +9,7 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({ children, requireAdmin = false }: ProtectedRouteProps) {
-  const { user, isAdmin, loading } = useAuth();
+  const { user, profile, isAdmin, loading } = useAuth();
   const location = useLocation();
 
   useEffect(() => {
@@ -17,29 +17,37 @@ export function ProtectedRoute({ children, requireAdmin = false }: ProtectedRout
       path: location.pathname,
       requireAdmin,
       user: user?.email,
+      profile: profile?.role,
       isAdmin,
       loading,
     });
-  }, [user, isAdmin, loading, location, requireAdmin]);
+  }, [user, profile, isAdmin, loading, location, requireAdmin]);
 
-  // Afficher loader pendant la vérification
-  if (loading) {
+  // Afficher loader pendant la vérification ET si profil pas encore chargé
+  if (loading || (user && !profile)) {
+    console.log('⏳ ProtectedRoute: Waiting for profile to load...');
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <div className="text-center space-y-4">
+          <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto" />
+          <p className="text-sm text-muted-foreground">Vérification des permissions...</p>
+        </div>
       </div>
     );
   }
 
   // Rediriger vers login si pas connecté
   if (!user) {
+    console.log('❌ ProtectedRoute: No user, redirecting to login');
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
   // Rediriger vers dashboard user si route admin sans être admin
   if (requireAdmin && !isAdmin) {
+    console.log('❌ ProtectedRoute: Access denied - Not admin, redirecting to /dashboard');
     return <Navigate to="/dashboard" replace />;
   }
 
+  console.log('✅ ProtectedRoute: Access granted');
   return <>{children}</>;
 }

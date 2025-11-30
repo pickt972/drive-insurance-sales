@@ -43,25 +43,36 @@ export function LoginPage() {
       if (signInError) throw signInError;
 
       if (data.user) {
-        // Temporary workaround until Supabase types are regenerated
-        const supabaseAny = supabase as any;
-        const { data: profile } = await supabaseAny
-          .from('profiles')
-          .select('role')
-          .eq('id', data.user.id)
-          .maybeSingle();
+        console.log('✅ [LOGIN] Connexion réussie pour:', data.user.email);
+        
+        // Laisser useAuth charger le profil avec retry logic
+        // Attendre un peu plus longtemps pour que le profil se charge
+        setTimeout(async () => {
+          try {
+            // Temporary workaround until Supabase types are regenerated
+            const supabaseAny = supabase as any;
+            const { data: profile } = await supabaseAny
+              .from('profiles')
+              .select('role')
+              .eq('id', data.user.id)
+              .single();
 
-        console.log('🔍 [LOGIN] Profile récupéré:', profile);
-        console.log('🔍 [LOGIN] Role détecté:', profile?.role);
-        
-        const isAdmin = profile?.role === 'admin';
-        console.log('🔍 [LOGIN] isAdmin:', isAdmin);
-        console.log('🔍 [LOGIN] Redirection vers:', isAdmin ? '/admin' : '/dashboard');
-        
-        // Petit délai pour laisser le temps à useAuth de se mettre à jour
-        setTimeout(() => {
-          navigate(isAdmin ? '/admin' : '/dashboard', { replace: true });
-        }, 100);
+            console.log('🎯 [LOGIN] Profil chargé:', profile);
+            console.log('🎯 [LOGIN] Rôle détecté:', profile?.role);
+            
+            const isAdmin = profile?.role === 'admin';
+            const targetRoute = isAdmin ? '/admin' : '/dashboard';
+            
+            console.log('➡️ [LOGIN] Redirection vers:', targetRoute);
+            console.log('🔑 [LOGIN] isAdmin:', isAdmin);
+            
+            navigate(targetRoute, { replace: true });
+          } catch (err) {
+            console.error('❌ [LOGIN] Erreur chargement profil:', err);
+            // Fallback: rediriger vers dashboard par défaut
+            navigate('/dashboard', { replace: true });
+          }
+        }, 500); // Délai augmenté à 500ms
       }
     } catch (error: any) {
       setError('Identifiant ou mot de passe incorrect');

@@ -29,8 +29,8 @@ export function useAuth() {
   });
   const { toast } = useToast();
 
-  // Fonction pour charger le profil utilisateur avec retry logic
-  const loadProfile = async (userId: string, retries = 3): Promise<Profile | null> => {
+  // Fonction pour charger le profil utilisateur avec retry logic AUGMENTÉ
+  const loadProfile = async (userId: string, retries = 10): Promise<Profile | null> => {
     for (let attempt = 1; attempt <= retries; attempt++) {
       try {
         console.log(`🔍 [${attempt}/${retries}] Loading profile for user:`, userId);
@@ -44,10 +44,11 @@ export function useAuth() {
           .single();
 
         if (error) {
-          // Si c'est une erreur de cache et qu'il reste des tentatives, on réessaie
+          // Si c'est une erreur de cache et qu'il reste des tentatives, on réessaie avec délai progressif
           if (error.code === 'PGRST002' && attempt < retries) {
-            console.warn(`⚠️ [${attempt}/${retries}] Schema cache error, retrying in ${attempt * 500}ms...`);
-            await new Promise(resolve => setTimeout(resolve, attempt * 500));
+            const delay = Math.min(attempt * 1000, 5000); // Max 5 secondes entre retries
+            console.warn(`⚠️ [${attempt}/${retries}] Schema cache error, retrying in ${delay}ms...`);
+            await new Promise(resolve => setTimeout(resolve, delay));
             continue;
           }
           console.error(`❌ [${attempt}/${retries}] Error loading profile:`, error);
@@ -61,6 +62,7 @@ export function useAuth() {
           console.error(`❌ [${attempt}/${retries}] All attempts failed:`, error);
           return null;
         }
+        // Continue to next iteration
       }
     }
     return null;
