@@ -28,7 +28,12 @@ export function LoginPage() {
     setIsLoading(true);
 
     try {
-      const email = username.includes('@') ? username : `${username.toLowerCase()}@aloelocation.com`;
+      // Convertir l'identifiant simple en email
+      const email = username.includes('@') 
+        ? username 
+        : `${username.toLowerCase()}@aloelocation.internal`;
+      
+      console.log('🔐 Tentative de connexion avec:', email);
       
       const { data, error: signInError } = await supabase.auth.signInWithPassword({
         email,
