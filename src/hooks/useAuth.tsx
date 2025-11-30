@@ -32,6 +32,8 @@ export function useAuth() {
   // Fonction pour charger le profil utilisateur
   const loadProfile = async (userId: string): Promise<Profile | null> => {
     try {
+      console.log('🔍 [1/4] Loading profile for user:', userId);
+      
       // Temporary workaround until Supabase types are regenerated
       const supabaseAny = supabase as any;
       const { data, error } = await supabaseAny
@@ -40,33 +42,46 @@ export function useAuth() {
         .eq('id', userId)
         .maybeSingle();
 
-      if (error) throw error;
-      
-      if (import.meta.env.DEV) {
-        console.log('✅ Profile loaded:', data);
+      if (error) {
+        console.error('❌ [2/4] Error loading profile:', error);
+        throw error;
       }
+      
+      console.log('✅ [3/4] Profile loaded successfully:', data);
       return data;
     } catch (error) {
-      if (import.meta.env.DEV) {
-        console.error('❌ Error loading profile:', error);
-      }
+      console.error('❌ [4/4] Exception in loadProfile:', error);
       return null;
     }
   };
 
   // Initialisation et écoute des changements d'auth
   useEffect(() => {
+    console.log('🚀 [AUTH] useEffect - Starting auth initialization');
     let isMounted = true;
 
     // Récupérer la session actuelle
     const initAuth = async () => {
       try {
+        console.log('🔍 [AUTH] Step 1: Getting current session...');
         const { data: { session }, error } = await supabase.auth.getSession();
         
-        if (error) throw error;
+        if (error) {
+          console.error('❌ [AUTH] Step 1 FAILED: Session error:', error);
+          throw error;
+        }
+
+        console.log('✅ [AUTH] Step 1 SUCCESS: Session retrieved:', session ? 'YES' : 'NO', session?.user?.email);
 
         if (session?.user && isMounted) {
+          console.log('🔍 [AUTH] Step 2: User found, loading profile...');
           const profile = await loadProfile(session.user.id);
+          
+          if (!profile) {
+            console.error('❌ [AUTH] Step 2 FAILED: No profile found for user:', session.user.id);
+          } else {
+            console.log('✅ [AUTH] Step 2 SUCCESS: Profile loaded');
+          }
           
           setState({
             user: session.user,
@@ -76,14 +91,13 @@ export function useAuth() {
             error: null,
           });
 
-          if (import.meta.env.DEV) {
-            console.log('🔐 Auth initialized:', {
-              user: session.user.email,
-              role: profile?.role,
-              isAdmin: profile?.role === 'admin',
-            });
-          }
+          console.log('✅ [AUTH] Auth initialized:', {
+            user: session.user.email,
+            role: profile?.role,
+            isAdmin: profile?.role === 'admin',
+          });
         } else if (isMounted) {
+          console.log('ℹ️ [AUTH] No session found - user not logged in');
           setState({
             user: null,
             profile: null,
@@ -93,9 +107,7 @@ export function useAuth() {
           });
         }
       } catch (error) {
-        if (import.meta.env.DEV) {
-          console.error('❌ Auth initialization error:', error);
-        }
+        console.error('❌ [AUTH] Auth initialization EXCEPTION:', error);
         if (isMounted) {
           setState({
             user: null,
@@ -113,11 +125,10 @@ export function useAuth() {
     // Écouter les changements d'authentification
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        if (import.meta.env.DEV) {
-          console.log('🔄 Auth state changed:', event);
-        }
+        console.log('🔄 [AUTH] Auth state changed:', event, 'Session:', session ? 'YES' : 'NO');
 
         if (event === 'SIGNED_IN' && session?.user && isMounted) {
+          console.log('🔑 [AUTH] SIGNED_IN event - loading profile');
           const profile = await loadProfile(session.user.id);
           
           setState({
@@ -127,7 +138,9 @@ export function useAuth() {
             loading: false,
             error: null,
           });
+          console.log('✅ [AUTH] State updated after SIGNED_IN');
         } else if (event === 'SIGNED_OUT' && isMounted) {
+          console.log('🚪 [AUTH] SIGNED_OUT event - clearing state');
           setState({
             user: null,
             profile: null,
@@ -136,6 +149,7 @@ export function useAuth() {
             error: null,
           });
         } else if (event === 'TOKEN_REFRESHED' && session?.user && isMounted) {
+          console.log('🔄 [AUTH] TOKEN_REFRESHED - updating profile');
           const profile = await loadProfile(session.user.id);
           
           setState(prev => ({
