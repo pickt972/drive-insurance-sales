@@ -45,33 +45,55 @@ export function LoginPage() {
       if (data.user) {
         console.log('✅ [LOGIN] Connexion réussie pour:', data.user.email);
         
-        try {
-          // Charger le profil immédiatement
-          const supabaseAny = supabase as any;
-          const { data: profile, error: profileError } = await supabaseAny
-            .from('profiles')
-            .select('role')
-            .eq('id', data.user.id)
-            .single();
+        // Charger le profil avec retry logic pour gérer PGRST002
+        const loadProfileWithRetry = async (retries = 2): Promise<any> => {
+          for (let attempt = 1; attempt <= retries; attempt++) {
+            try {
+              console.log(`🔍 [LOGIN] Tentative ${attempt}/${retries} de chargement profil`);
+              
+              const supabaseAny = supabase as any;
+              const { data: profile, error: profileError } = await supabaseAny
+                .from('profiles')
+                .select('role')
+                .eq('id', data.user.id)
+                .maybeSingle();
 
-          if (profileError) {
-            console.error('❌ [LOGIN] Erreur chargement profil:', profileError);
-            throw profileError;
+              if (profileError && profileError.code === 'PGRST002' && attempt < retries) {
+                console.warn(`⚠️ [LOGIN] Erreur cache, retry dans 500ms...`);
+                await new Promise(resolve => setTimeout(resolve, 500));
+                continue;
+              }
+
+              if (profileError) {
+                console.error('❌ [LOGIN] Erreur chargement profil:', profileError);
+                throw profileError;
+              }
+
+              if (!profile) {
+                console.error('❌ [LOGIN] Aucun profil trouvé');
+                throw new Error('Profil introuvable');
+              }
+
+              console.log('✅ [LOGIN] Profil chargé:', profile);
+              return profile;
+            } catch (err) {
+              if (attempt === retries) throw err;
+            }
           }
+        };
 
-          console.log('🎯 [LOGIN] Profil chargé:', profile);
-          console.log('🎯 [LOGIN] Rôle détecté:', profile?.role);
+        try {
+          const profile = await loadProfileWithRetry();
           
+          console.log('🎯 [LOGIN] Rôle détecté:', profile?.role);
           const isAdmin = profile?.role === 'admin';
           const targetRoute = isAdmin ? '/admin' : '/dashboard';
           
           console.log('➡️ [LOGIN] Redirection vers:', targetRoute);
-          console.log('🔑 [LOGIN] isAdmin:', isAdmin);
-          
           navigate(targetRoute, { replace: true });
         } catch (err) {
-          console.error('❌ [LOGIN] Erreur chargement profil:', err);
-          setError('Erreur lors du chargement du profil');
+          console.error('❌ [LOGIN] Erreur finale:', err);
+          setError('Erreur lors du chargement du profil. Veuillez réessayer.');
         }
       }
     } catch (error: any) {
