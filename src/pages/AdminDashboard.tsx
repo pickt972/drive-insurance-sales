@@ -4,10 +4,11 @@ import { AdminStats } from '@/components/Admin/AdminStats';
 import { AllSalesTable } from '@/components/Admin/AllSalesTable';
 import { UserManagement } from '@/components/Admin/UserManagement';
 import { ObjectivesManagement } from '@/components/Admin/ObjectivesManagement';
+import { InsuranceTypesManagement } from '@/components/Admin/InsuranceTypesManagement';
 import { QuickActions } from '@/components/Admin/QuickActions';
 import { useRealtimeSales } from '@/hooks/useRealtimeSales';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { BarChart3, Users, FileText, Target } from 'lucide-react';
+import { BarChart3, Users, FileText, Target, Shield } from 'lucide-react';
 
 export function AdminDashboard() {
   const [refreshKey, setRefreshKey] = useState(0);
@@ -22,39 +23,47 @@ export function AdminDashboard() {
       {/* Quick Actions */}
       <QuickActions />
 
-      <Tabs defaultValue="stats" className="space-y-6">
-        <TabsList>
-          <TabsTrigger value="stats">
-            <BarChart3 className="mr-2 h-4 w-4" />
-            Statistiques
+      <Tabs defaultValue="stats" className="space-y-6 animate-gentle-fade-in">
+        <TabsList className="grid w-full grid-cols-5 h-12">
+          <TabsTrigger value="stats" className="gap-2">
+            <BarChart3 className="h-4 w-4" />
+            <span className="hidden sm:inline">Statistiques</span>
           </TabsTrigger>
-          <TabsTrigger value="sales">
-            <FileText className="mr-2 h-4 w-4" />
-            Toutes les ventes
+          <TabsTrigger value="sales" className="gap-2">
+            <FileText className="h-4 w-4" />
+            <span className="hidden sm:inline">Ventes</span>
           </TabsTrigger>
-          <TabsTrigger value="users">
-            <Users className="mr-2 h-4 w-4" />
-            Utilisateurs
+          <TabsTrigger value="users" className="gap-2">
+            <Users className="h-4 w-4" />
+            <span className="hidden sm:inline">Utilisateurs</span>
           </TabsTrigger>
-          <TabsTrigger value="objectives">
-            <Target className="mr-2 h-4 w-4" />
-            Objectifs
+          <TabsTrigger value="insurance" className="gap-2">
+            <Shield className="h-4 w-4" />
+            <span className="hidden sm:inline">Assurances</span>
+          </TabsTrigger>
+          <TabsTrigger value="objectives" className="gap-2">
+            <Target className="h-4 w-4" />
+            <span className="hidden sm:inline">Objectifs</span>
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="stats" key={`stats-${refreshKey}`}>
+        <TabsContent value="stats" key={`stats-${refreshKey}`} className="animate-smooth-scale-in">
           <AdminStats />
         </TabsContent>
 
-        <TabsContent value="sales" key={`sales-${refreshKey}`}>
+        <TabsContent value="sales" key={`sales-${refreshKey}`} className="animate-smooth-scale-in">
           <AllSalesTable />
         </TabsContent>
 
-        <TabsContent value="users">
+        <TabsContent value="users" className="animate-smooth-scale-in">
           <UserManagement />
         </TabsContent>
 
-        <TabsContent value="objectives">
+        <TabsContent value="insurance" className="animate-smooth-scale-in">
+          <InsuranceTypesManagement />
+        </TabsContent>
+
+        <TabsContent value="objectives" className="animate-smooth-scale-in">
           <ObjectivesManagement />
         </TabsContent>
       </Tabs>

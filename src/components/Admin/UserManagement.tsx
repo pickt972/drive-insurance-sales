@@ -1,6 +1,7 @@
 import { useUsers } from '@/hooks/useUsers';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
   Table,
   TableBody,
@@ -16,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Shield, User as UserIcon } from 'lucide-react';
+import { Shield, User as UserIcon, Users as UsersIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
@@ -30,14 +31,19 @@ export function UserManagement() {
   };
 
   return (
-    <Card>
+    <Card className="modern-card animate-gentle-fade-in">
       <CardHeader>
         <div className="flex items-center justify-between">
-          <div>
-            <CardTitle>Gestion des utilisateurs</CardTitle>
-            <CardDescription>
-              {users.length} utilisateur{users.length > 1 ? 's' : ''} enregistré{users.length > 1 ? 's' : ''}
-            </CardDescription>
+          <div className="flex items-center gap-2">
+            <div className="p-2 rounded-lg bg-gradient-to-br from-success/10 to-success/5">
+              <UsersIcon className="h-5 w-5 text-success" />
+            </div>
+            <div>
+              <CardTitle>Gestion des utilisateurs</CardTitle>
+              <CardDescription>
+                {users.length} utilisateur{users.length > 1 ? 's' : ''} enregistré{users.length > 1 ? 's' : ''}
+              </CardDescription>
+            </div>
           </div>
         </div>
       </CardHeader>
@@ -63,14 +69,15 @@ export function UserManagement() {
                 </TableRow>
               ) : (
                 users.map((user) => (
-                  <TableRow key={user.id}>
+                  <TableRow key={user.id} className="hover:bg-muted/50 transition-colors">
                     <TableCell className="font-medium">
                       {user.full_name}
                     </TableCell>
-                    <TableCell>{user.email}</TableCell>
+                    <TableCell className="text-muted-foreground">{user.email}</TableCell>
                     <TableCell>
                       <Badge 
                         variant={user.role === 'admin' ? 'destructive' : 'secondary'}
+                        className="font-semibold"
                       >
                         {user.role === 'admin' ? (
                           <>
@@ -85,7 +92,7 @@ export function UserManagement() {
                         )}
                       </Badge>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="text-muted-foreground">
                       {format(new Date(user.created_at), 'dd/MM/yyyy', { locale: fr })}
                     </TableCell>
                     <TableCell>
@@ -98,7 +105,7 @@ export function UserManagement() {
                         value={user.role}
                         onValueChange={(value) => handleRoleChange(user.id, value as 'user' | 'admin')}
                       >
-                        <SelectTrigger className="w-[120px]">
+                        <SelectTrigger className="w-[120px] hover:border-primary transition-colors">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>

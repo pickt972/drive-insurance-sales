@@ -14,7 +14,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Search, Download } from 'lucide-react';
+import { Search, Download, FileText } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
@@ -89,18 +89,27 @@ export function AllSalesTable() {
   }), [filteredSales]);
 
   return (
-    <Card>
+    <Card className="modern-card animate-gentle-fade-in">
       <CardHeader>
         <div className="flex items-center justify-between">
-          <div>
-            <CardTitle>Toutes les ventes</CardTitle>
-            <CardDescription>
-              {filteredSales.length} vente{filteredSales.length > 1 ? 's' : ''} - 
-              Total : {stats.total.toFixed(2)} € - 
-              Commission : {stats.commission.toFixed(2)} €
-            </CardDescription>
+          <div className="flex items-center gap-2">
+            <div className="p-2 rounded-lg bg-gradient-to-br from-primary/10 to-primary/5">
+              <FileText className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <CardTitle>Toutes les ventes</CardTitle>
+              <CardDescription>
+                {filteredSales.length} vente{filteredSales.length > 1 ? 's' : ''} - 
+                <span className="font-semibold text-primary"> Total : {stats.total.toFixed(2)} €</span> - 
+                <span className="font-semibold text-success"> Commission : {stats.commission.toFixed(2)} €</span>
+              </CardDescription>
+            </div>
           </div>
-          <Button variant="outline" onClick={handleExportCSV}>
+          <Button 
+            variant="outline" 
+            onClick={handleExportCSV}
+            className="hover:bg-primary/10 hover:text-primary hover:scale-105 transition-all duration-300"
+          >
             <Download className="mr-2 h-4 w-4" />
             Exporter
           </Button>
