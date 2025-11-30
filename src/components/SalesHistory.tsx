@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { useSales } from '@/hooks/useSales';
 import { useInsuranceTypes } from '@/hooks/useInsuranceTypes';
 import { exportSalesPDF } from '@/utils/pdfExport';
+import { exportSalesExcel } from '@/utils/excelExport';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -21,7 +22,8 @@ import {
   Download,
   ChevronLeft,
   ChevronRight,
-  FileText
+  FileText,
+  FileSpreadsheet
 } from 'lucide-react';
 import { format, subMonths } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -135,6 +137,10 @@ export const SalesHistory = () => {
             <Button variant="outline" onClick={handleExportCSV}>
               <Download className="mr-2 h-4 w-4" />
               CSV
+            </Button>
+            <Button variant="outline" onClick={() => exportSalesExcel(filteredSales, 'mes-ventes')}>
+              <FileSpreadsheet className="mr-2 h-4 w-4" />
+              Excel
             </Button>
             <Button variant="outline" onClick={() => exportSalesPDF(filteredSales, 'Mes ventes')}>
               <FileText className="mr-2 h-4 w-4" />
