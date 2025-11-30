@@ -3,6 +3,7 @@ import { UserLayout } from '@/components/layouts/UserLayout';
 import { Dashboard } from '@/components/Dashboard';
 import { SalesForm } from '@/components/SalesForm';
 import { SalesHistory } from '@/components/SalesHistory';
+import { Home, PlusCircle, BarChart } from 'lucide-react';
 
 export function UserDashboard() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -26,43 +27,44 @@ export function UserDashboard() {
 
   return (
     <UserLayout>
-      <div className="space-y-8">
-        {/* Navigation tabs */}
-        <div className="flex gap-4 border-b border-border pb-2">
-          <button
-            onClick={() => setActiveTab('dashboard')}
-            className={`px-4 py-2 font-semibold transition-colors ${
-              activeTab === 'dashboard'
-                ? 'text-blue-600 border-b-2 border-blue-600'
-                : 'text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            Tableau de bord
-          </button>
-          <button
-            onClick={() => setActiveTab('new-sale')}
-            className={`px-4 py-2 font-semibold transition-colors ${
-              activeTab === 'new-sale'
-                ? 'text-blue-600 border-b-2 border-blue-600'
-                : 'text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            Nouvelle vente
-          </button>
-          <button
-            onClick={() => setActiveTab('stats')}
-            className={`px-4 py-2 font-semibold transition-colors ${
-              activeTab === 'stats'
-                ? 'text-blue-600 border-b-2 border-blue-600'
-                : 'text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            Mes statistiques
-          </button>
+      <div className="space-y-6 animate-gentle-fade-in">
+        {/* Navigation tabs moderne */}
+        <div className="modern-card p-2">
+          <div className="flex gap-2">
+            <button
+              onClick={() => setActiveTab('dashboard')}
+              className={`nav-button flex-1 ${
+                activeTab === 'dashboard' ? 'active' : ''
+              }`}
+            >
+              <Home className="mr-2 h-4 w-4" />
+              <span className="font-semibold">Tableau de bord</span>
+            </button>
+            <button
+              onClick={() => setActiveTab('new-sale')}
+              className={`nav-button flex-1 ${
+                activeTab === 'new-sale' ? 'active' : ''
+              }`}
+            >
+              <PlusCircle className="mr-2 h-4 w-4" />
+              <span className="font-semibold">Nouvelle vente</span>
+            </button>
+            <button
+              onClick={() => setActiveTab('stats')}
+              className={`nav-button flex-1 ${
+                activeTab === 'stats' ? 'active' : ''
+              }`}
+            >
+              <BarChart className="mr-2 h-4 w-4" />
+              <span className="font-semibold">Statistiques</span>
+            </button>
+          </div>
         </div>
 
         {/* Content */}
-        {renderContent()}
+        <div className="animate-smooth-scale-in">
+          {renderContent()}
+        </div>
       </div>
     </UserLayout>
   );
