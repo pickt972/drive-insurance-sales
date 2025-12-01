@@ -47,5 +47,5 @@ export function useRealtimeSales(onNewSale?: () => void) {
       console.log('🔴 Unsubscribing from realtime sales');
       supabase.removeChannel(channel);
     };
-  }, [user, isAdmin, onNewSale, toast]);
+  }, [user?.id, isAdmin, onNewSale, toast]); // Use user?.id for stable reference
 }

@@ -35,7 +35,8 @@ export function useObjectives() {
     if (user) {
       fetchObjectives();
     }
-  }, [user, isAdmin]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]); // Use stable user.id instead of user and isAdmin
 
   const fetchObjectives = async () => {
     try {
