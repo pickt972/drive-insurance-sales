@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Navigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -48,10 +48,7 @@ export default function LoginPage() {
 
   // Si déjà connecté et pas en cours de chargement, rediriger (UNE SEULE FOIS)
   if (!isLoading && isAuthenticated) {
-    const redirectTo = isAdmin ? '/admin/dashboard' : '/dashboard';
-    // Utiliser window.location pour éviter la boucle React
-    window.location.href = redirectTo;
-    return null;
+    return <Navigate to={isAdmin ? '/admin/dashboard' : '/dashboard'} replace />;
   }
 
   if (isLoading) {
