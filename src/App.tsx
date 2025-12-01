@@ -10,10 +10,12 @@ import { AdminUsersPage } from '@/pages/admin/AdminUsersPage';
 import { AdminInsuranceTypesPage } from '@/pages/admin/AdminInsuranceTypesPage';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { AuthProvider } from '@/hooks/useAuth';
+import { DebugAuth } from '@/components/DebugAuth';
 
 const App = () => {
   return (
     <AuthProvider>
+      <DebugAuth />
       <TooltipProvider>
         <Toaster />
         <Routes>
