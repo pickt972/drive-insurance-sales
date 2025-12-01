@@ -16,7 +16,7 @@ export default function LoginPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [debugLogs, setDebugLogs] = useState<string[]>([]);
 
-  const { signIn, user, isAdmin, isLoading, role } = useAuth();
+  const { signIn, user, isAdmin, isLoading, role, isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
   const addLog = (message: string) => {
@@ -139,6 +139,14 @@ export default function LoginPage() {
               )}
             </Button>
           </form>
+
+          <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded text-xs">
+            <p><strong>isLoading:</strong> {isLoading ? 'true' : 'false'}</p>
+            <p><strong>isAuthenticated:</strong> {isAuthenticated ? 'true' : 'false'}</p>
+            <p><strong>isAdmin:</strong> {isAdmin ? 'true' : 'false'}</p>
+            <p><strong>role:</strong> {role || 'null'}</p>
+            <p><strong>user:</strong> {user?.email || 'null'}</p>
+          </div>
 
           {debugLogs.length > 0 && (
             <div className="mt-4 p-4 bg-gray-100 rounded text-xs max-h-40 overflow-auto">
