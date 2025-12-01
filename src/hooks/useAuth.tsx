@@ -49,15 +49,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  // Récupérer le rôle depuis user_roles (lecture directe, pas RPC)
+  // Récupérer le rôle via RPC pour éviter les problèmes de RLS
   const fetchRole = useCallback(async (userId: string) => {
     console.log('[AUTH] fetchRole called for:', userId);
     try {
       const { data, error } = await (supabase as any)
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', userId)
-        .maybeSingle();
+        .rpc('get_user_role', { _user_id: userId });
 
       console.log('[AUTH] Role result:', data, 'Error:', error);
       
@@ -66,7 +63,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return 'user';
       }
       
-      return data?.role || 'user';
+      return data || 'user';
     } catch (err) {
       console.error('[AUTH] fetchRole exception:', err);
       return 'user';
