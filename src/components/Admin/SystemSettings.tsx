@@ -142,7 +142,7 @@ export function SystemSettings() {
             <Input
               id="notif-email"
               type="email"
-              placeholder="admin@aloelocation.com"
+              placeholder="admin@aloelocation.internal"
               value={settings.notification_email}
               onChange={(e) => 
                 setSettings({ ...settings, notification_email: e.target.value })
