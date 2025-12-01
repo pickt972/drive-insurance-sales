@@ -14,9 +14,15 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [debugLogs, setDebugLogs] = useState<string[]>([]);
 
-  const { signIn, user, isAdmin, isLoading } = useAuth();
+  const { signIn, user, isAdmin, isLoading, role } = useAuth();
   const navigate = useNavigate();
+
+  const addLog = (message: string) => {
+    setDebugLogs(prev => [...prev, `${new Date().toLocaleTimeString()}: ${message}`]);
+    console.log(message);
+  };
 
   // Redirection automatique si déjà connecté
   useEffect(() => {
@@ -37,16 +43,20 @@ export default function LoginPage() {
       ? identifier 
       : `${identifier.toLowerCase()}@aloelocation.internal`;
 
+    addLog(`Tentative connexion: ${identifier}`);
     console.log('[Login] Attempting login for:', email);
 
     const result = await signIn(email, password);
 
     if (result.error) {
+      addLog(`Erreur: ${result.error.message}`);
       setError('Identifiant ou mot de passe incorrect');
       setIsSubmitting(false);
       return;
     }
 
+    addLog(`Connexion OK, role: ${role}, isAdmin: ${isAdmin}`);
+    
     // La redirection sera gérée par le useEffect ci-dessus
     setIsSubmitting(false);
   };
@@ -129,6 +139,15 @@ export default function LoginPage() {
               )}
             </Button>
           </form>
+
+          {debugLogs.length > 0 && (
+            <div className="mt-4 p-4 bg-gray-100 rounded text-xs max-h-40 overflow-auto">
+              <p className="font-bold mb-2">Debug:</p>
+              {debugLogs.map((log, i) => (
+                <p key={i} className="text-gray-600">{log}</p>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
