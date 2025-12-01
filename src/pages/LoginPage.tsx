@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -14,54 +14,46 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [debugLogs, setDebugLogs] = useState<string[]>([]);
 
-  const { signIn, user, isAdmin, isLoading, role, isAuthenticated } = useAuth();
+  const { signIn, isAuthenticated, isAdmin, isLoading } = useAuth();
   const navigate = useNavigate();
 
-  const addLog = (message: string) => {
-    setDebugLogs(prev => [...prev, `${new Date().toLocaleTimeString()}: ${message}`]);
-    console.log(message);
-  };
-
-  // Redirection automatique si déjà connecté
-  useEffect(() => {
-    if (!isLoading && user) {
-      const redirectTo = isAdmin ? '/admin' : '/dashboard';
-      console.log('[Login] Already authenticated, redirecting to:', redirectTo);
-      navigate(redirectTo, { replace: true });
-    }
-  }, [user?.id, isAdmin, isLoading, navigate]); // Use user?.id for stable reference
+  // PAS DE useEffect POUR LA REDIRECTION ICI !
+  // La redirection se fait UNIQUEMENT après le signIn réussi
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setIsSubmitting(true);
 
-    // Convertir l'identifiant simple en email
-    const email = identifier.includes('@') 
-      ? identifier 
-      : `${identifier.toLowerCase()}@aloelocation.internal`;
+    const { error: signInError } = await signIn(identifier, password);
 
-    addLog(`Tentative connexion: ${identifier}`);
-    console.log('[Login] Attempting login for:', email);
-
-    const result = await signIn(email, password);
-
-    if (result.error) {
-      addLog(`Erreur: ${result.error.message}`);
-      setError('Identifiant ou mot de passe incorrect');
+    if (signInError) {
+      setError(
+        signInError.message === 'Invalid login credentials'
+          ? 'Identifiant ou mot de passe incorrect'
+          : signInError.message
+      );
       setIsSubmitting(false);
       return;
     }
 
-    addLog(`Connexion OK, role: ${role}, isAdmin: ${isAdmin}`);
-    
-    // La redirection sera gérée par le useEffect ci-dessus
-    setIsSubmitting(false);
+    // Redirection APRÈS connexion réussie - délai pour laisser le state se mettre à jour
+    setTimeout(() => {
+      // Vérifier le rôle pour rediriger
+      const redirectTo = isAdmin ? '/admin/dashboard' : '/dashboard';
+      navigate(redirectTo, { replace: true });
+    }, 500);
   };
 
-  // Si en cours de chargement initial, afficher un loader
+  // Si déjà connecté et pas en cours de chargement, rediriger (UNE SEULE FOIS)
+  if (!isLoading && isAuthenticated) {
+    const redirectTo = isAdmin ? '/admin/dashboard' : '/dashboard';
+    // Utiliser window.location pour éviter la boucle React
+    window.location.href = redirectTo;
+    return null;
+  }
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -139,23 +131,6 @@ export default function LoginPage() {
               )}
             </Button>
           </form>
-
-          <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded text-xs">
-            <p><strong>isLoading:</strong> {isLoading ? 'true' : 'false'}</p>
-            <p><strong>isAuthenticated:</strong> {isAuthenticated ? 'true' : 'false'}</p>
-            <p><strong>isAdmin:</strong> {isAdmin ? 'true' : 'false'}</p>
-            <p><strong>role:</strong> {role || 'null'}</p>
-            <p><strong>user:</strong> {user?.email || 'null'}</p>
-          </div>
-
-          {debugLogs.length > 0 && (
-            <div className="mt-4 p-4 bg-gray-100 rounded text-xs max-h-40 overflow-auto">
-              <p className="font-bold mb-2">Debug:</p>
-              {debugLogs.map((log, i) => (
-                <p key={i} className="text-gray-600">{log}</p>
-              ))}
-            </div>
-          )}
         </CardContent>
       </Card>
     </div>
