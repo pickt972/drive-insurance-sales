@@ -9,7 +9,7 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({ children, requireAdmin = false }: ProtectedRouteProps) {
-  const { user, profile, isAdmin, loading } = useAuth();
+  const { user, profile, isAdmin, role, isLoading } = useAuth();
   const location = useLocation();
 
   useEffect(() => {
@@ -17,14 +17,14 @@ export function ProtectedRoute({ children, requireAdmin = false }: ProtectedRout
       path: location.pathname,
       requireAdmin,
       user: user?.email,
-      profile: profile?.role,
+      role: role,
       isAdmin,
-      loading,
+      loading: isLoading,
     });
-  }, [user?.id, profile?.id, isAdmin, loading, location.pathname, requireAdmin]); // Use stable references
+  }, [user?.id, profile?.id, isAdmin, isLoading, location.pathname, requireAdmin]); // Use stable references
 
   // Afficher loader pendant la vérification
-  if (loading) {
+  if (isLoading) {
     console.log('⏳ ProtectedRoute: Loading...');
     return (
       <div className="flex items-center justify-center min-h-screen">

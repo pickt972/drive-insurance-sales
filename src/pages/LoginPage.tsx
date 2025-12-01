@@ -15,17 +15,17 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { signIn, user, isAdmin, loading } = useAuth();
+  const { signIn, user, isAdmin, isLoading } = useAuth();
   const navigate = useNavigate();
 
   // Redirection automatique si déjà connecté
   useEffect(() => {
-    if (!loading && user) {
+    if (!isLoading && user) {
       const redirectTo = isAdmin ? '/admin' : '/dashboard';
       console.log('[Login] Already authenticated, redirecting to:', redirectTo);
       navigate(redirectTo, { replace: true });
     }
-  }, [user?.id, isAdmin, loading, navigate]); // Use user?.id for stable reference
+  }, [user?.id, isAdmin, isLoading, navigate]); // Use user?.id for stable reference
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,7 +41,7 @@ export default function LoginPage() {
 
     const result = await signIn(email, password);
 
-    if (!result.success) {
+    if (result.error) {
       setError('Identifiant ou mot de passe incorrect');
       setIsSubmitting(false);
       return;
@@ -52,7 +52,7 @@ export default function LoginPage() {
   };
 
   // Si en cours de chargement initial, afficher un loader
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
