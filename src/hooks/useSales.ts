@@ -34,7 +34,8 @@ export function useSales() {
     if (user) {
       fetchSales();
     }
-  }, [user, isAdmin]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]); // Only refetch when user changes, not when isAdmin changes
 
   const fetchSales = async () => {
     try {
