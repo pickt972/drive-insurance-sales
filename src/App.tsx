@@ -1,7 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { LoginPage } from '@/pages/LoginPage';
+import LoginPage from '@/pages/LoginPage';
 import { UserDashboard } from '@/pages/UserDashboard';
 import AdminLayout from '@/layouts/AdminLayout';
 import AdminDashboard from '@/pages/admin/AdminDashboard';

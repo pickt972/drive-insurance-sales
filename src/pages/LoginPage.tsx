@@ -1,138 +1,127 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, User, Lock, Eye, EyeOff, AlertCircle } from 'lucide-react';
+import { Eye, EyeOff, Loader2, Car } from 'lucide-react';
 
-export function LoginPage() {
-  const [username, setUsername] = useState('');
+export default function LoginPage() {
+  const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const { signIn, user, isAdmin, loading } = useAuth();
   const navigate = useNavigate();
+
+  // Redirection automatique si déjà connecté
+  useEffect(() => {
+    if (!loading && user) {
+      const redirectTo = isAdmin ? '/admin' : '/dashboard';
+      console.log('[Login] Already authenticated, redirecting to:', redirectTo);
+      navigate(redirectTo, { replace: true });
+    }
+  }, [user, isAdmin, loading, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setIsSubmitting(true);
 
-    if (!username || !password) {
-      setError('Veuillez remplir tous les champs');
+    // Convertir l'identifiant simple en email
+    const email = identifier.includes('@') 
+      ? identifier 
+      : `${identifier.toLowerCase()}@aloelocation.internal`;
+
+    console.log('[Login] Attempting login for:', email);
+
+    const result = await signIn(email, password);
+
+    if (!result.success) {
+      setError('Identifiant ou mot de passe incorrect');
+      setIsSubmitting(false);
       return;
     }
 
-    setIsLoading(true);
-
-    try {
-      // Convertir l'identifiant simple en email
-      const email = username.includes('@') 
-        ? username 
-        : `${username.toLowerCase()}@aloelocation.internal`;
-      
-      console.log('🔐 Tentative de connexion avec:', email);
-      
-      const { data, error: signInError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (signInError) throw signInError;
-
-      if (data.user) {
-        console.log('✅ [LOGIN] Connexion réussie pour:', data.user.email);
-        
-        // Utiliser directement user_metadata pour la redirection (plus fiable que profiles table)
-        const userRole = data.user.user_metadata?.role || 'user';
-        console.log('🎯 [LOGIN] Rôle depuis user_metadata:', userRole);
-        
-        const isAdmin = userRole === 'admin';
-        const targetRoute = isAdmin ? '/admin' : '/dashboard';
-        
-        console.log('➡️ [LOGIN] Redirection immédiate vers:', targetRoute);
-        navigate(targetRoute, { replace: true });
-      }
-    } catch (error: any) {
-      setError('Identifiant ou mot de passe incorrect');
-    } finally {
-      setIsLoading(false);
-    }
+    // La redirection sera gérée par le useEffect ci-dessus
+    setIsSubmitting(false);
   };
 
+  // Si en cours de chargement initial, afficher un loader
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+      </div>
+    );
+  }
+
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-100 p-4">
-      <Card className="w-full max-w-md shadow-2xl">
-        <CardHeader className="space-y-1 text-center">
-          <div className="flex justify-center mb-6">
-            <div className="w-20 h-20 bg-gradient-to-br from-blue-600 to-blue-700 rounded-2xl flex items-center justify-center shadow-lg">
-              <span className="text-3xl font-bold text-white">AL</span>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+      <Card className="w-full max-w-md">
+        <CardHeader className="text-center">
+          <div className="flex justify-center mb-4">
+            <div className="h-16 w-16 bg-blue-600 rounded-full flex items-center justify-center">
+              <Car className="h-8 w-8 text-white" />
             </div>
           </div>
-          <CardTitle className="text-3xl font-bold text-gray-800">ALOELOCATION</CardTitle>
-          <CardDescription className="text-base text-gray-600">Connexion au système</CardDescription>
+          <CardTitle className="text-2xl font-bold text-gray-900">ALOELOCATION</CardTitle>
+          <CardDescription>Connectez-vous à votre compte</CardDescription>
         </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {error && (
+              <Alert variant="destructive">
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
 
-        <CardContent className="pt-6">
-          <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="username" className="text-sm font-medium">Identifiant</Label>
-              <div className="relative">
-                <User className="absolute left-3 top-3.5 h-5 w-5 text-gray-400" />
-                <Input
-                  id="username"
-                  type="text"
-                  placeholder="stef"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  className="pl-10 h-12 text-base"
-                  required
-                  disabled={isLoading}
-                  autoFocus
-                  autoComplete="username"
-                />
-              </div>
-              <p className="text-xs text-muted-foreground">Utilisez votre nom d'utilisateur (ex: stef, admin, julie...)</p>
+              <Label htmlFor="identifier">Identifiant</Label>
+              <Input
+                id="identifier"
+                type="text"
+                placeholder="admin, stef, marie..."
+                value={identifier}
+                onChange={(e) => setIdentifier(e.target.value)}
+                required
+                autoComplete="username"
+                disabled={isSubmitting}
+              />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-sm font-medium">Mot de passe</Label>
+              <Label htmlFor="password">Mot de passe</Label>
               <div className="relative">
-                <Lock className="absolute left-3 top-3.5 h-5 w-5 text-gray-400" />
                 <Input
                   id="password"
                   type={showPassword ? 'text' : 'password'}
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="pl-10 pr-12 h-12 text-base"
                   required
-                  disabled={isLoading}
+                  autoComplete="current-password"
+                  disabled={isSubmitting}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-3.5 text-gray-400 hover:text-gray-600"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
                   tabIndex={-1}
                 >
-                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
             </div>
 
-            {error && (
-              <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
-
-            <Button type="submit" className="w-full h-12 text-base font-semibold" disabled={isLoading}>
-              {isLoading ? (
+            <Button type="submit" className="w-full" disabled={isSubmitting}>
+              {isSubmitting ? (
                 <>
-                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Connexion...
                 </>
               ) : (
@@ -140,19 +129,7 @@ export function LoginPage() {
               )}
             </Button>
           </form>
-
-          <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-100">
-            <p className="text-sm text-blue-800 text-center font-medium">💡 Connexion par nom d'utilisateur</p>
-            <p className="text-xs text-blue-600 text-center mt-2">Exemples d'identifiants valides :</p>
-            <p className="text-xs text-blue-700 text-center mt-1 font-mono font-semibold">admin • stef • julie • nadia</p>
-          </div>
         </CardContent>
-
-        <div className="px-6 pb-6">
-          <div className="border-t pt-4">
-            <p className="text-center text-xs text-gray-500">© 2025 ALOELOCATION - Martinique</p>
-          </div>
-        </div>
       </Card>
     </div>
   );
