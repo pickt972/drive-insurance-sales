@@ -21,7 +21,7 @@ export function ProtectedRoute({ children, requireAdmin = false }: ProtectedRout
       isAdmin,
       loading,
     });
-  }, [user, profile, isAdmin, loading, location, requireAdmin]);
+  }, [user?.id, profile?.id, isAdmin, loading, location.pathname, requireAdmin]); // Use stable references
 
   // Afficher loader pendant la vérification
   if (loading) {

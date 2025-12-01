@@ -25,7 +25,7 @@ export default function LoginPage() {
       console.log('[Login] Already authenticated, redirecting to:', redirectTo);
       navigate(redirectTo, { replace: true });
     }
-  }, [user, isAdmin, loading, navigate]);
+  }, [user?.id, isAdmin, loading, navigate]); // Use user?.id for stable reference
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

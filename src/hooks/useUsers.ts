@@ -29,7 +29,8 @@ export function useUsers() {
     if (isAdmin) {
       fetchUsers();
     }
-  }, [isAdmin]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only fetch once on mount when component is rendered for admin
 
   const fetchUsers = async () => {
     if (!isAdmin) return;
