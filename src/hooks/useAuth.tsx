@@ -31,43 +31,73 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Récupérer le profil
+  // Récupérer le profil avec retry et fallback
   const fetchProfile = useCallback(async (userId: string) => {
     console.log('[AUTH] fetchProfile called for:', userId);
-    try {
-      const { data, error } = await (supabase as any)
-        .from('profiles')
-        .select('id, email, full_name, agency, is_active')
-        .eq('id', userId)
-        .maybeSingle();
+    
+    // Retry jusqu'à 3 fois
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        const { data, error } = await (supabase as any)
+          .from('profiles')
+          .select('id, email, full_name, agency, is_active')
+          .eq('id', userId)
+          .maybeSingle();
 
-      console.log('[AUTH] Profile result:', data, 'Error:', error);
-      return data || null;
-    } catch (err) {
-      console.error('[AUTH] fetchProfile exception:', err);
-      return null;
+        if (!error && data) {
+          console.log('[AUTH] ✅ Profile loaded:', data);
+          return data;
+        }
+
+        console.log(`[AUTH] ⚠️ Profile attempt ${attempt + 1} failed:`, error);
+        if (attempt < 2) await new Promise(resolve => setTimeout(resolve, 500));
+      } catch (err) {
+        console.error(`[AUTH] fetchProfile exception (attempt ${attempt + 1}):`, err);
+      }
     }
+
+    // Fallback: construire depuis user_metadata
+    console.log('[AUTH] 🔄 Using user_metadata fallback');
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user?.user_metadata) {
+      return {
+        id: userId,
+        email: user.email || '',
+        full_name: user.user_metadata.full_name || '',
+        agency: user.user_metadata.agency || null,
+        is_active: true
+      };
+    }
+
+    return null;
   }, []);
 
-  // Récupérer le rôle via RPC pour éviter les problèmes de RLS
+  // Récupérer le rôle via RPC avec retry
   const fetchRole = useCallback(async (userId: string) => {
     console.log('[AUTH] fetchRole called for:', userId);
-    try {
-      const { data, error } = await (supabase as any)
-        .rpc('get_user_role', { _user_id: userId });
+    
+    // Retry jusqu'à 3 fois
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        const { data, error } = await (supabase as any)
+          .rpc('get_user_role', { _user_id: userId });
 
-      console.log('[AUTH] Role result:', data, 'Error:', error);
-      
-      if (error) {
-        console.error('[AUTH] Role fetch error:', error);
-        return 'user';
+        if (!error && data) {
+          console.log('[AUTH] ✅ Role loaded:', data);
+          return data;
+        }
+        
+        console.log(`[AUTH] ⚠️ Role attempt ${attempt + 1} failed:`, error);
+        if (attempt < 2) await new Promise(resolve => setTimeout(resolve, 500));
+      } catch (err) {
+        console.error(`[AUTH] fetchRole exception (attempt ${attempt + 1}):`, err);
       }
-      
-      return data || 'user';
-    } catch (err) {
-      console.error('[AUTH] fetchRole exception:', err);
-      return 'user';
     }
+
+    // Fallback: vérifier user_metadata
+    console.log('[AUTH] 🔄 Using user_metadata fallback for role');
+    const { data: { user } } = await supabase.auth.getUser();
+    return user?.user_metadata?.role || 'user';
   }, []);
 
   // Initialisation
