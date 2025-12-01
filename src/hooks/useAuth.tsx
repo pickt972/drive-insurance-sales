@@ -100,6 +100,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return user?.user_metadata?.role || 'user';
   }, []);
 
+  // Timeout de sécurité pour éviter le blocage infini
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      if (isLoading) {
+        console.warn('[AUTH] ⚠️ Timeout after 5s - forcing isLoading to false');
+        setIsLoading(false);
+      }
+    }, 5000);
+
+    return () => clearTimeout(timeout);
+  }, [isLoading]);
+
   // Initialisation
   useEffect(() => {
     let mounted = true;
