@@ -5,9 +5,9 @@ import { useAuth } from "@/hooks/useAuth";
 import { Loader2 } from 'lucide-react';
 
 export const AdminPanel = () => {
-  const { profile, isAdmin, loading } = useAuth();
+  const { profile, isAdmin, isLoading } = useAuth();
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
