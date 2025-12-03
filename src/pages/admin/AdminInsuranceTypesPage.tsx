@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Plus, Edit, Trash2, Info } from 'lucide-react';
+import { Plus, Edit, Trash2, GripVertical } from 'lucide-react';
 import {
   Tooltip,
   TooltipContent,
@@ -18,6 +18,23 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 interface InsuranceType {
   id: string;
@@ -32,6 +49,41 @@ interface InsuranceType {
   display_order: number;
 }
 
+// Sortable row component
+function SortableInsuranceRow({ 
+  type, 
+  children 
+}: { 
+  type: InsuranceType; 
+  children: React.ReactNode;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: type.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <TableRow ref={setNodeRef} style={style} className={isDragging ? 'bg-muted' : ''}>
+      <TableCell className="w-8">
+        <button {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing p-1 hover:bg-muted rounded">
+          <GripVertical className="h-4 w-4 text-muted-foreground" />
+        </button>
+      </TableCell>
+      {children}
+    </TableRow>
+  );
+}
+
 export function AdminInsuranceTypesPage() {
   const [types, setTypes] = useState<InsuranceType[]>([]);
   const [loading, setLoading] = useState(true);
@@ -39,6 +91,11 @@ export function AdminInsuranceTypesPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
 
   const [formData, setFormData] = useState({
     name: '',
@@ -54,6 +111,22 @@ export function AdminInsuranceTypesPage() {
   useEffect(() => {
     loadTypes();
   }, []);
+
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (over && active.id !== over.id) {
+      const oldIndex = types.findIndex((t) => t.id === active.id);
+      const newIndex = types.findIndex((t) => t.id === over.id);
+      const newTypes = arrayMove(types, oldIndex, newIndex);
+      setTypes(newTypes);
+      
+      // Update display_order in database
+      const supabaseAny = supabase as any;
+      for (let i = 0; i < newTypes.length; i++) {
+        await supabaseAny.from('insurance_types').update({ display_order: i }).eq('id', newTypes[i].id);
+      }
+    }
+  };
 
   const loadTypes = async () => {
     try {
