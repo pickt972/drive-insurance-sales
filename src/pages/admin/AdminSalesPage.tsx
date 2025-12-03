@@ -10,7 +10,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Download, Search, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, CalendarIcon, X, CheckCircle, Trash2, Pencil, Check, XCircle, FileText } from 'lucide-react';
 import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { format, startOfMonth, endOfMonth } from 'date-fns';
+import { format, startOfMonth, endOfMonth, subDays, startOfQuarter, endOfQuarter } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { toast } from '@/hooks/use-toast';
@@ -235,6 +235,21 @@ export function AdminSalesPage() {
   const setThisMonth = () => {
     setStartDate(startOfMonth(new Date()));
     setEndDate(endOfMonth(new Date()));
+  };
+
+  const setLast7Days = () => {
+    setStartDate(subDays(new Date(), 7));
+    setEndDate(new Date());
+  };
+
+  const setLast30Days = () => {
+    setStartDate(subDays(new Date(), 30));
+    setEndDate(new Date());
+  };
+
+  const setThisQuarter = () => {
+    setStartDate(startOfQuarter(new Date()));
+    setEndDate(endOfQuarter(new Date()));
   };
 
   // Bulk selection handlers
@@ -677,6 +692,22 @@ export function AdminSalesPage() {
                     />
                   </PopoverContent>
                 </Popover>
+              </div>
+              
+              {/* Date presets */}
+              <div className="flex items-center gap-1">
+                <Button variant="outline" size="sm" onClick={setLast7Days} className="text-xs">
+                  7 jours
+                </Button>
+                <Button variant="outline" size="sm" onClick={setLast30Days} className="text-xs">
+                  30 jours
+                </Button>
+                <Button variant="outline" size="sm" onClick={setThisMonth} className="text-xs">
+                  Ce mois
+                </Button>
+                <Button variant="outline" size="sm" onClick={setThisQuarter} className="text-xs">
+                  Ce trimestre
+                </Button>
               </div>
               
               <div className="flex items-center gap-2">
