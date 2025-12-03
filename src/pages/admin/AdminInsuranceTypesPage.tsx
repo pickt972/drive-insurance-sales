@@ -339,9 +339,21 @@ export function AdminInsuranceTypesPage() {
                   <TableCell className="font-medium">{type.name}</TableCell>
                   <TableCell>{type.base_price.toFixed(2)} €</TableCell>
                   <TableCell>
-                    {type.commission_amount > 0 
-                      ? `${type.commission_amount.toFixed(2)} €` 
-                      : `${type.commission_rate}%`}
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium">
+                        {type.commission_amount > 0 
+                          ? `${type.commission_amount.toFixed(2)} €` 
+                          : `${type.commission_rate}%`}
+                      </span>
+                      <Badge 
+                        variant={type.commission_amount > 0 ? 'default' : 'outline'}
+                        className={type.commission_amount > 0 
+                          ? 'bg-emerald-100 text-emerald-700 border-emerald-200' 
+                          : 'bg-blue-50 text-blue-700 border-blue-200'}
+                      >
+                        {type.commission_amount > 0 ? 'Fixe' : '%'}
+                      </Badge>
+                    </div>
                   </TableCell>
                   <TableCell>
                     <Badge variant={type.is_active ? 'default' : 'secondary'}>
