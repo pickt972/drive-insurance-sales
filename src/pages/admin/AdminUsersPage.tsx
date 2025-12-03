@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { UserPlus, Search, CheckCircle, XCircle, Edit, MoreHorizontal, Eye, EyeOff, KeyRound } from 'lucide-react';
+import { UserPlus, Search, CheckCircle, XCircle, Edit, MoreHorizontal, Eye, EyeOff, KeyRound, GripVertical, Filter } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
@@ -31,6 +31,23 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 interface User {
   id: string;
@@ -61,11 +78,47 @@ interface CreateFormData {
   role: 'admin' | 'user';
 }
 
+// Sortable row component
+function SortableUserRow({ 
+  user, 
+  children 
+}: { 
+  user: User; 
+  children: React.ReactNode;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: user.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <TableRow ref={setNodeRef} style={style} className={isDragging ? 'bg-muted' : ''}>
+      <TableCell className="w-8">
+        <button {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing p-1 hover:bg-muted rounded">
+          <GripVertical className="h-4 w-4 text-muted-foreground" />
+        </button>
+      </TableCell>
+      {children}
+    </TableRow>
+  );
+}
+
 export function AdminUsersPage() {
   const { session } = useAuth();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
@@ -94,9 +147,28 @@ export function AdminUsersPage() {
   });
   const { toast } = useToast();
 
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
   useEffect(() => {
     loadUsers();
   }, []);
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    
+    if (over && active.id !== over.id) {
+      setUsers((items) => {
+        const oldIndex = items.findIndex((item) => item.id === active.id);
+        const newIndex = items.findIndex((item) => item.id === over.id);
+        return arrayMove(items, oldIndex, newIndex);
+      });
+    }
+  };
 
   const loadUsers = async () => {
     try {
@@ -420,12 +492,18 @@ export function AdminUsersPage() {
     }
   };
 
-  const filteredUsers = users.filter(user =>
-    searchTerm === '' ||
-    user.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.agency?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredUsers = users.filter(user => {
+    const matchesSearch = searchTerm === '' ||
+      user.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.agency?.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesStatus = statusFilter === 'all' || 
+      (statusFilter === 'active' && user.is_active) ||
+      (statusFilter === 'inactive' && !user.is_active);
+    
+    return matchesSearch && matchesStatus;
+  });
 
   return (
     <div className="space-y-6">
@@ -477,8 +555,8 @@ export function AdminUsersPage() {
       {/* User Table */}
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <div className="flex-1 max-w-md">
+          <div className="flex items-center gap-4 flex-wrap">
+            <div className="flex-1 min-w-[200px] max-w-md">
               <div className="relative">
                 <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                 <Input
@@ -489,124 +567,146 @@ export function AdminUsersPage() {
                 />
               </div>
             </div>
+            <div className="flex items-center gap-2">
+              <Filter className="h-4 w-4 text-muted-foreground" />
+              <Select value={statusFilter} onValueChange={(v: 'all' | 'active' | 'inactive') => setStatusFilter(v)}>
+                <SelectTrigger className="w-[140px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tous</SelectItem>
+                  <SelectItem value="active">Actifs</SelectItem>
+                  <SelectItem value="inactive">Inactifs</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </CardHeader>
         <CardContent>
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nom complet</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Téléphone</TableHead>
-                  <TableHead>Rôle</TableHead>
-                  <TableHead>Agence</TableHead>
-                  <TableHead>Statut</TableHead>
-                  <TableHead>Date création</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {loading ? (
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center py-8">
-                      Chargement...
-                    </TableCell>
+                    <TableHead className="w-8"></TableHead>
+                    <TableHead>Nom complet</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Téléphone</TableHead>
+                    <TableHead>Rôle</TableHead>
+                    <TableHead>Agence</TableHead>
+                    <TableHead>Statut</TableHead>
+                    <TableHead>Date création</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
-                ) : filteredUsers.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={8} className="text-center py-8">
-                      Aucun utilisateur trouvé
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  filteredUsers.map((user) => (
-                    <TableRow key={user.id}>
-                      <TableCell className="font-medium">{user.full_name}</TableCell>
-                      <TableCell className="text-sm text-gray-600">{user.email}</TableCell>
-                      <TableCell className="text-sm text-gray-600">{user.phone || '-'}</TableCell>
-                      <TableCell>
-                        <Select
-                          value={user.role}
-                          onValueChange={(value: 'admin' | 'user') => updateUserRole(user.id, value)}
-                        >
-                          <SelectTrigger className="w-32">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="user">Employé</SelectItem>
-                            <SelectItem value="admin">Admin</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </TableCell>
-                      <TableCell>{user.agency || '-'}</TableCell>
-                      <TableCell>
-                        {user.is_active ? (
-                          <Badge className="bg-green-100 text-green-800">
-                            <CheckCircle className="h-3 w-3 mr-1" />
-                            Actif
-                          </Badge>
-                        ) : (
-                          <Badge variant="secondary">
-                            <XCircle className="h-3 w-3 mr-1" />
-                            Inactif
-                          </Badge>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-sm text-gray-600">
-                        {format(new Date(user.created_at), 'dd/MM/yyyy', { locale: fr })}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem onClick={() => openEditDialog(user)}>
-                              <Edit className="h-4 w-4 mr-2" />
-                              Modifier
-                            </DropdownMenuItem>
-                            <DropdownMenuItem 
-                              onClick={() => toggleUserActive(user.id, user.is_active)}
-                            >
-                              {user.is_active ? (
-                                <>
-                                  <XCircle className="h-4 w-4 mr-2" />
-                                  Désactiver
-                                </>
-                              ) : (
-                                <>
-                                  <CheckCircle className="h-4 w-4 mr-2" />
-                                  Activer
-                                </>
-                              )}
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => openResetPasswordDialog(user)}>
-                              <KeyRound className="h-4 w-4 mr-2" />
-                              Réinitialiser mot de passe
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem 
-                              onClick={() => confirmDelete(user)}
-                              className="text-orange-600"
-                              disabled={!user.is_active}
-                            >
-                              <XCircle className="h-4 w-4 mr-2" />
-                              Désactiver
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                </TableHeader>
+                <TableBody>
+                  {loading ? (
+                    <TableRow>
+                      <TableCell colSpan={9} className="text-center py-8">
+                        Chargement...
                       </TableCell>
                     </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
+                  ) : filteredUsers.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={9} className="text-center py-8">
+                        Aucun utilisateur trouvé
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    <SortableContext items={filteredUsers.map(u => u.id)} strategy={verticalListSortingStrategy}>
+                      {filteredUsers.map((user) => (
+                        <SortableUserRow key={user.id} user={user}>
+                          <TableCell className="font-medium">{user.full_name}</TableCell>
+                          <TableCell className="text-sm text-gray-600">{user.email}</TableCell>
+                          <TableCell className="text-sm text-gray-600">{user.phone || '-'}</TableCell>
+                          <TableCell>
+                            <Select
+                              value={user.role}
+                              onValueChange={(value: 'admin' | 'user') => updateUserRole(user.id, value)}
+                            >
+                              <SelectTrigger className="w-32">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="user">Employé</SelectItem>
+                                <SelectItem value="admin">Admin</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </TableCell>
+                          <TableCell>{user.agency || '-'}</TableCell>
+                          <TableCell>
+                            {user.is_active ? (
+                              <Badge className="bg-green-100 text-green-800">
+                                <CheckCircle className="h-3 w-3 mr-1" />
+                                Actif
+                              </Badge>
+                            ) : (
+                              <Badge variant="secondary">
+                                <XCircle className="h-3 w-3 mr-1" />
+                                Inactif
+                              </Badge>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-sm text-gray-600">
+                            {format(new Date(user.created_at), 'dd/MM/yyyy', { locale: fr })}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon">
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem onClick={() => openEditDialog(user)}>
+                                  <Edit className="h-4 w-4 mr-2" />
+                                  Modifier
+                                </DropdownMenuItem>
+                                <DropdownMenuItem 
+                                  onClick={() => toggleUserActive(user.id, user.is_active)}
+                                >
+                                  {user.is_active ? (
+                                    <>
+                                      <XCircle className="h-4 w-4 mr-2" />
+                                      Désactiver
+                                    </>
+                                  ) : (
+                                    <>
+                                      <CheckCircle className="h-4 w-4 mr-2" />
+                                      Activer
+                                    </>
+                                  )}
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => openResetPasswordDialog(user)}>
+                                  <KeyRound className="h-4 w-4 mr-2" />
+                                  Réinitialiser mot de passe
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem 
+                                  onClick={() => confirmDelete(user)}
+                                  className="text-orange-600"
+                                  disabled={!user.is_active}
+                                >
+                                  <XCircle className="h-4 w-4 mr-2" />
+                                  Désactiver
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
+                        </SortableUserRow>
+                      ))}
+                    </SortableContext>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          </DndContext>
         </CardContent>
       </Card>
 
