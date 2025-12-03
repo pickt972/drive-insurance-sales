@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { UserPlus, Search, CheckCircle, XCircle, Edit, Trash2, MoreHorizontal, Eye, EyeOff } from 'lucide-react';
+import { UserPlus, Search, CheckCircle, XCircle, Edit, Trash2, MoreHorizontal, Eye, EyeOff, KeyRound } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
@@ -70,6 +70,10 @@ export function AdminUsersPage() {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [resetPasswordDialogOpen, setResetPasswordDialogOpen] = useState(false);
+  const [userToResetPassword, setUserToResetPassword] = useState<User | null>(null);
+  const [newPassword, setNewPassword] = useState('');
+  const [showNewPassword, setShowNewPassword] = useState(false);
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
   const [saving, setSaving] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -360,6 +364,62 @@ export function AdminUsersPage() {
     }
   };
 
+  const openResetPasswordDialog = (user: User) => {
+    setUserToResetPassword(user);
+    setNewPassword('');
+    setShowNewPassword(false);
+    setResetPasswordDialogOpen(true);
+  };
+
+  const resetPassword = async () => {
+    if (!userToResetPassword) return;
+
+    if (newPassword.length < 6) {
+      toast({
+        title: 'Erreur',
+        description: 'Le mot de passe doit contenir au moins 6 caractères',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const response = await supabase.functions.invoke('reset-user-password', {
+        body: {
+          user_id: userToResetPassword.id,
+          new_password: newPassword,
+        },
+      });
+
+      if (response.error) {
+        throw new Error(response.error.message || 'Erreur lors de la réinitialisation');
+      }
+
+      if (!response.data?.success) {
+        throw new Error(response.data?.error || 'Erreur lors de la réinitialisation');
+      }
+
+      toast({
+        title: 'Succès',
+        description: `Mot de passe réinitialisé pour "${userToResetPassword.full_name}"`,
+      });
+
+      setResetPasswordDialogOpen(false);
+      setUserToResetPassword(null);
+      setNewPassword('');
+    } catch (error: any) {
+      console.error('Error resetting password:', error);
+      toast({
+        title: 'Erreur',
+        description: error.message || 'Impossible de réinitialiser le mot de passe',
+        variant: 'destructive',
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const filteredUsers = users.filter(user =>
     searchTerm === '' ||
     user.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -524,6 +584,10 @@ export function AdminUsersPage() {
                                   Activer
                                 </>
                               )}
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => openResetPasswordDialog(user)}>
+                              <KeyRound className="h-4 w-4 mr-2" />
+                              Réinitialiser mot de passe
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem 
@@ -751,6 +815,49 @@ export function AdminUsersPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Reset Password Dialog */}
+      <Dialog open={resetPasswordDialogOpen} onOpenChange={setResetPasswordDialogOpen}>
+        <DialogContent className="sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle>Réinitialiser le mot de passe</DialogTitle>
+            <DialogDescription>
+              Définissez un nouveau mot de passe pour {userToResetPassword?.full_name}.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="new_password">Nouveau mot de passe</Label>
+              <div className="relative">
+                <Input
+                  id="new_password"
+                  type={showNewPassword ? 'text' : 'password'}
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="Minimum 6 caractères"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-0 top-0 h-full px-3"
+                  onClick={() => setShowNewPassword(!showNewPassword)}
+                >
+                  {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </Button>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setResetPasswordDialogOpen(false)}>
+              Annuler
+            </Button>
+            <Button onClick={resetPassword} disabled={saving || newPassword.length < 6}>
+              {saving ? 'Réinitialisation...' : 'Réinitialiser'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
