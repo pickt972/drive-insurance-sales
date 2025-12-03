@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { UserPlus, Search, CheckCircle, XCircle, Edit, Trash2, MoreHorizontal, Eye, EyeOff, KeyRound } from 'lucide-react';
+import { UserPlus, Search, CheckCircle, XCircle, Edit, MoreHorizontal, Eye, EyeOff, KeyRound } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
@@ -592,10 +592,11 @@ export function AdminUsersPage() {
                             <DropdownMenuSeparator />
                             <DropdownMenuItem 
                               onClick={() => confirmDelete(user)}
-                              className="text-red-600"
+                              className="text-orange-600"
+                              disabled={!user.is_active}
                             >
-                              <Trash2 className="h-4 w-4 mr-2" />
-                              Supprimer
+                              <XCircle className="h-4 w-4 mr-2" />
+                              Désactiver
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
@@ -797,11 +798,11 @@ export function AdminUsersPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation Dialog */}
+      {/* Deactivate Confirmation Dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
+            <AlertDialogTitle>Confirmer la désactivation</AlertDialogTitle>
             <AlertDialogDescription>
               Êtes-vous sûr de vouloir désactiver l'utilisateur "{userToDelete?.full_name}" ?
               Cette action peut être annulée en réactivant l'utilisateur.
