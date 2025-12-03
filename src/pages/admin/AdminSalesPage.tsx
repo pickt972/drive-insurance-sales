@@ -7,8 +7,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Download, Search, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, CalendarIcon, X, CheckCircle, Trash2, Pencil, Check, XCircle, FileText, Settings2, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuCheckboxItem, DropdownMenuTrigger, DropdownMenuLabel, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Download, Search, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, CalendarIcon, X, CheckCircle, Trash2, Pencil, Check, XCircle, FileText, Settings2, ArrowUpDown, ArrowUp, ArrowDown, MoreHorizontal, Copy, Eye, Mail } from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuCheckboxItem, DropdownMenuTrigger, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { format, startOfMonth, endOfMonth, subDays, startOfQuarter, endOfQuarter } from 'date-fns';
@@ -129,6 +130,39 @@ export function AdminSalesPage() {
       totalCommission: selectedSales.reduce((sum, s) => sum + Number(s.commission_amount || 0), 0),
     };
   }, [selectedIds, sales]);
+  
+  // State for viewing sale details
+  const [viewingSale, setViewingSale] = useState<any | null>(null);
+  
+  // Duplicate sale function
+  const duplicateSale = async (sale: any) => {
+    try {
+      const newSale = {
+        user_id: sale.user_id,
+        insurance_type_id: sale.insurance_type_id,
+        amount: sale.amount,
+        sale_date: format(new Date(), 'yyyy-MM-dd'),
+        client_name: sale.client_name,
+        client_phone: sale.client_phone,
+        agency: sale.agency,
+        status: 'pending',
+        notes: sale.notes,
+        contract_number: `${sale.contract_number}-COPY`,
+      };
+      
+      const { error } = await (supabase as any)
+        .from('insurance_sales')
+        .insert(newSale);
+      
+      if (error) throw error;
+      
+      toast({ title: 'Vente dupliquée', description: 'La vente a été dupliquée avec succès' });
+      loadSales();
+    } catch (error) {
+      console.error('Error duplicating sale:', error);
+      toast({ title: 'Erreur', description: 'Impossible de dupliquer la vente', variant: 'destructive' });
+    }
+  };
 
   const totalPages = Math.ceil(totalCount / itemsPerPage);
 
@@ -1011,18 +1045,19 @@ export function AdminSalesPage() {
                       <div className="flex items-center">Statut{getSortIcon('status')}</div>
                     </TableHead>
                   )}
+                  <TableHead className="w-12">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={1 + visibleColumns.size} className="text-center py-8">
+                    <TableCell colSpan={2 + visibleColumns.size} className="text-center py-8">
                       Chargement...
                     </TableCell>
                   </TableRow>
                 ) : sales.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={1 + visibleColumns.size} className="text-center py-8">
+                    <TableCell colSpan={2 + visibleColumns.size} className="text-center py-8">
                       Aucune vente trouvée
                     </TableCell>
                   </TableRow>
@@ -1088,12 +1123,103 @@ export function AdminSalesPage() {
                           )}
                         </TableCell>
                       )}
+                      <TableCell>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="bg-background">
+                            <DropdownMenuItem onClick={() => setViewingSale(sale)}>
+                              <Eye className="h-4 w-4 mr-2" />
+                              Voir détails
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => duplicateSale(sale)}>
+                              <Copy className="h-4 w-4 mr-2" />
+                              Dupliquer
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem 
+                              onClick={() => toast({ title: 'Fonctionnalité à venir', description: 'L\'envoi d\'email sera disponible prochainement' })}
+                            >
+                              <Mail className="h-4 w-4 mr-2" />
+                              Envoyer par email
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
                     </TableRow>
                   ))
                 )}
               </TableBody>
             </Table>
           </div>
+
+          {/* Sale Details Dialog */}
+          <Dialog open={!!viewingSale} onOpenChange={() => setViewingSale(null)}>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle>Détails de la vente</DialogTitle>
+              </DialogHeader>
+              {viewingSale && (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span className="text-muted-foreground">Date:</span>
+                      <p className="font-medium">{format(new Date(viewingSale.sale_date), 'dd MMMM yyyy', { locale: fr })}</p>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Statut:</span>
+                      <p>
+                        <Badge variant={viewingSale.status === 'validated' ? 'default' : 'secondary'}>
+                          {viewingSale.status === 'validated' ? 'Validé' : 'En attente'}
+                        </Badge>
+                      </p>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Client:</span>
+                      <p className="font-medium">{viewingSale.client_name || '-'}</p>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Téléphone:</span>
+                      <p className="font-medium">{viewingSale.client_phone || '-'}</p>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">N° Contrat:</span>
+                      <p className="font-mono">{viewingSale.contract_number || '-'}</p>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Type:</span>
+                      <p>{viewingSale.insurance_types?.name || '-'}</p>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Montant:</span>
+                      <p className="font-bold text-lg">{Number(viewingSale.amount).toFixed(2)} €</p>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Commission:</span>
+                      <p className="font-bold text-lg text-green-600">{Number(viewingSale.commission_amount || 0).toFixed(2)} €</p>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Employé:</span>
+                      <p className="font-medium">{viewingSale.profiles?.full_name || '-'}</p>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Agence:</span>
+                      <p>{viewingSale.agency || '-'}</p>
+                    </div>
+                  </div>
+                  {viewingSale.notes && (
+                    <div>
+                      <span className="text-muted-foreground text-sm">Notes:</span>
+                      <p className="text-sm mt-1 p-2 bg-muted rounded">{viewingSale.notes}</p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </DialogContent>
+          </Dialog>
 
           {/* Pagination Controls */}
           {totalPages > 1 && (
