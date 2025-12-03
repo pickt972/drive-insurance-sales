@@ -7,13 +7,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Download, Search, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, CalendarIcon, X, CheckCircle, Trash2, Pencil, Check, XCircle } from 'lucide-react';
+import { Download, Search, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, CalendarIcon, X, CheckCircle, Trash2, Pencil, Check, XCircle, FileText } from 'lucide-react';
 import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { toast } from '@/hooks/use-toast';
+import { exportSalesPDF } from '@/utils/pdfExport';
 
 interface EditingCell {
   saleId: string;
@@ -502,6 +503,70 @@ export function AdminSalesPage() {
     }
   };
 
+  const exportToPDF = async () => {
+    try {
+      const supabaseAny = supabase as any;
+      let query = supabaseAny
+        .from('insurance_sales')
+        .select(`
+          *,
+          insurance_types(name),
+          profiles:user_id(full_name)
+        `)
+        .order('sale_date', { ascending: false });
+      
+      if (startDate) {
+        query = query.gte('sale_date', format(startDate, 'yyyy-MM-dd'));
+      }
+      if (endDate) {
+        query = query.lte('sale_date', format(endDate, 'yyyy-MM-dd'));
+      }
+      
+      if (selectedEmployee && selectedEmployee !== 'all') {
+        query = query.eq('user_id', selectedEmployee);
+      }
+      
+      if (selectedInsuranceType && selectedInsuranceType !== 'all') {
+        query = query.eq('insurance_type_id', selectedInsuranceType);
+      }
+      
+      if (selectedStatus && selectedStatus !== 'all') {
+        query = query.eq('status', selectedStatus);
+      }
+      
+      if (selectedAgency && selectedAgency !== 'all') {
+        query = query.eq('agency', selectedAgency);
+      }
+      
+      if (searchTerm) {
+        query = query.or(`contract_number.ilike.%${searchTerm}%,client_name.ilike.%${searchTerm}%`);
+      }
+      
+      const { data } = await query;
+      
+      if (!data || data.length === 0) {
+        toast({ title: 'Aucune donnée', description: 'Aucune vente à exporter', variant: 'destructive' });
+        return;
+      }
+      
+      const salesForPDF = data.map((sale: any) => ({
+        sale_date: sale.sale_date,
+        employee_name: sale.profiles?.full_name || '-',
+        insurance_type: sale.insurance_types?.name || '-',
+        contract_number: sale.contract_number || '-',
+        amount: sale.amount || 0,
+        commission: sale.commission_amount || 0,
+        customer_name: sale.client_name || '-',
+      }));
+      
+      exportSalesPDF(salesForPDF, 'Rapport des ventes - Administration');
+      toast({ title: 'Export PDF', description: 'Le rapport PDF a été généré avec succès' });
+    } catch (error) {
+      console.error('PDF Export error:', error);
+      toast({ title: 'Erreur', description: 'Impossible de générer le PDF', variant: 'destructive' });
+    }
+  };
+
   const goToPage = (page: number) => {
     setCurrentPage(Math.max(1, Math.min(page, totalPages)));
   };
@@ -513,10 +578,16 @@ export function AdminSalesPage() {
           <h2 className="text-3xl font-bold text-foreground">Toutes les ventes</h2>
           <p className="text-muted-foreground">Gestion et suivi des ventes</p>
         </div>
-        <Button onClick={exportToCSV} className="bg-red-600 hover:bg-red-700">
-          <Download className="h-4 w-4 mr-2" />
-          Exporter CSV
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={exportToCSV} variant="outline">
+            <Download className="h-4 w-4 mr-2" />
+            CSV
+          </Button>
+          <Button onClick={exportToPDF} className="bg-red-600 hover:bg-red-700">
+            <FileText className="h-4 w-4 mr-2" />
+            PDF
+          </Button>
+        </div>
       </div>
 
       {/* Summary Stats */}
