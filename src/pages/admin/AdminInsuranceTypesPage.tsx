@@ -74,13 +74,14 @@ function SortableInsuranceRow({
 
   return (
     <TableRow ref={setNodeRef} style={style} className={isDragging ? 'bg-muted' : ''}>
-      <TableCell className="w-12 px-2">
+      <TableCell style={{ width: '50px', minWidth: '50px' }} className="px-2">
         <button 
           {...attributes} 
           {...listeners} 
-          className="cursor-grab active:cursor-grabbing p-2 hover:bg-muted rounded flex items-center justify-center"
+          className="cursor-grab active:cursor-grabbing p-2 hover:bg-gray-100 rounded flex items-center justify-center"
+          title="Glisser pour réordonner"
         >
-          <GripVertical className="h-5 w-5 text-gray-500" />
+          <GripVertical className="h-5 w-5 text-gray-600" />
         </button>
       </TableCell>
       {children}
@@ -429,7 +430,7 @@ export function AdminInsuranceTypesPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-8"></TableHead>
+                  <TableHead style={{ width: '50px', minWidth: '50px' }}></TableHead>
                   <TableHead>Code</TableHead>
                   <TableHead>Nom</TableHead>
                   <TableHead>Prix de base</TableHead>
