@@ -45,14 +45,21 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Check if user is admin using the has_role function
-    const { data: isAdmin, error: roleError } = await supabaseAdmin.rpc('has_role', {
-      _user_id: user.id,
-      _role: 'admin'
+    // Check if user is admin using get_user_role function (avoids function overload issue)
+    const { data: userRole, error: roleError } = await supabaseAdmin.rpc('get_user_role', {
+      _user_id: user.id
     });
 
-    if (roleError || !isAdmin) {
-      console.log('User is not admin:', roleError);
+    if (roleError) {
+      console.log('Error checking user role:', roleError);
+      return new Response(
+        JSON.stringify({ error: 'Erreur lors de la vérification des droits' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (userRole !== 'admin') {
+      console.log('User is not admin, role:', userRole);
       return new Response(
         JSON.stringify({ error: 'Accès refusé - Droits admin requis' }),
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
