@@ -7,13 +7,19 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Download, Search, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, CalendarIcon, X, CheckCircle, Trash2 } from 'lucide-react';
+import { Download, Search, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, CalendarIcon, X, CheckCircle, Trash2, Pencil, Check, XCircle } from 'lucide-react';
 import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { toast } from '@/hooks/use-toast';
+
+interface EditingCell {
+  saleId: string;
+  field: string;
+  value: string;
+}
 
 const ITEMS_PER_PAGE_OPTIONS = [10, 20, 50, 100];
 
@@ -53,6 +59,10 @@ export function AdminSalesPage() {
   // Bulk selection state
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkLoading, setBulkLoading] = useState(false);
+  
+  // Inline editing state
+  const [editingCell, setEditingCell] = useState<EditingCell | null>(null);
+  const [savingEdit, setSavingEdit] = useState(false);
 
   const totalPages = Math.ceil(totalCount / itemsPerPage);
 
@@ -308,6 +318,119 @@ export function AdminSalesPage() {
     } finally {
       setBulkLoading(false);
     }
+  };
+
+  // Inline editing functions
+  const startEditing = (saleId: string, field: string, currentValue: string) => {
+    setEditingCell({ saleId, field, value: currentValue || '' });
+  };
+
+  const cancelEditing = () => {
+    setEditingCell(null);
+  };
+
+  const saveEdit = async () => {
+    if (!editingCell) return;
+    
+    setSavingEdit(true);
+    try {
+      const updateData: Record<string, any> = {};
+      
+      if (editingCell.field === 'amount') {
+        const numValue = parseFloat(editingCell.value);
+        if (isNaN(numValue) || numValue < 0) {
+          toast({ title: 'Erreur', description: 'Montant invalide', variant: 'destructive' });
+          return;
+        }
+        updateData.amount = numValue;
+      } else if (editingCell.field === 'status') {
+        updateData.status = editingCell.value;
+      } else {
+        updateData[editingCell.field] = editingCell.value.trim();
+      }
+      
+      const { error } = await (supabase as any)
+        .from('insurance_sales')
+        .update(updateData)
+        .eq('id', editingCell.saleId);
+      
+      if (error) throw error;
+      
+      toast({ title: 'Modifié', description: 'Vente mise à jour avec succès' });
+      setEditingCell(null);
+      loadSales();
+    } catch (error) {
+      console.error('Error updating sale:', error);
+      toast({ title: 'Erreur', description: 'Impossible de modifier la vente', variant: 'destructive' });
+    } finally {
+      setSavingEdit(false);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      saveEdit();
+    } else if (e.key === 'Escape') {
+      cancelEditing();
+    }
+  };
+
+  const renderEditableCell = (sale: any, field: string, displayValue: string, className?: string) => {
+    const isEditing = editingCell?.saleId === sale.id && editingCell?.field === field;
+    
+    if (isEditing) {
+      if (field === 'status') {
+        return (
+          <div className="flex items-center gap-1">
+            <Select value={editingCell.value} onValueChange={(v) => setEditingCell({ ...editingCell, value: v })}>
+              <SelectTrigger className="h-8 w-[120px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="validated">Validé</SelectItem>
+                <SelectItem value="pending">En attente</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button size="icon" variant="ghost" className="h-6 w-6" onClick={saveEdit} disabled={savingEdit}>
+              <Check className="h-3 w-3 text-green-600" />
+            </Button>
+            <Button size="icon" variant="ghost" className="h-6 w-6" onClick={cancelEditing}>
+              <XCircle className="h-3 w-3 text-destructive" />
+            </Button>
+          </div>
+        );
+      }
+      
+      return (
+        <div className="flex items-center gap-1">
+          <Input
+            value={editingCell.value}
+            onChange={(e) => setEditingCell({ ...editingCell, value: e.target.value })}
+            onKeyDown={handleKeyDown}
+            className="h-8 w-full min-w-[80px]"
+            autoFocus
+            type={field === 'amount' ? 'number' : 'text'}
+            step={field === 'amount' ? '0.01' : undefined}
+          />
+          <Button size="icon" variant="ghost" className="h-6 w-6 shrink-0" onClick={saveEdit} disabled={savingEdit}>
+            <Check className="h-3 w-3 text-green-600" />
+          </Button>
+          <Button size="icon" variant="ghost" className="h-6 w-6 shrink-0" onClick={cancelEditing}>
+            <XCircle className="h-3 w-3 text-destructive" />
+          </Button>
+        </div>
+      );
+    }
+    
+    return (
+      <div 
+        className={cn("group cursor-pointer hover:bg-muted/50 px-1 py-0.5 rounded flex items-center gap-1", className)}
+        onClick={() => startEditing(sale.id, field, field === 'amount' ? sale.amount?.toString() : (sale[field] || ''))}
+      >
+        <span>{displayValue}</span>
+        <Pencil className="h-3 w-3 opacity-0 group-hover:opacity-50 shrink-0" />
+      </div>
+    );
   };
 
   const exportToCSV = async () => {
@@ -674,20 +797,32 @@ export function AdminSalesPage() {
                       <TableCell>
                         <Badge variant="outline">{sale.insurance_types?.name || '-'}</Badge>
                       </TableCell>
-                      <TableCell className="font-mono text-sm">{sale.contract_number || '-'}</TableCell>
-                      <TableCell>{sale.client_name || '-'}</TableCell>
-                      <TableCell className="text-right font-medium">{Number(sale.amount).toFixed(2)} €</TableCell>
+                      <TableCell className="font-mono text-sm">
+                        {renderEditableCell(sale, 'contract_number', sale.contract_number || '-')}
+                      </TableCell>
+                      <TableCell>
+                        {renderEditableCell(sale, 'client_name', sale.client_name || '-')}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {renderEditableCell(sale, 'amount', `${Number(sale.amount).toFixed(2)} €`, 'font-medium justify-end')}
+                      </TableCell>
                       <TableCell className="text-right text-green-600 font-medium">
                         {Number(sale.commission_amount || 0).toFixed(2)} €
                       </TableCell>
-                      <TableCell>{sale.agency || '-'}</TableCell>
                       <TableCell>
-                        <Badge
-                          variant={sale.status === 'validated' ? 'default' : 'secondary'}
-                          className={sale.status === 'validated' ? 'bg-green-100 text-green-800' : ''}
-                        >
-                          {sale.status || 'pending'}
-                        </Badge>
+                        {renderEditableCell(sale, 'agency', sale.agency || '-')}
+                      </TableCell>
+                      <TableCell>
+                        {renderEditableCell(
+                          sale, 
+                          'status', 
+                          <Badge
+                            variant={sale.status === 'validated' ? 'default' : 'secondary'}
+                            className={sale.status === 'validated' ? 'bg-green-100 text-green-800' : ''}
+                          >
+                            {sale.status === 'validated' ? 'Validé' : 'En attente'}
+                          </Badge> as any
+                        )}
                       </TableCell>
                     </TableRow>
                   ))
