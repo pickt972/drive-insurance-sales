@@ -7,13 +7,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Plus, Edit, Trash2, Info } from 'lucide-react';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+import { Plus, Edit, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -44,7 +38,6 @@ export function AdminInsuranceTypesPage() {
     code: '',
     description: '',
     base_price: 0,
-    commission_rate: 15,
     commission_amount: 0,
     display_order: 0,
   });
@@ -82,7 +75,6 @@ export function AdminInsuranceTypesPage() {
           .update({
             ...formData,
             base_price: Number(formData.base_price),
-            commission_rate: Number(formData.commission_rate),
             commission_amount: Number(formData.commission_amount),
             display_order: Number(formData.display_order),
           })
@@ -100,7 +92,6 @@ export function AdminInsuranceTypesPage() {
           .insert({
             ...formData,
             base_price: Number(formData.base_price),
-            commission_rate: Number(formData.commission_rate),
             commission_amount: Number(formData.commission_amount),
             display_order: Number(formData.display_order),
             created_by: user?.id,
@@ -122,7 +113,6 @@ export function AdminInsuranceTypesPage() {
         code: '',
         description: '',
         base_price: 0,
-        commission_rate: 15,
         commission_amount: 0,
         display_order: 0,
       });
@@ -196,7 +186,6 @@ export function AdminInsuranceTypesPage() {
       code: type.code,
       description: type.description || '',
       base_price: type.base_price,
-      commission_rate: type.commission_rate,
       commission_amount: type.commission_amount || 0,
       display_order: type.display_order,
     });
@@ -219,7 +208,6 @@ export function AdminInsuranceTypesPage() {
                 code: '',
                 description: '',
                 base_price: 0,
-                commission_rate: 15,
                 commission_amount: 0,
                 display_order: 0,
               });
@@ -276,29 +264,17 @@ export function AdminInsuranceTypesPage() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="commission_rate">Taux commission (%)</Label>
+                    <Label htmlFor="commission_amount">Commission (€) <span className="text-destructive">*</span></Label>
                     <Input
-                      id="commission_rate"
+                      id="commission_amount"
                       type="number"
                       step="0.01"
-                      value={formData.commission_rate}
-                      onChange={(e) => setFormData({ ...formData, commission_rate: parseFloat(e.target.value) || 0 })}
+                      value={formData.commission_amount}
+                      onChange={(e) => setFormData({ ...formData, commission_amount: parseFloat(e.target.value) || 0 })}
+                      placeholder="Montant fixe"
+                      required
                     />
                   </div>
-                </div>
-                <div>
-                  <Label htmlFor="commission_amount">Commission fixe (€)</Label>
-                  <Input
-                    id="commission_amount"
-                    type="number"
-                    step="0.01"
-                    value={formData.commission_amount}
-                    onChange={(e) => setFormData({ ...formData, commission_amount: parseFloat(e.target.value) || 0 })}
-                    placeholder="Si > 0, remplace le taux"
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Si renseigné, ce montant sera utilisé à la place du taux en %
-                  </p>
                 </div>
                 <div>
                   <Label htmlFor="display_order">Ordre d'affichage</Label>
@@ -345,38 +321,9 @@ export function AdminInsuranceTypesPage() {
                   <TableCell className="font-medium">{type.name}</TableCell>
                   <TableCell>{type.base_price.toFixed(2)} €</TableCell>
                   <TableCell>
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <div className="inline-flex items-center gap-2 cursor-help">
-                            <span className="font-medium">
-                              {type.commission_amount > 0 
-                                ? `${type.commission_amount.toFixed(2)} €` 
-                                : `${type.commission_rate}%`}
-                            </span>
-                            <Badge 
-                              variant={type.commission_amount > 0 ? 'default' : 'outline'}
-                              className={type.commission_amount > 0 
-                                ? 'bg-emerald-100 text-emerald-700 border-emerald-200' 
-                                : 'bg-blue-50 text-blue-700 border-blue-200'}
-                            >
-                              {type.commission_amount > 0 ? 'Fixe' : '%'}
-                            </Badge>
-                          </div>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <div className="text-xs space-y-1">
-                            <p><strong>Montant fixe :</strong> {type.commission_amount > 0 ? `${type.commission_amount.toFixed(2)} €` : 'Non défini'}</p>
-                            <p><strong>Taux (%) :</strong> {type.commission_rate}%</p>
-                            <p className="text-muted-foreground pt-1 border-t mt-1">
-                              {type.commission_amount > 0 
-                                ? 'Le montant fixe est appliqué' 
-                                : 'Le taux en % est appliqué'}
-                            </p>
-                          </div>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
+                    <span className="font-medium text-emerald-700">
+                      {type.commission_amount.toFixed(2)} €
+                    </span>
                   </TableCell>
                   <TableCell>
                     <Badge variant={type.is_active ? 'default' : 'secondary'}>
