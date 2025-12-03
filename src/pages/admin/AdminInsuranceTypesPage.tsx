@@ -417,113 +417,120 @@ export function AdminInsuranceTypesPage() {
 
       <Card>
         <CardContent className="pt-6">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Ordre</TableHead>
-                <TableHead>Code</TableHead>
-                <TableHead>Nom</TableHead>
-                <TableHead>Prix de base</TableHead>
-                <TableHead>Type prix</TableHead>
-                <TableHead>Commission</TableHead>
-                <TableHead>Statut</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {types.map((type) => (
-                <TableRow key={type.id}>
-                  <TableCell>{type.display_order}</TableCell>
-                  <TableCell className="font-mono text-sm">{type.code}</TableCell>
-                  <TableCell className="font-medium">{type.name}</TableCell>
-                  <TableCell>{type.base_price.toFixed(2)} €</TableCell>
-                  <TableCell>
-                    <Badge variant={type.price_type === 'per_day' ? 'default' : 'outline'}>
-                      {type.price_type === 'per_day' ? '/jour' : 'Forfait'}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <div className="inline-flex items-center gap-2 cursor-help">
-                            <span className="font-medium">
-                              {type.commission_amount > 0 
-                                ? `${type.commission_amount.toFixed(2)} €` 
-                                : `${type.commission_rate}%`}
-                            </span>
-                            <Badge 
-                              variant={type.commission_amount > 0 ? 'default' : 'outline'}
-                              className={type.commission_amount > 0 
-                                ? 'bg-emerald-100 text-emerald-700 border-emerald-200' 
-                                : 'bg-blue-50 text-blue-700 border-blue-200'}
-                            >
-                              {type.commission_amount > 0 ? 'Fixe' : '%'}
-                            </Badge>
-                          </div>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <div className="text-xs space-y-1">
-                            <p><strong>Montant fixe :</strong> {type.commission_amount > 0 ? `${type.commission_amount.toFixed(2)} €` : 'Non défini'}</p>
-                            <p><strong>Taux (%) :</strong> {type.commission_rate}%</p>
-                            <p className="text-muted-foreground pt-1 border-t mt-1">
-                              {type.commission_amount > 0 
-                                ? 'Le montant fixe est appliqué' 
-                                : 'Le taux en % est appliqué'}
-                            </p>
-                          </div>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={type.is_active ? 'default' : 'secondary'}>
-                      {type.is_active ? 'Actif' : 'Inactif'}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex gap-2">
-                      <Button variant="ghost" size="sm" onClick={() => startEdit(type)}>
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => toggleActive(type.id, type.is_active)}
-                      >
-                        {type.is_active ? 'Désactiver' : 'Activer'}
-                      </Button>
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive">
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Supprimer définitivement ?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Le type d'assurance "{type.name}" sera supprimé définitivement.
-                              Cette action est irréversible.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Annuler</AlertDialogCancel>
-                            <AlertDialogAction
-                              onClick={() => deleteType(type.id, type.name)}
-                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                            >
-                              Supprimer
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </div>
-                  </TableCell>
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-8"></TableHead>
+                  <TableHead>Code</TableHead>
+                  <TableHead>Nom</TableHead>
+                  <TableHead>Prix de base</TableHead>
+                  <TableHead>Type prix</TableHead>
+                  <TableHead>Commission</TableHead>
+                  <TableHead>Statut</TableHead>
+                  <TableHead>Actions</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                <SortableContext items={types.map(t => t.id)} strategy={verticalListSortingStrategy}>
+                  {types.map((type) => (
+                    <SortableInsuranceRow key={type.id} type={type}>
+                      <TableCell className="font-mono text-sm">{type.code}</TableCell>
+                      <TableCell className="font-medium">{type.name}</TableCell>
+                      <TableCell>{type.base_price.toFixed(2)} €</TableCell>
+                      <TableCell>
+                        <Badge variant={type.price_type === 'per_day' ? 'default' : 'outline'}>
+                          {type.price_type === 'per_day' ? '/jour' : 'Forfait'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <div className="inline-flex items-center gap-2 cursor-help">
+                                <span className="font-medium">
+                                  {type.commission_amount > 0 
+                                    ? `${type.commission_amount.toFixed(2)} €` 
+                                    : `${type.commission_rate}%`}
+                                </span>
+                                <Badge 
+                                  variant={type.commission_amount > 0 ? 'default' : 'outline'}
+                                  className={type.commission_amount > 0 
+                                    ? 'bg-emerald-100 text-emerald-700 border-emerald-200' 
+                                    : 'bg-blue-50 text-blue-700 border-blue-200'}
+                                >
+                                  {type.commission_amount > 0 ? 'Fixe' : '%'}
+                                </Badge>
+                              </div>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <div className="text-xs space-y-1">
+                                <p><strong>Montant fixe :</strong> {type.commission_amount > 0 ? `${type.commission_amount.toFixed(2)} €` : 'Non défini'}</p>
+                                <p><strong>Taux (%) :</strong> {type.commission_rate}%</p>
+                                <p className="text-muted-foreground pt-1 border-t mt-1">
+                                  {type.commission_amount > 0 
+                                    ? 'Le montant fixe est appliqué' 
+                                    : 'Le taux en % est appliqué'}
+                                </p>
+                              </div>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={type.is_active ? 'default' : 'secondary'}>
+                          {type.is_active ? 'Actif' : 'Inactif'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex gap-2">
+                          <Button variant="ghost" size="sm" onClick={() => startEdit(type)}>
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => toggleActive(type.id, type.is_active)}
+                          >
+                            {type.is_active ? 'Désactiver' : 'Activer'}
+                          </Button>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive">
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Supprimer définitivement ?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Le type d'assurance "{type.name}" sera supprimé définitivement.
+                                  Cette action est irréversible.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Annuler</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => deleteType(type.id, type.name)}
+                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                >
+                                  Supprimer
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
+                      </TableCell>
+                    </SortableInsuranceRow>
+                  ))}
+                </SortableContext>
+              </TableBody>
+            </Table>
+          </DndContext>
         </CardContent>
       </Card>
     </div>
