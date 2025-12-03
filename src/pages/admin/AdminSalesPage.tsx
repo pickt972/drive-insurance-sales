@@ -4,11 +4,14 @@ import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Download, Search, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { Download, Search, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, CalendarIcon, X } from 'lucide-react';
 import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { format } from 'date-fns';
+import { format, startOfMonth, endOfMonth } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { cn } from '@/lib/utils';
 
 const ITEMS_PER_PAGE_OPTIONS = [10, 20, 50, 100];
 
@@ -16,6 +19,10 @@ export function AdminSalesPage() {
   const [sales, setSales] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  
+  // Date range filter state
+  const [startDate, setStartDate] = useState<Date | undefined>(startOfMonth(new Date()));
+  const [endDate, setEndDate] = useState<Date | undefined>(endOfMonth(new Date()));
   
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -42,6 +49,14 @@ export function AdminSalesPage() {
           profiles:user_id(full_name)
         `, { count: 'exact' });
       
+      // Apply date range filter
+      if (startDate) {
+        query = query.gte('sale_date', format(startDate, 'yyyy-MM-dd'));
+      }
+      if (endDate) {
+        query = query.lte('sale_date', format(endDate, 'yyyy-MM-dd'));
+      }
+      
       // Apply search filter if present
       if (searchTerm) {
         query = query.or(`contract_number.ilike.%${searchTerm}%,client_name.ilike.%${searchTerm}%`);
@@ -64,21 +79,28 @@ export function AdminSalesPage() {
       setTotalCount(count || 0);
       
       // Load aggregated stats separately (for all matching records)
-      await loadStats(searchTerm);
+      await loadStats(searchTerm, startDate, endDate);
     } catch (error) {
       console.error('Error loading sales:', error);
     } finally {
       setLoading(false);
     }
-  }, [currentPage, itemsPerPage, searchTerm]);
+  }, [currentPage, itemsPerPage, searchTerm, startDate, endDate]);
 
-  const loadStats = async (search: string) => {
+  const loadStats = async (search: string, start?: Date, end?: Date) => {
     try {
       const supabaseAny = supabase as any;
       
       let query = supabaseAny
         .from('insurance_sales')
         .select('amount, commission_amount');
+      
+      if (start) {
+        query = query.gte('sale_date', format(start, 'yyyy-MM-dd'));
+      }
+      if (end) {
+        query = query.lte('sale_date', format(end, 'yyyy-MM-dd'));
+      }
       
       if (search) {
         query = query.or(`contract_number.ilike.%${search}%,client_name.ilike.%${search}%`);
@@ -101,10 +123,20 @@ export function AdminSalesPage() {
     loadSales();
   }, [loadSales]);
 
-  // Reset to page 1 when search changes
+  // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm]);
+  }, [searchTerm, startDate, endDate]);
+
+  const clearDateFilter = () => {
+    setStartDate(undefined);
+    setEndDate(undefined);
+  };
+
+  const setThisMonth = () => {
+    setStartDate(startOfMonth(new Date()));
+    setEndDate(endOfMonth(new Date()));
+  };
 
   const exportToCSV = async () => {
     // Export all matching records, not just current page
@@ -118,6 +150,13 @@ export function AdminSalesPage() {
           profiles:user_id(full_name)
         `)
         .order('sale_date', { ascending: false });
+      
+      if (startDate) {
+        query = query.gte('sale_date', format(startDate, 'yyyy-MM-dd'));
+      }
+      if (endDate) {
+        query = query.lte('sale_date', format(endDate, 'yyyy-MM-dd'));
+      }
       
       if (searchTerm) {
         query = query.or(`contract_number.ilike.%${searchTerm}%,client_name.ilike.%${searchTerm}%`);
@@ -160,8 +199,8 @@ export function AdminSalesPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-3xl font-bold text-gray-900">Toutes les ventes</h2>
-          <p className="text-gray-600">Gestion et suivi des ventes</p>
+          <h2 className="text-3xl font-bold text-foreground">Toutes les ventes</h2>
+          <p className="text-muted-foreground">Gestion et suivi des ventes</p>
         </div>
         <Button onClick={exportToCSV} className="bg-red-600 hover:bg-red-700">
           <Download className="h-4 w-4 mr-2" />
@@ -174,19 +213,19 @@ export function AdminSalesPage() {
         <Card>
           <CardContent className="pt-6">
             <div className="text-2xl font-bold text-blue-600">{totalCount}</div>
-            <p className="text-sm text-gray-600">Ventes totales</p>
+            <p className="text-sm text-muted-foreground">Ventes totales</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6">
             <div className="text-2xl font-bold text-green-600">{totalAmount.toFixed(2)} €</div>
-            <p className="text-sm text-gray-600">Montant total</p>
+            <p className="text-sm text-muted-foreground">Montant total</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6">
             <div className="text-2xl font-bold text-purple-600">{totalCommission.toFixed(2)} €</div>
-            <p className="text-sm text-gray-600">Commissions totales</p>
+            <p className="text-sm text-muted-foreground">Commissions totales</p>
           </CardContent>
         </Card>
       </div>
@@ -194,36 +233,107 @@ export function AdminSalesPage() {
       {/* Table with filters */}
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex-1 max-w-md">
-              <div className="relative">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                <Input
-                  placeholder="Rechercher par contrat ou client..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
+          <div className="flex flex-col gap-4">
+            {/* Search and items per page */}
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex-1 max-w-md">
+                <div className="relative">
+                  <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Rechercher par contrat ou client..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">Par page:</span>
+                <Select 
+                  value={itemsPerPage.toString()} 
+                  onValueChange={(v) => {
+                    setItemsPerPage(Number(v));
+                    setCurrentPage(1);
+                  }}
+                >
+                  <SelectTrigger className="w-[80px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {ITEMS_PER_PAGE_OPTIONS.map(opt => (
+                      <SelectItem key={opt} value={opt.toString()}>{opt}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-500">Par page:</span>
-              <Select 
-                value={itemsPerPage.toString()} 
-                onValueChange={(v) => {
-                  setItemsPerPage(Number(v));
-                  setCurrentPage(1);
-                }}
-              >
-                <SelectTrigger className="w-[80px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {ITEMS_PER_PAGE_OPTIONS.map(opt => (
-                    <SelectItem key={opt} value={opt.toString()}>{opt}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            
+            {/* Date range filters */}
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">Du:</span>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-[160px] justify-start text-left font-normal",
+                        !startDate && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {startDate ? format(startDate, "dd/MM/yyyy") : "Date début"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={startDate}
+                      onSelect={setStartDate}
+                      initialFocus
+                      className="pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">Au:</span>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-[160px] justify-start text-left font-normal",
+                        !endDate && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {endDate ? format(endDate, "dd/MM/yyyy") : "Date fin"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={endDate}
+                      onSelect={setEndDate}
+                      initialFocus
+                      className="pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+              
+              <Button variant="outline" size="sm" onClick={setThisMonth}>
+                Ce mois
+              </Button>
+              
+              {(startDate || endDate) && (
+                <Button variant="ghost" size="sm" onClick={clearDateFilter}>
+                  <X className="h-4 w-4 mr-1" />
+                  Effacer
+                </Button>
+              )}
             </div>
           </div>
         </CardHeader>
@@ -291,7 +401,7 @@ export function AdminSalesPage() {
           {/* Pagination Controls */}
           {totalPages > 1 && (
             <div className="flex items-center justify-between mt-4">
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-muted-foreground">
                 Affichage de {((currentPage - 1) * itemsPerPage) + 1} à {Math.min(currentPage * itemsPerPage, totalCount)} sur {totalCount} résultats
               </p>
               <div className="flex items-center gap-1">
