@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Plus, Edit, Trash2 } from 'lucide-react';
@@ -146,6 +147,32 @@ export function AdminInsuranceTypesPage() {
       toast({
         title: 'Erreur',
         description: 'Impossible de modifier le statut',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const deleteType = async (id: string, name: string) => {
+    try {
+      const supabaseAny = supabase as any;
+      const { error } = await supabaseAny
+        .from('insurance_types')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+      
+      toast({
+        title: 'Supprimé',
+        description: `Type "${name}" supprimé définitivement`,
+      });
+      
+      loadTypes();
+    } catch (error) {
+      console.error('Error deleting type:', error);
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de supprimer ce type (peut-être utilisé dans des ventes)',
         variant: 'destructive',
       });
     }
@@ -309,6 +336,31 @@ export function AdminInsuranceTypesPage() {
                       >
                         {type.is_active ? 'Désactiver' : 'Activer'}
                       </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive">
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Supprimer définitivement ?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Le type d'assurance "{type.name}" sera supprimé définitivement.
+                              Cette action est irréversible.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Annuler</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => deleteType(type.id, type.name)}
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            >
+                              Supprimer
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                     </div>
                   </TableCell>
                 </TableRow>
