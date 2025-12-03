@@ -25,6 +25,7 @@ interface InsuranceType {
   code: string;
   description: string;
   base_price: number;
+  price_type: 'forfait' | 'per_day';
   commission_rate: number;
   commission_amount: number;
   is_active: boolean;
@@ -44,6 +45,7 @@ export function AdminInsuranceTypesPage() {
     code: '',
     description: '',
     base_price: 0,
+    price_type: 'forfait' as 'forfait' | 'per_day',
     commission_rate: 15,
     commission_amount: 0,
     display_order: 0,
@@ -122,6 +124,7 @@ export function AdminInsuranceTypesPage() {
         code: '',
         description: '',
         base_price: 0,
+        price_type: 'forfait',
         commission_rate: 15,
         commission_amount: 0,
         display_order: 0,
@@ -196,6 +199,7 @@ export function AdminInsuranceTypesPage() {
       code: type.code,
       description: type.description || '',
       base_price: type.base_price,
+      price_type: type.price_type || 'forfait',
       commission_rate: type.commission_rate,
       commission_amount: type.commission_amount || 0,
       display_order: type.display_order,
@@ -219,6 +223,7 @@ export function AdminInsuranceTypesPage() {
                 code: '',
                 description: '',
                 base_price: 0,
+                price_type: 'forfait',
                 commission_rate: 15,
                 commission_amount: 0,
                 display_order: 0,
@@ -276,6 +281,20 @@ export function AdminInsuranceTypesPage() {
                     />
                   </div>
                   <div>
+                    <Label htmlFor="price_type">Type de prix</Label>
+                    <select
+                      id="price_type"
+                      value={formData.price_type}
+                      onChange={(e) => setFormData({ ...formData, price_type: e.target.value as 'forfait' | 'per_day' })}
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    >
+                      <option value="forfait">Forfait (prix fixe)</option>
+                      <option value="per_day">Par jour</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
                     <Label htmlFor="commission_rate">Taux commission (%)</Label>
                     <Input
                       id="commission_rate"
@@ -332,6 +351,7 @@ export function AdminInsuranceTypesPage() {
                 <TableHead>Code</TableHead>
                 <TableHead>Nom</TableHead>
                 <TableHead>Prix de base</TableHead>
+                <TableHead>Type prix</TableHead>
                 <TableHead>Commission</TableHead>
                 <TableHead>Statut</TableHead>
                 <TableHead>Actions</TableHead>
@@ -344,6 +364,11 @@ export function AdminInsuranceTypesPage() {
                   <TableCell className="font-mono text-sm">{type.code}</TableCell>
                   <TableCell className="font-medium">{type.name}</TableCell>
                   <TableCell>{type.base_price.toFixed(2)} €</TableCell>
+                  <TableCell>
+                    <Badge variant={type.price_type === 'per_day' ? 'default' : 'outline'}>
+                      {type.price_type === 'per_day' ? '/jour' : 'Forfait'}
+                    </Badge>
+                  </TableCell>
                   <TableCell>
                     <TooltipProvider>
                       <Tooltip>
