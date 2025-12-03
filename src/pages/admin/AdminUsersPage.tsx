@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { UserPlus, Search, CheckCircle, XCircle, Edit, MoreHorizontal, Eye, EyeOff, KeyRound, GripVertical, Filter } from 'lucide-react';
+import { UserPlus, Search, CheckCircle, XCircle, Edit, MoreHorizontal, Eye, EyeOff, KeyRound, GripVertical, Filter, Trash2 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
@@ -690,11 +690,10 @@ export function AdminUsersPage() {
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem 
                                   onClick={() => confirmDelete(user)}
-                                  className="text-orange-600"
-                                  disabled={!user.is_active}
+                                  className="text-destructive"
                                 >
-                                  <XCircle className="h-4 w-4 mr-2" />
-                                  Désactiver
+                                  <Trash2 className="h-4 w-4 mr-2" />
+                                  Supprimer définitivement
                                 </DropdownMenuItem>
                               </DropdownMenuContent>
                             </DropdownMenu>
