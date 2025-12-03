@@ -35,6 +35,10 @@ export function AdminSalesPage() {
   // Status filter state
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
   
+  // Agency filter state
+  const [agencies, setAgencies] = useState<string[]>([]);
+  const [selectedAgency, setSelectedAgency] = useState<string>('all');
+  
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
@@ -64,8 +68,17 @@ export function AdminSalesPage() {
         .order('name');
       setInsuranceTypes(data || []);
     };
+    const loadAgencies = async () => {
+      const { data } = await (supabase as any)
+        .from('profiles')
+        .select('agency')
+        .not('agency', 'is', null);
+      const uniqueAgencies = [...new Set((data || []).map((p: any) => p.agency as string).filter(Boolean))] as string[];
+      setAgencies(uniqueAgencies.sort());
+    };
     loadEmployees();
     loadInsuranceTypes();
+    loadAgencies();
   }, []);
 
   const loadSales = useCallback(async () => {
@@ -105,6 +118,11 @@ export function AdminSalesPage() {
         query = query.eq('status', selectedStatus);
       }
       
+      // Apply agency filter
+      if (selectedAgency && selectedAgency !== 'all') {
+        query = query.eq('agency', selectedAgency);
+      }
+      
       // Apply search filter if present
       if (searchTerm) {
         query = query.or(`contract_number.ilike.%${searchTerm}%,client_name.ilike.%${searchTerm}%`);
@@ -127,15 +145,15 @@ export function AdminSalesPage() {
       setTotalCount(count || 0);
       
       // Load aggregated stats separately (for all matching records)
-      await loadStats(searchTerm, startDate, endDate, selectedEmployee, selectedInsuranceType, selectedStatus);
+      await loadStats(searchTerm, startDate, endDate, selectedEmployee, selectedInsuranceType, selectedStatus, selectedAgency);
     } catch (error) {
       console.error('Error loading sales:', error);
     } finally {
       setLoading(false);
     }
-  }, [currentPage, itemsPerPage, searchTerm, startDate, endDate, selectedEmployee, selectedInsuranceType, selectedStatus]);
+  }, [currentPage, itemsPerPage, searchTerm, startDate, endDate, selectedEmployee, selectedInsuranceType, selectedStatus, selectedAgency]);
 
-  const loadStats = async (search: string, start?: Date, end?: Date, employeeId?: string, insuranceTypeId?: string, status?: string) => {
+  const loadStats = async (search: string, start?: Date, end?: Date, employeeId?: string, insuranceTypeId?: string, status?: string, agency?: string) => {
     try {
       const supabaseAny = supabase as any;
       
@@ -162,6 +180,10 @@ export function AdminSalesPage() {
         query = query.eq('status', status);
       }
       
+      if (agency && agency !== 'all') {
+        query = query.eq('agency', agency);
+      }
+      
       if (search) {
         query = query.or(`contract_number.ilike.%${search}%,client_name.ilike.%${search}%`);
       }
@@ -186,7 +208,7 @@ export function AdminSalesPage() {
   // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, startDate, endDate, selectedEmployee, selectedInsuranceType, selectedStatus]);
+  }, [searchTerm, startDate, endDate, selectedEmployee, selectedInsuranceType, selectedStatus, selectedAgency]);
 
   const clearDateFilter = () => {
     setStartDate(undefined);
@@ -228,6 +250,10 @@ export function AdminSalesPage() {
       
       if (selectedStatus && selectedStatus !== 'all') {
         query = query.eq('status', selectedStatus);
+      }
+      
+      if (selectedAgency && selectedAgency !== 'all') {
+        query = query.eq('agency', selectedAgency);
       }
       
       if (searchTerm) {
@@ -440,16 +466,32 @@ export function AdminSalesPage() {
                 </Select>
               </div>
               
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">Agence:</span>
+                <Select value={selectedAgency} onValueChange={setSelectedAgency}>
+                  <SelectTrigger className="w-[160px]">
+                    <SelectValue placeholder="Toutes" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Toutes les agences</SelectItem>
+                    {agencies.map(agency => (
+                      <SelectItem key={agency} value={agency}>{agency}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
               <Button variant="outline" size="sm" onClick={setThisMonth}>
                 Ce mois
               </Button>
               
-              {(startDate || endDate || selectedEmployee !== 'all' || selectedInsuranceType !== 'all' || selectedStatus !== 'all') && (
+              {(startDate || endDate || selectedEmployee !== 'all' || selectedInsuranceType !== 'all' || selectedStatus !== 'all' || selectedAgency !== 'all') && (
                 <Button variant="ghost" size="sm" onClick={() => {
                   clearDateFilter();
                   setSelectedEmployee('all');
                   setSelectedInsuranceType('all');
                   setSelectedStatus('all');
+                  setSelectedAgency('all');
                 }}>
                   <X className="h-4 w-4 mr-1" />
                   Effacer filtres
