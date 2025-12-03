@@ -1,11 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
-import { Settings, Save, RefreshCw } from 'lucide-react';
+import { Settings, Save, RefreshCw, Upload, X, Image as ImageIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface SystemSetting {
@@ -16,6 +16,7 @@ interface SystemSetting {
 export function SystemSettings() {
   const [settings, setSettings] = useState({
     app_name: 'Gestion des Ventes',
+    app_logo: '' as string,
     auto_export_enabled: false,
     auto_export_day: 1,
     notification_email: '',
@@ -24,6 +25,8 @@ export function SystemSettings() {
   });
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -47,6 +50,7 @@ export function SystemSettings() {
 
       setSettings({
         app_name: settingsObj.app_name || 'Gestion des Ventes',
+        app_logo: settingsObj.app_logo || '',
         auto_export_enabled: settingsObj.auto_export_enabled || false,
         auto_export_day: settingsObj.auto_export_day || 1,
         notification_email: settingsObj.notification_email || '',
@@ -97,6 +101,80 @@ export function SystemSettings() {
     }
   };
 
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Vérifier le type de fichier
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: 'Erreur',
+        description: 'Veuillez sélectionner une image (PNG, JPG, SVG)',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    // Vérifier la taille (max 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      toast({
+        title: 'Erreur',
+        description: 'L\'image ne doit pas dépasser 2MB',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    setUploading(true);
+    try {
+      // Supprimer l'ancien logo s'il existe
+      if (settings.app_logo) {
+        const oldPath = settings.app_logo.split('/').pop();
+        if (oldPath) {
+          await supabase.storage.from('app-assets').remove([`logo/${oldPath}`]);
+        }
+      }
+
+      // Upload le nouveau logo
+      const fileExt = file.name.split('.').pop();
+      const fileName = `app-logo-${Date.now()}.${fileExt}`;
+      const filePath = `logo/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('app-assets')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      // Obtenir l'URL publique
+      const { data: { publicUrl } } = supabase.storage
+        .from('app-assets')
+        .getPublicUrl(filePath);
+
+      setSettings({ ...settings, app_logo: publicUrl });
+
+      toast({
+        title: '✅ Logo uploadé',
+        description: 'N\'oubliez pas de sauvegarder les paramètres',
+      });
+    } catch (error: any) {
+      toast({
+        title: 'Erreur',
+        description: error.message,
+        variant: 'destructive'
+      });
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  const handleRemoveLogo = () => {
+    setSettings({ ...settings, app_logo: '' });
+  };
+
   return (
     <div className="grid gap-6 md:grid-cols-2">
       {/* Nom de l'application */}
@@ -112,7 +190,7 @@ export function SystemSettings() {
             </div>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
           <div className="space-y-2 max-w-md">
             <Label htmlFor="app-name">Nom de l'application</Label>
             <Input
@@ -127,6 +205,61 @@ export function SystemSettings() {
             <p className="text-xs text-muted-foreground">
               Ce nom sera affiché en haut à gauche de l'application pour tous les utilisateurs connectés
             </p>
+          </div>
+
+          <div className="space-y-2 max-w-md pt-4 border-t">
+            <Label>Logo de l'application</Label>
+            <div className="flex items-center gap-4">
+              {settings.app_logo ? (
+                <div className="relative">
+                  <img 
+                    src={settings.app_logo} 
+                    alt="Logo" 
+                    className="h-16 w-16 object-contain rounded-lg border bg-white"
+                  />
+                  <button
+                    onClick={handleRemoveLogo}
+                    className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </div>
+              ) : (
+                <div className="h-16 w-16 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center bg-gray-50">
+                  <ImageIcon className="h-6 w-6 text-gray-400" />
+                </div>
+              )}
+              <div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleLogoUpload}
+                  className="hidden"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploading}
+                >
+                  {uploading ? (
+                    <>
+                      <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                      Upload...
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="mr-2 h-4 w-4" />
+                      Choisir un logo
+                    </>
+                  )}
+                </Button>
+                <p className="text-xs text-muted-foreground mt-1">
+                  PNG, JPG ou SVG (max 2MB)
+                </p>
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>

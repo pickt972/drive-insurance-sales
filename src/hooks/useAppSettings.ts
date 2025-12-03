@@ -3,10 +3,12 @@ import { supabase } from '@/integrations/supabase/client';
 
 interface AppSettings {
   app_name: string;
+  app_logo: string | null;
 }
 
 const DEFAULT_SETTINGS: AppSettings = {
   app_name: 'Gestion des Ventes',
+  app_logo: null,
 };
 
 export function useAppSettings() {
@@ -22,7 +24,7 @@ export function useAppSettings() {
       const { data, error } = await (supabase as any)
         .from('system_settings')
         .select('key, value')
-        .in('key', ['app_name']);
+        .in('key', ['app_name', 'app_logo']);
 
       if (error) {
         console.error('Error fetching app settings:', error);
@@ -33,6 +35,8 @@ export function useAppSettings() {
       data?.forEach((setting: { key: string; value: any }) => {
         if (setting.key === 'app_name') {
           settingsObj.app_name = setting.value;
+        } else if (setting.key === 'app_logo') {
+          settingsObj.app_logo = setting.value;
         }
       });
 
