@@ -1,4 +1,5 @@
 import { useAuth } from '@/hooks/useAuth';
+import { useAppSettings } from '@/hooks/useAppSettings';
 import { Button } from '@/components/ui/button';
 import { LogOut, Home, PlusCircle, BarChart } from 'lucide-react';
 import { useState } from 'react';
@@ -9,6 +10,7 @@ interface UserLayoutProps {
 
 export function UserLayout({ children }: UserLayoutProps) {
   const { profile, signOut } = useAuth();
+  const { settings: appSettings } = useAppSettings();
   const [activeTab, setActiveTab] = useState('dashboard');
 
   return (
@@ -24,7 +26,7 @@ export function UserLayout({ children }: UserLayoutProps) {
                 </div>
                 <div>
                   <h1 className="text-2xl font-bold bg-gradient-to-r from-primary via-info to-primary-variant bg-clip-text text-transparent">
-                    ALOELOCATION
+                    {appSettings.app_name}
                   </h1>
                   <p className="text-xs font-medium text-muted-foreground">
                     Bienvenue, {profile?.full_name} 👋
@@ -60,7 +62,7 @@ export function UserLayout({ children }: UserLayoutProps) {
         <div className="modern-container">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <p className="text-sm text-muted-foreground">
-              © 2025 ALOELOCATION - Martinique 🏝️
+              © 2025 {appSettings.app_name}
             </p>
             <div className="flex items-center gap-2">
               <div className="h-2 w-2 rounded-full bg-success animate-pulse"></div>

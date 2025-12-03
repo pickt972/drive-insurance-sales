@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { useAppSettings } from '@/hooks/useAppSettings';
 import { cn } from '@/lib/utils';
 import {
   LayoutDashboard,
@@ -46,6 +47,7 @@ const navigation = [
 export default function AdminLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { profile, signOut } = useAuth();
+  const { settings: appSettings } = useAppSettings();
   const navigate = useNavigate();
 
   const handleSignOut = async () => {
@@ -76,7 +78,7 @@ export default function AdminLayout() {
           <div className="flex items-center justify-between h-16 px-6 border-b">
             <div className="flex items-center gap-2">
               <Car className="h-8 w-8 text-blue-600" />
-              <span className="text-xl font-bold text-gray-900">ALOELOCATION</span>
+              <span className="text-xl font-bold text-gray-900">{appSettings.app_name}</span>
             </div>
             <button onClick={() => setSidebarOpen(false)}>
               <X className="h-6 w-6 text-gray-500" />
@@ -111,7 +113,7 @@ export default function AdminLayout() {
           {/* Logo */}
           <div className="flex items-center h-16 px-6 border-b border-gray-200">
             <Car className="h-8 w-8 text-blue-600" />
-            <span className="ml-2 text-xl font-bold text-gray-900">ALOELOCATION</span>
+            <span className="ml-2 text-xl font-bold text-gray-900">{appSettings.app_name}</span>
           </div>
 
           {/* Navigation */}
