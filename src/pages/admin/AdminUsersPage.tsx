@@ -6,7 +6,8 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { UserPlus, Search, CheckCircle, XCircle, Edit, Trash2, MoreHorizontal } from 'lucide-react';
+import { UserPlus, Search, CheckCircle, XCircle, Edit, Trash2, MoreHorizontal, Eye, EyeOff } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -51,18 +52,38 @@ interface EditFormData {
   role: 'admin' | 'user';
 }
 
+interface CreateFormData {
+  username: string;
+  full_name: string;
+  password: string;
+  agency: string;
+  phone: string;
+  role: 'admin' | 'user';
+}
+
 export function AdminUsersPage() {
+  const { session } = useAuth();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
   const [saving, setSaving] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState<EditFormData>({
     full_name: '',
     email: '',
+    agency: '',
+    phone: '',
+    role: 'user',
+  });
+  const [createFormData, setCreateFormData] = useState<CreateFormData>({
+    username: '',
+    full_name: '',
+    password: '',
     agency: '',
     phone: '',
     role: 'user',
@@ -107,8 +128,84 @@ export function AdminUsersPage() {
     setEditDialogOpen(true);
   };
 
+  const openCreateDialog = () => {
+    setCreateFormData({
+      username: '',
+      full_name: '',
+      password: '',
+      agency: '',
+      phone: '',
+      role: 'user',
+    });
+    setShowPassword(false);
+    setCreateDialogOpen(true);
+  };
+
   const handleFormChange = (field: keyof EditFormData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleCreateFormChange = (field: keyof CreateFormData, value: string) => {
+    setCreateFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const createUser = async () => {
+    if (!createFormData.username.trim()) {
+      toast({
+        title: 'Erreur',
+        description: 'Le nom d\'utilisateur est requis',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (createFormData.password.length < 6) {
+      toast({
+        title: 'Erreur',
+        description: 'Le mot de passe doit contenir au moins 6 caractères',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const response = await supabase.functions.invoke('create-user', {
+        body: {
+          username: createFormData.username.trim(),
+          full_name: createFormData.full_name.trim() || createFormData.username.trim(),
+          password: createFormData.password,
+          role: createFormData.role,
+          agency: createFormData.agency || null,
+          phone: createFormData.phone || null,
+        },
+      });
+
+      if (response.error) {
+        throw new Error(response.error.message || 'Erreur lors de la création');
+      }
+
+      if (!response.data?.success) {
+        throw new Error(response.data?.error || 'Erreur lors de la création');
+      }
+
+      toast({
+        title: 'Succès',
+        description: `Utilisateur "${createFormData.username}" créé avec succès`,
+      });
+
+      setCreateDialogOpen(false);
+      loadUsers();
+    } catch (error: any) {
+      console.error('Error creating user:', error);
+      toast({
+        title: 'Erreur',
+        description: error.message || 'Impossible de créer l\'utilisateur',
+        variant: 'destructive',
+      });
+    } finally {
+      setSaving(false);
+    }
   };
 
   const saveUser = async () => {
@@ -133,12 +230,11 @@ export function AdminUsersPage() {
       if (profileError) throw profileError;
 
       // Update user_roles table for security
-      const { error: deleteRoleError } = await supabaseAny
+      await supabaseAny
         .from('user_roles')
         .delete()
         .eq('user_id', editingUser.id);
 
-      // Insert new role (ignore error if already exists)
       await supabaseAny
         .from('user_roles')
         .upsert({
@@ -170,7 +266,6 @@ export function AdminUsersPage() {
     try {
       const supabaseAny = supabase as any;
       
-      // Update profile role
       const { error: profileError } = await supabaseAny
         .from('profiles')
         .update({ role: newRole })
@@ -178,7 +273,6 @@ export function AdminUsersPage() {
 
       if (profileError) throw profileError;
 
-      // Update user_roles table
       await supabaseAny
         .from('user_roles')
         .delete()
@@ -241,7 +335,6 @@ export function AdminUsersPage() {
     try {
       const supabaseAny = supabase as any;
       
-      // Soft delete - just deactivate
       const { error } = await supabaseAny
         .from('profiles')
         .update({ is_active: false })
@@ -281,6 +374,10 @@ export function AdminUsersPage() {
           <h2 className="text-3xl font-bold text-gray-900">Gestion des utilisateurs</h2>
           <p className="text-gray-600">Gérer les comptes et permissions</p>
         </div>
+        <Button onClick={openCreateDialog}>
+          <UserPlus className="h-4 w-4 mr-2" />
+          Nouvel utilisateur
+        </Button>
       </div>
 
       {/* Stats */}
@@ -448,6 +545,111 @@ export function AdminUsersPage() {
         </CardContent>
       </Card>
 
+      {/* Create User Dialog */}
+      <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Créer un utilisateur</DialogTitle>
+            <DialogDescription>
+              Remplissez les informations pour créer un nouvel utilisateur.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="create_username">Nom d'utilisateur *</Label>
+              <Input
+                id="create_username"
+                value={createFormData.username}
+                onChange={(e) => handleCreateFormChange('username', e.target.value)}
+                placeholder="jean.dupont"
+              />
+              <p className="text-xs text-gray-500">
+                L'email sera : {createFormData.username.trim() || 'username'}@aloelocation.internal
+              </p>
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="create_full_name">Nom complet</Label>
+              <Input
+                id="create_full_name"
+                value={createFormData.full_name}
+                onChange={(e) => handleCreateFormChange('full_name', e.target.value)}
+                placeholder="Jean Dupont"
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="create_password">Mot de passe *</Label>
+              <div className="relative">
+                <Input
+                  id="create_password"
+                  type={showPassword ? 'text' : 'password'}
+                  value={createFormData.password}
+                  onChange={(e) => handleCreateFormChange('password', e.target.value)}
+                  placeholder="Minimum 6 caractères"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-0 top-0 h-full px-3"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </Button>
+              </div>
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="create_phone">Téléphone</Label>
+              <Input
+                id="create_phone"
+                value={createFormData.phone}
+                onChange={(e) => handleCreateFormChange('phone', e.target.value)}
+                placeholder="+596 696 12 34 56"
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="create_agency">Agence</Label>
+              <Select
+                value={createFormData.agency}
+                onValueChange={(value) => handleCreateFormChange('agency', value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Sélectionner une agence" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Trinité">Trinité</SelectItem>
+                  <SelectItem value="Le Lamentin">Le Lamentin</SelectItem>
+                  <SelectItem value="Fort-de-France">Fort-de-France</SelectItem>
+                  <SelectItem value="Saint-Pierre">Saint-Pierre</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="create_role">Rôle</Label>
+              <Select
+                value={createFormData.role}
+                onValueChange={(value) => handleCreateFormChange('role', value)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="user">Employé</SelectItem>
+                  <SelectItem value="admin">Administrateur</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCreateDialogOpen(false)}>
+              Annuler
+            </Button>
+            <Button onClick={createUser} disabled={saving}>
+              {saving ? 'Création...' : 'Créer l\'utilisateur'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Edit Dialog */}
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
         <DialogContent className="sm:max-w-[500px]">
@@ -484,7 +686,7 @@ export function AdminUsersPage() {
                 id="phone"
                 value={formData.phone}
                 onChange={(e) => handleFormChange('phone', e.target.value)}
-                placeholder="+33 6 12 34 56 78"
+                placeholder="+596 696 12 34 56"
               />
             </div>
             <div className="grid gap-2">
