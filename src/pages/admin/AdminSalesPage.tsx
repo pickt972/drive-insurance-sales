@@ -24,6 +24,10 @@ export function AdminSalesPage() {
   const [startDate, setStartDate] = useState<Date | undefined>(startOfMonth(new Date()));
   const [endDate, setEndDate] = useState<Date | undefined>(endOfMonth(new Date()));
   
+  // Employee filter state
+  const [employees, setEmployees] = useState<{ id: string; full_name: string }[]>([]);
+  const [selectedEmployee, setSelectedEmployee] = useState<string>('all');
+  
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
@@ -34,6 +38,19 @@ export function AdminSalesPage() {
   const [totalCommission, setTotalCommission] = useState(0);
 
   const totalPages = Math.ceil(totalCount / itemsPerPage);
+
+  // Load employees list
+  useEffect(() => {
+    const loadEmployees = async () => {
+      const { data } = await (supabase as any)
+        .from('profiles')
+        .select('id, full_name')
+        .eq('is_active', true)
+        .order('full_name');
+      setEmployees(data || []);
+    };
+    loadEmployees();
+  }, []);
 
   const loadSales = useCallback(async () => {
     setLoading(true);
@@ -55,6 +72,11 @@ export function AdminSalesPage() {
       }
       if (endDate) {
         query = query.lte('sale_date', format(endDate, 'yyyy-MM-dd'));
+      }
+      
+      // Apply employee filter
+      if (selectedEmployee && selectedEmployee !== 'all') {
+        query = query.eq('user_id', selectedEmployee);
       }
       
       // Apply search filter if present
@@ -79,15 +101,15 @@ export function AdminSalesPage() {
       setTotalCount(count || 0);
       
       // Load aggregated stats separately (for all matching records)
-      await loadStats(searchTerm, startDate, endDate);
+      await loadStats(searchTerm, startDate, endDate, selectedEmployee);
     } catch (error) {
       console.error('Error loading sales:', error);
     } finally {
       setLoading(false);
     }
-  }, [currentPage, itemsPerPage, searchTerm, startDate, endDate]);
+  }, [currentPage, itemsPerPage, searchTerm, startDate, endDate, selectedEmployee]);
 
-  const loadStats = async (search: string, start?: Date, end?: Date) => {
+  const loadStats = async (search: string, start?: Date, end?: Date, employeeId?: string) => {
     try {
       const supabaseAny = supabase as any;
       
@@ -100,6 +122,10 @@ export function AdminSalesPage() {
       }
       if (end) {
         query = query.lte('sale_date', format(end, 'yyyy-MM-dd'));
+      }
+      
+      if (employeeId && employeeId !== 'all') {
+        query = query.eq('user_id', employeeId);
       }
       
       if (search) {
@@ -126,7 +152,7 @@ export function AdminSalesPage() {
   // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, startDate, endDate]);
+  }, [searchTerm, startDate, endDate, selectedEmployee]);
 
   const clearDateFilter = () => {
     setStartDate(undefined);
@@ -156,6 +182,10 @@ export function AdminSalesPage() {
       }
       if (endDate) {
         query = query.lte('sale_date', format(endDate, 'yyyy-MM-dd'));
+      }
+      
+      if (selectedEmployee && selectedEmployee !== 'all') {
+        query = query.eq('user_id', selectedEmployee);
       }
       
       if (searchTerm) {
@@ -268,7 +298,7 @@ export function AdminSalesPage() {
               </div>
             </div>
             
-            {/* Date range filters */}
+            {/* Date range and employee filters */}
             <div className="flex flex-wrap items-center gap-3">
               <div className="flex items-center gap-2">
                 <span className="text-sm text-muted-foreground">Du:</span>
@@ -324,14 +354,32 @@ export function AdminSalesPage() {
                 </Popover>
               </div>
               
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">Employé:</span>
+                <Select value={selectedEmployee} onValueChange={setSelectedEmployee}>
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Tous les employés" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Tous les employés</SelectItem>
+                    {employees.map(emp => (
+                      <SelectItem key={emp.id} value={emp.id}>{emp.full_name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
               <Button variant="outline" size="sm" onClick={setThisMonth}>
                 Ce mois
               </Button>
               
-              {(startDate || endDate) && (
-                <Button variant="ghost" size="sm" onClick={clearDateFilter}>
+              {(startDate || endDate || selectedEmployee !== 'all') && (
+                <Button variant="ghost" size="sm" onClick={() => {
+                  clearDateFilter();
+                  setSelectedEmployee('all');
+                }}>
                   <X className="h-4 w-4 mr-1" />
-                  Effacer
+                  Effacer filtres
                 </Button>
               )}
             </div>
