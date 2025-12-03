@@ -15,6 +15,7 @@ interface SystemSetting {
 
 export function SystemSettings() {
   const [settings, setSettings] = useState({
+    app_name: 'Gestion des Ventes',
     auto_export_enabled: false,
     auto_export_day: 1,
     notification_email: '',
@@ -45,6 +46,7 @@ export function SystemSettings() {
       });
 
       setSettings({
+        app_name: settingsObj.app_name || 'Gestion des Ventes',
         auto_export_enabled: settingsObj.auto_export_enabled || false,
         auto_export_day: settingsObj.auto_export_day || 1,
         notification_email: settingsObj.notification_email || '',
@@ -97,6 +99,38 @@ export function SystemSettings() {
 
   return (
     <div className="grid gap-6 md:grid-cols-2">
+      {/* Nom de l'application */}
+      <Card className="modern-card animate-gentle-fade-in md:col-span-2">
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <div className="p-2 rounded-lg bg-gradient-to-br from-primary/10 to-primary/5">
+              <Settings className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <CardTitle>Identité de l'application</CardTitle>
+              <CardDescription>Nom affiché dans l'en-tête une fois connecté</CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-2 max-w-md">
+            <Label htmlFor="app-name">Nom de l'application</Label>
+            <Input
+              id="app-name"
+              type="text"
+              placeholder="Ex: ALOELOCATION, Mon Entreprise..."
+              value={settings.app_name}
+              onChange={(e) => 
+                setSettings({ ...settings, app_name: e.target.value })
+              }
+            />
+            <p className="text-xs text-muted-foreground">
+              Ce nom sera affiché en haut à gauche de l'application pour tous les utilisateurs connectés
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Exports automatiques */}
       <Card className="modern-card animate-gentle-fade-in">
         <CardHeader>

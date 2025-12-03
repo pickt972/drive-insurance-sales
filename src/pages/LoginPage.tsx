@@ -60,7 +60,7 @@ export default function LoginPage() {
               <Car className="h-8 w-8 text-white" />
             </div>
           </div>
-          <CardTitle className="text-2xl font-bold text-gray-900">ALOELOCATION</CardTitle>
+          <CardTitle className="text-2xl font-bold text-gray-900">Connexion</CardTitle>
           <CardDescription>Connectez-vous à votre compte</CardDescription>
         </CardHeader>
         <CardContent>
