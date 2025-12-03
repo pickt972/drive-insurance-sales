@@ -8,6 +8,8 @@ export interface InsuranceType {
   id: string;
   name: string;
   commission: number;
+  commission_rate: number;
+  commission_amount: number;
   is_active: boolean;
   // Compatibilité anciens champs
   description?: string;
@@ -38,8 +40,11 @@ export function useInsuranceTypes() {
       // Mapper pour compatibilité
       const mapped = (data || []).map((type: any) => ({
         ...type,
+        commission: type.commission_amount > 0 ? type.commission_amount : type.commission_rate,
+        commission_rate: type.commission_rate || 0,
+        commission_amount: type.commission_amount || 0,
         isActive: type.is_active,
-        price: type.commission,
+        price: type.commission_amount > 0 ? type.commission_amount : type.commission_rate,
         description: type.name,
       }));
 
@@ -48,10 +53,10 @@ export function useInsuranceTypes() {
       console.error('Error fetching insurance types:', error);
       // En cas d'erreur, utiliser des types par défaut
       setInsuranceTypes([
-        { id: '1', name: 'CDW', description: 'Collision Damage Waiver', commission: 15, price: 15, is_active: true, isActive: true },
-        { id: '2', name: 'TP', description: 'Theft Protection', commission: 12, price: 12, is_active: true, isActive: true },
-        { id: '3', name: 'PAI', description: 'Personal Accident Insurance', commission: 8, price: 8, is_active: true, isActive: true },
-        { id: '4', name: 'Super Cover', description: 'CDW + TP + PAI', commission: 30, price: 30, is_active: true, isActive: true },
+        { id: '1', name: 'CDW', description: 'Collision Damage Waiver', commission: 15, commission_rate: 15, commission_amount: 0, price: 15, is_active: true, isActive: true },
+        { id: '2', name: 'TP', description: 'Theft Protection', commission: 12, commission_rate: 12, commission_amount: 0, price: 12, is_active: true, isActive: true },
+        { id: '3', name: 'PAI', description: 'Personal Accident Insurance', commission: 8, commission_rate: 8, commission_amount: 0, price: 8, is_active: true, isActive: true },
+        { id: '4', name: 'Super Cover', description: 'CDW + TP + PAI', commission: 30, commission_rate: 0, commission_amount: 30, price: 30, is_active: true, isActive: true },
       ]);
     } finally {
       setLoading(false);
