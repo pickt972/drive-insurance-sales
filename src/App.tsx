@@ -8,15 +8,18 @@ import AdminDashboard from '@/pages/admin/AdminDashboard';
 import { AdminSalesPage } from '@/pages/admin/AdminSalesPage';
 import { AdminUsersPage } from '@/pages/admin/AdminUsersPage';
 import { AdminInsuranceTypesPage } from '@/pages/admin/AdminInsuranceTypesPage';
+import { AdminObjectivesPage } from '@/pages/admin/AdminObjectivesPage';
+import { AdminBonusesPage } from '@/pages/admin/AdminBonusesPage';
+import { AdminReportsPage } from '@/pages/admin/AdminReportsPage';
+import { AdminAuditLogsPage } from '@/pages/admin/AdminAuditLogsPage';
+import { AdminSettingsPage } from '@/pages/admin/AdminSettingsPage';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { AdminRoute } from '@/components/auth/AdminRoute';
 import { AuthProvider } from '@/hooks/useAuth';
-import { DebugAuth } from '@/components/DebugAuth';
 
 const App = () => {
   return (
     <AuthProvider>
-      <DebugAuth />
       <TooltipProvider>
         <Toaster />
         <Routes>
@@ -35,12 +38,12 @@ const App = () => {
               <Route path="sales" element={<AdminSalesPage />} />
               <Route path="users" element={<AdminUsersPage />} />
               <Route path="insurance-types" element={<AdminInsuranceTypesPage />} />
-              <Route path="objectives" element={<div className="p-8 text-center text-gray-500">Page Objectifs - En cours de développement</div>} />
-              <Route path="bonuses" element={<div className="p-8 text-center text-gray-500">Page Primes & Bonus - En cours de développement</div>} />
-              <Route path="bonus-rules" element={<div className="p-8 text-center text-gray-500">Page Règles de bonus - En cours de développement</div>} />
-              <Route path="reports" element={<div className="p-8 text-center text-gray-500">Page Rapports - En cours de développement</div>} />
-              <Route path="audit-logs" element={<div className="p-8 text-center text-gray-500">Page Journal d'audit - En cours de développement</div>} />
-              <Route path="settings" element={<div className="p-8 text-center text-gray-500">Page Paramètres - En cours de développement</div>} />
+              <Route path="objectives" element={<AdminObjectivesPage />} />
+              <Route path="bonuses" element={<AdminBonusesPage />} />
+              <Route path="bonus-rules" element={<AdminBonusesPage />} />
+              <Route path="reports" element={<AdminReportsPage />} />
+              <Route path="audit-logs" element={<AdminAuditLogsPage />} />
+              <Route path="settings" element={<AdminSettingsPage />} />
             </Route>
           </Route>
           

@@ -127,14 +127,15 @@ export default function AdminDashboard() {
           sale_date,
           user_id,
           insurance_type_id,
-          profiles!inner(full_name),
-          insurance_types!inner(name)
+          profiles(full_name),
+          insurance_types(name)
         `)
         .gte('sale_date', start)
-        .lte('sale_date', end)
-        .eq('status', 'validated');
+        .lte('sale_date', end);
 
-      if (salesError) throw salesError;
+      if (salesError) {
+        console.error('Error fetching sales:', salesError);
+      }
 
       // Nombre d'employés actifs
       const { count: employeeCount } = await (supabase as any)
