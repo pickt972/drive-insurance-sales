@@ -18,59 +18,123 @@ serve(async (req) => {
       { auth: { autoRefreshToken: false, persistSession: false } }
     )
 
-    const { username, firstName, lastName, password, role = 'user' } = await req.json()
+    // Verify caller is admin
+    const authHeader = req.headers.get('Authorization')
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Non autorisé' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 }
+      )
+    }
 
-    // Vérifier si le username existe déjà
-    const { data: existingProfile } = await supabaseAdmin
-      .from('profiles')
-      .select('username')
-      .eq('username', username)
-      .eq('is_active', true)
+    const token = authHeader.replace('Bearer ', '')
+    const { data: { user: caller } } = await supabaseAdmin.auth.getUser(token)
+    
+    if (!caller) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Non autorisé' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 }
+      )
+    }
+
+    // Check if caller is admin
+    const { data: callerRole } = await supabaseAdmin
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', caller.id)
       .single()
 
-    if (existingProfile) {
+    if (callerRole?.role !== 'admin') {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Accès refusé - Admin requis' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 403 }
+      )
+    }
+
+    const { username, full_name, password, role = 'user', agency, phone } = await req.json()
+
+    if (!username || !password) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Nom d\'utilisateur et mot de passe requis' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      )
+    }
+
+    if (password.length < 6) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Le mot de passe doit contenir au moins 6 caractères' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      )
+    }
+
+    // Generate email from username
+    const email = `${username.toLowerCase().trim()}@aloelocation.internal`
+
+    // Check if username/email already exists
+    const { data: existingUser } = await supabaseAdmin
+      .from('profiles')
+      .select('id')
+      .eq('email', email)
+      .single()
+
+    if (existingUser) {
       return new Response(
         JSON.stringify({ success: false, error: 'Ce nom d\'utilisateur existe déjà' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
       )
     }
 
-    // Générer un email unique basé sur le username
-    const email = `${username.toLowerCase()}@aloelocation.internal`
-
-    // Créer l'utilisateur avec Supabase Auth Admin
+    // Create user with Supabase Auth Admin
     const { data: newUser, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email,
       password,
       email_confirm: true,
       user_metadata: {
-        username,
-        first_name: firstName,
-        last_name: lastName,
-        role
+        full_name: full_name || username,
+        role,
+        agency: agency || null,
       }
     })
 
     if (authError) {
-      console.error('Erreur création utilisateur:', authError)
+      console.error('Error creating user:', authError)
+      
+      if (authError.message.includes('already been registered')) {
+        return new Response(
+          JSON.stringify({ success: false, error: 'Cet email est déjà utilisé' }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+        )
+      }
+      
       return new Response(
         JSON.stringify({ success: false, error: authError.message }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
       )
     }
 
+    // Update profile with phone if provided
+    if (phone && newUser.user) {
+      await supabaseAdmin
+        .from('profiles')
+        .update({ phone })
+        .eq('id', newUser.user.id)
+    }
+
     return new Response(
       JSON.stringify({ 
         success: true, 
-        userId: newUser.user.id,
+        userId: newUser.user?.id,
         username,
-        email 
+        email,
+        full_name: full_name || username,
+        role,
+        agency
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
 
   } catch (error) {
-    console.error('Erreur:', error)
+    console.error('Error:', error)
     return new Response(
       JSON.stringify({ success: false, error: error.message }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
