@@ -6,12 +6,14 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { Download, Search, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, CalendarIcon, X } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Download, Search, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, CalendarIcon, X, CheckCircle, Trash2 } from 'lucide-react';
 import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
+import { toast } from '@/hooks/use-toast';
 
 const ITEMS_PER_PAGE_OPTIONS = [10, 20, 50, 100];
 
@@ -47,6 +49,10 @@ export function AdminSalesPage() {
   // Stats state (calculated from all data, not just current page)
   const [totalAmount, setTotalAmount] = useState(0);
   const [totalCommission, setTotalCommission] = useState(0);
+  
+  // Bulk selection state
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkLoading, setBulkLoading] = useState(false);
 
   const totalPages = Math.ceil(totalCount / itemsPerPage);
 
@@ -218,6 +224,90 @@ export function AdminSalesPage() {
   const setThisMonth = () => {
     setStartDate(startOfMonth(new Date()));
     setEndDate(endOfMonth(new Date()));
+  };
+
+  // Bulk selection handlers
+  const toggleSelectAll = () => {
+    if (selectedIds.size === sales.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(sales.map(s => s.id)));
+    }
+  };
+
+  const toggleSelectOne = (id: string) => {
+    const newSelected = new Set(selectedIds);
+    if (newSelected.has(id)) {
+      newSelected.delete(id);
+    } else {
+      newSelected.add(id);
+    }
+    setSelectedIds(newSelected);
+  };
+
+  // Clear selection when sales change
+  useEffect(() => {
+    setSelectedIds(new Set());
+  }, [sales]);
+
+  const bulkValidate = async () => {
+    if (selectedIds.size === 0) return;
+    setBulkLoading(true);
+    try {
+      const { error } = await (supabase as any)
+        .from('insurance_sales')
+        .update({ status: 'validated' })
+        .in('id', Array.from(selectedIds));
+      
+      if (error) throw error;
+      
+      toast({
+        title: 'Ventes validées',
+        description: `${selectedIds.size} vente(s) validée(s) avec succès`,
+      });
+      setSelectedIds(new Set());
+      loadSales();
+    } catch (error) {
+      console.error('Error validating sales:', error);
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de valider les ventes',
+        variant: 'destructive',
+      });
+    } finally {
+      setBulkLoading(false);
+    }
+  };
+
+  const bulkDelete = async () => {
+    if (selectedIds.size === 0) return;
+    if (!confirm(`Êtes-vous sûr de vouloir supprimer ${selectedIds.size} vente(s) ?`)) return;
+    
+    setBulkLoading(true);
+    try {
+      const { error } = await (supabase as any)
+        .from('insurance_sales')
+        .delete()
+        .in('id', Array.from(selectedIds));
+      
+      if (error) throw error;
+      
+      toast({
+        title: 'Ventes supprimées',
+        description: `${selectedIds.size} vente(s) supprimée(s) avec succès`,
+      });
+      setSelectedIds(new Set());
+      loadSales();
+    } catch (error) {
+      console.error('Error deleting sales:', error);
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de supprimer les ventes',
+        variant: 'destructive',
+      });
+    } finally {
+      setBulkLoading(false);
+    }
   };
 
   const exportToCSV = async () => {
@@ -501,10 +591,48 @@ export function AdminSalesPage() {
           </div>
         </CardHeader>
         <CardContent>
+          {/* Bulk Actions Bar */}
+          {selectedIds.size > 0 && (
+            <div className="flex items-center gap-3 mb-4 p-3 bg-muted rounded-lg">
+              <span className="text-sm font-medium">
+                {selectedIds.size} vente(s) sélectionnée(s)
+              </span>
+              <div className="flex gap-2 ml-auto">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={bulkValidate}
+                  disabled={bulkLoading}
+                  className="text-green-600 hover:text-green-700"
+                >
+                  <CheckCircle className="h-4 w-4 mr-1" />
+                  Valider
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={bulkDelete}
+                  disabled={bulkLoading}
+                  className="text-destructive hover:text-destructive"
+                >
+                  <Trash2 className="h-4 w-4 mr-1" />
+                  Supprimer
+                </Button>
+              </div>
+            </div>
+          )}
+          
           <div className="rounded-md border">
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-12">
+                    <Checkbox
+                      checked={sales.length > 0 && selectedIds.size === sales.length}
+                      onCheckedChange={toggleSelectAll}
+                      aria-label="Sélectionner tout"
+                    />
+                  </TableHead>
                   <TableHead>Date</TableHead>
                   <TableHead>Employé</TableHead>
                   <TableHead>Type</TableHead>
@@ -519,19 +647,26 @@ export function AdminSalesPage() {
               <TableBody>
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={9} className="text-center py-8">
+                    <TableCell colSpan={10} className="text-center py-8">
                       Chargement...
                     </TableCell>
                   </TableRow>
                 ) : sales.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={9} className="text-center py-8">
+                    <TableCell colSpan={10} className="text-center py-8">
                       Aucune vente trouvée
                     </TableCell>
                   </TableRow>
                 ) : (
                   sales.map((sale) => (
-                    <TableRow key={sale.id}>
+                    <TableRow key={sale.id} className={selectedIds.has(sale.id) ? 'bg-muted/50' : ''}>
+                      <TableCell>
+                        <Checkbox
+                          checked={selectedIds.has(sale.id)}
+                          onCheckedChange={() => toggleSelectOne(sale.id)}
+                          aria-label={`Sélectionner vente ${sale.contract_number}`}
+                        />
+                      </TableCell>
                       <TableCell>
                         {format(new Date(sale.sale_date), 'dd/MM/yyyy', { locale: fr })}
                       </TableCell>
