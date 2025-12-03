@@ -35,15 +35,8 @@ export default function LoginPage() {
           : signInError.message
       );
       setIsSubmitting(false);
-      return;
     }
-
-    // Redirection APRÈS connexion réussie - délai pour laisser le state se mettre à jour
-    setTimeout(() => {
-      // Vérifier le rôle pour rediriger
-      const redirectTo = isAdmin ? '/admin/dashboard' : '/dashboard';
-      navigate(redirectTo, { replace: true });
-    }, 500);
+    // La redirection se fait automatiquement via le rendu conditionnel ci-dessous
   };
 
   // Si déjà connecté et pas en cours de chargement, rediriger (UNE SEULE FOIS)
