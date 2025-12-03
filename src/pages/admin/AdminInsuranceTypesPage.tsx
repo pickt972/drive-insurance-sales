@@ -20,6 +20,7 @@ interface InsuranceType {
   description: string;
   base_price: number;
   commission_rate: number;
+  commission_amount: number;
   is_active: boolean;
   display_order: number;
 }
@@ -38,6 +39,7 @@ export function AdminInsuranceTypesPage() {
     description: '',
     base_price: 0,
     commission_rate: 15,
+    commission_amount: 0,
     display_order: 0,
   });
 
@@ -75,6 +77,7 @@ export function AdminInsuranceTypesPage() {
             ...formData,
             base_price: Number(formData.base_price),
             commission_rate: Number(formData.commission_rate),
+            commission_amount: Number(formData.commission_amount),
             display_order: Number(formData.display_order),
           })
           .eq('id', editingType.id);
@@ -92,6 +95,7 @@ export function AdminInsuranceTypesPage() {
             ...formData,
             base_price: Number(formData.base_price),
             commission_rate: Number(formData.commission_rate),
+            commission_amount: Number(formData.commission_amount),
             display_order: Number(formData.display_order),
             created_by: user?.id,
             is_active: true,
@@ -113,6 +117,7 @@ export function AdminInsuranceTypesPage() {
         description: '',
         base_price: 0,
         commission_rate: 15,
+        commission_amount: 0,
         display_order: 0,
       });
       loadTypes();
@@ -186,6 +191,7 @@ export function AdminInsuranceTypesPage() {
       description: type.description || '',
       base_price: type.base_price,
       commission_rate: type.commission_rate,
+      commission_amount: type.commission_amount || 0,
       display_order: type.display_order,
     });
     setIsDialogOpen(true);
@@ -208,6 +214,7 @@ export function AdminInsuranceTypesPage() {
                 description: '',
                 base_price: 0,
                 commission_rate: 15,
+                commission_amount: 0,
                 display_order: 0,
               });
             }}>
@@ -269,10 +276,23 @@ export function AdminInsuranceTypesPage() {
                       type="number"
                       step="0.01"
                       value={formData.commission_rate}
-                      onChange={(e) => setFormData({ ...formData, commission_rate: parseFloat(e.target.value) })}
-                      required
+                      onChange={(e) => setFormData({ ...formData, commission_rate: parseFloat(e.target.value) || 0 })}
                     />
                   </div>
+                </div>
+                <div>
+                  <Label htmlFor="commission_amount">Commission fixe (€)</Label>
+                  <Input
+                    id="commission_amount"
+                    type="number"
+                    step="0.01"
+                    value={formData.commission_amount}
+                    onChange={(e) => setFormData({ ...formData, commission_amount: parseFloat(e.target.value) || 0 })}
+                    placeholder="Si > 0, remplace le taux"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Si renseigné, ce montant sera utilisé à la place du taux en %
+                  </p>
                 </div>
                 <div>
                   <Label htmlFor="display_order">Ordre d'affichage</Label>
@@ -318,7 +338,11 @@ export function AdminInsuranceTypesPage() {
                   <TableCell className="font-mono text-sm">{type.code}</TableCell>
                   <TableCell className="font-medium">{type.name}</TableCell>
                   <TableCell>{type.base_price.toFixed(2)} €</TableCell>
-                  <TableCell>{type.commission_rate}%</TableCell>
+                  <TableCell>
+                    {type.commission_amount > 0 
+                      ? `${type.commission_amount.toFixed(2)} €` 
+                      : `${type.commission_rate}%`}
+                  </TableCell>
                   <TableCell>
                     <Badge variant={type.is_active ? 'default' : 'secondary'}>
                       {type.is_active ? 'Actif' : 'Inactif'}

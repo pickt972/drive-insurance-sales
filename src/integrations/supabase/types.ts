@@ -283,6 +283,7 @@ export type Database = {
         Row: {
           base_price: number
           code: string | null
+          commission_amount: number | null
           commission_rate: number
           created_at: string | null
           created_by: string | null
@@ -296,6 +297,7 @@ export type Database = {
         Insert: {
           base_price?: number
           code?: string | null
+          commission_amount?: number | null
           commission_rate?: number
           created_at?: string | null
           created_by?: string | null
@@ -309,6 +311,7 @@ export type Database = {
         Update: {
           base_price?: number
           code?: string | null
+          commission_amount?: number | null
           commission_rate?: number
           created_at?: string | null
           created_by?: string | null
