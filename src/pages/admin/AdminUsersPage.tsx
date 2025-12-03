@@ -103,9 +103,13 @@ function SortableUserRow({
 
   return (
     <TableRow ref={setNodeRef} style={style} className={isDragging ? 'bg-muted' : ''}>
-      <TableCell className="w-8">
-        <button {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing p-1 hover:bg-muted rounded">
-          <GripVertical className="h-4 w-4 text-muted-foreground" />
+      <TableCell className="w-12 px-2">
+        <button 
+          {...attributes} 
+          {...listeners} 
+          className="cursor-grab active:cursor-grabbing p-2 hover:bg-muted rounded flex items-center justify-center"
+        >
+          <GripVertical className="h-5 w-5 text-gray-500" />
         </button>
       </TableCell>
       {children}
