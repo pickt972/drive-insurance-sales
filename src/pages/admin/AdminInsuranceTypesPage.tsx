@@ -7,7 +7,13 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Plus, Edit, Trash2 } from 'lucide-react';
+import { Plus, Edit, Trash2, Info } from 'lucide-react';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -339,21 +345,38 @@ export function AdminInsuranceTypesPage() {
                   <TableCell className="font-medium">{type.name}</TableCell>
                   <TableCell>{type.base_price.toFixed(2)} €</TableCell>
                   <TableCell>
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium">
-                        {type.commission_amount > 0 
-                          ? `${type.commission_amount.toFixed(2)} €` 
-                          : `${type.commission_rate}%`}
-                      </span>
-                      <Badge 
-                        variant={type.commission_amount > 0 ? 'default' : 'outline'}
-                        className={type.commission_amount > 0 
-                          ? 'bg-emerald-100 text-emerald-700 border-emerald-200' 
-                          : 'bg-blue-50 text-blue-700 border-blue-200'}
-                      >
-                        {type.commission_amount > 0 ? 'Fixe' : '%'}
-                      </Badge>
-                    </div>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div className="inline-flex items-center gap-2 cursor-help">
+                            <span className="font-medium">
+                              {type.commission_amount > 0 
+                                ? `${type.commission_amount.toFixed(2)} €` 
+                                : `${type.commission_rate}%`}
+                            </span>
+                            <Badge 
+                              variant={type.commission_amount > 0 ? 'default' : 'outline'}
+                              className={type.commission_amount > 0 
+                                ? 'bg-emerald-100 text-emerald-700 border-emerald-200' 
+                                : 'bg-blue-50 text-blue-700 border-blue-200'}
+                            >
+                              {type.commission_amount > 0 ? 'Fixe' : '%'}
+                            </Badge>
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <div className="text-xs space-y-1">
+                            <p><strong>Montant fixe :</strong> {type.commission_amount > 0 ? `${type.commission_amount.toFixed(2)} €` : 'Non défini'}</p>
+                            <p><strong>Taux (%) :</strong> {type.commission_rate}%</p>
+                            <p className="text-muted-foreground pt-1 border-t mt-1">
+                              {type.commission_amount > 0 
+                                ? 'Le montant fixe est appliqué' 
+                                : 'Le taux en % est appliqué'}
+                            </p>
+                          </div>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                   </TableCell>
                   <TableCell>
                     <Badge variant={type.is_active ? 'default' : 'secondary'}>

@@ -19,6 +19,10 @@ export interface Sale {
   amount: number;
   commission: number;
   commission_amount?: number;
+  // Commission calculation details
+  commission_is_fixed?: boolean;
+  commission_rate_used?: number;
+  commission_fixed_amount?: number;
   customer_name?: string;
   client_name?: string;
   vehicle_type?: string;
@@ -52,7 +56,7 @@ export function useSales() {
         .from('insurance_sales')
         .select(`
           *,
-          insurance_types(name),
+          insurance_types(name, commission_rate, commission_amount),
           profiles:user_id(full_name)
         `)
         .order('sale_date', { ascending: false });
@@ -68,15 +72,24 @@ export function useSales() {
       }
 
       // Map data to expected format with compatibility fields
-      const mappedSales = (data || []).map((sale: any) => ({
-        ...sale,
-        insurance_type: sale.insurance_types?.name || sale.insurance_type || 'N/A',
-        commission: sale.commission_amount || sale.commission || 0,
-        customer_name: sale.client_name || sale.customer_name,
-        // Compatibility mappings
-        employee_id: sale.user_id,
-        employee_name: sale.profiles?.full_name || 'N/A',
-      }));
+      const mappedSales = (data || []).map((sale: any) => {
+        const insuranceType = sale.insurance_types;
+        const isFixedCommission = insuranceType?.commission_amount > 0;
+        
+        return {
+          ...sale,
+          insurance_type: insuranceType?.name || sale.insurance_type || 'N/A',
+          commission: sale.commission_amount || sale.commission || 0,
+          customer_name: sale.client_name || sale.customer_name,
+          // Commission calculation details
+          commission_is_fixed: isFixedCommission,
+          commission_rate_used: insuranceType?.commission_rate || 0,
+          commission_fixed_amount: insuranceType?.commission_amount || 0,
+          // Compatibility mappings
+          employee_id: sale.user_id,
+          employee_name: sale.profiles?.full_name || 'N/A',
+        };
+      });
 
       setSales(mappedSales);
     } catch (error) {
