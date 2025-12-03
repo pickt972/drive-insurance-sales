@@ -7,7 +7,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Download, Search, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, CalendarIcon, X, CheckCircle, Trash2, Pencil, Check, XCircle, FileText } from 'lucide-react';
+import { Download, Search, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, CalendarIcon, X, CheckCircle, Trash2, Pencil, Check, XCircle, FileText, Settings2 } from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuCheckboxItem, DropdownMenuTrigger, DropdownMenuLabel, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { format, startOfMonth, endOfMonth, subDays, startOfQuarter, endOfQuarter } from 'date-fns';
@@ -23,6 +24,20 @@ interface EditingCell {
 }
 
 const ITEMS_PER_PAGE_OPTIONS = [10, 20, 50, 100];
+
+const COLUMNS = [
+  { key: 'date', label: 'Date', default: true },
+  { key: 'employee', label: 'Employé', default: true },
+  { key: 'type', label: 'Type', default: true },
+  { key: 'contract', label: 'N° Contrat', default: true },
+  { key: 'client', label: 'Client', default: true },
+  { key: 'amount', label: 'Montant', default: true },
+  { key: 'commission', label: 'Commission', default: true },
+  { key: 'agency', label: 'Agence', default: true },
+  { key: 'status', label: 'Statut', default: true },
+] as const;
+
+type ColumnKey = typeof COLUMNS[number]['key'];
 
 export function AdminSalesPage() {
   const [sales, setSales] = useState<any[]>([]);
@@ -64,6 +79,23 @@ export function AdminSalesPage() {
   // Inline editing state
   const [editingCell, setEditingCell] = useState<EditingCell | null>(null);
   const [savingEdit, setSavingEdit] = useState(false);
+  
+  // Column visibility state
+  const [visibleColumns, setVisibleColumns] = useState<Set<ColumnKey>>(
+    new Set(COLUMNS.filter(c => c.default).map(c => c.key))
+  );
+
+  const toggleColumn = (key: ColumnKey) => {
+    const newVisible = new Set(visibleColumns);
+    if (newVisible.has(key)) {
+      newVisible.delete(key);
+    } else {
+      newVisible.add(key);
+    }
+    setVisibleColumns(newVisible);
+  };
+
+  const isColumnVisible = (key: ColumnKey) => visibleColumns.has(key);
 
   const totalPages = Math.ceil(totalCount / itemsPerPage);
 
@@ -662,6 +694,28 @@ export function AdminSalesPage() {
                     ))}
                   </SelectContent>
                 </Select>
+                
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm">
+                      <Settings2 className="h-4 w-4 mr-2" />
+                      Colonnes
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48 bg-background">
+                    <DropdownMenuLabel>Colonnes visibles</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    {COLUMNS.map((col) => (
+                      <DropdownMenuCheckboxItem
+                        key={col.key}
+                        checked={isColumnVisible(col.key)}
+                        onCheckedChange={() => toggleColumn(col.key)}
+                      >
+                        {col.label}
+                      </DropdownMenuCheckboxItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </div>
             
@@ -858,27 +912,27 @@ export function AdminSalesPage() {
                       aria-label="Sélectionner tout"
                     />
                   </TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Employé</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>N° Contrat</TableHead>
-                  <TableHead>Client</TableHead>
-                  <TableHead className="text-right">Montant</TableHead>
-                  <TableHead className="text-right">Commission</TableHead>
-                  <TableHead>Agence</TableHead>
-                  <TableHead>Statut</TableHead>
+                  {isColumnVisible('date') && <TableHead>Date</TableHead>}
+                  {isColumnVisible('employee') && <TableHead>Employé</TableHead>}
+                  {isColumnVisible('type') && <TableHead>Type</TableHead>}
+                  {isColumnVisible('contract') && <TableHead>N° Contrat</TableHead>}
+                  {isColumnVisible('client') && <TableHead>Client</TableHead>}
+                  {isColumnVisible('amount') && <TableHead className="text-right">Montant</TableHead>}
+                  {isColumnVisible('commission') && <TableHead className="text-right">Commission</TableHead>}
+                  {isColumnVisible('agency') && <TableHead>Agence</TableHead>}
+                  {isColumnVisible('status') && <TableHead>Statut</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={10} className="text-center py-8">
+                    <TableCell colSpan={1 + visibleColumns.size} className="text-center py-8">
                       Chargement...
                     </TableCell>
                   </TableRow>
                 ) : sales.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={10} className="text-center py-8">
+                    <TableCell colSpan={1 + visibleColumns.size} className="text-center py-8">
                       Aucune vente trouvée
                     </TableCell>
                   </TableRow>
@@ -892,40 +946,58 @@ export function AdminSalesPage() {
                           aria-label={`Sélectionner vente ${sale.contract_number}`}
                         />
                       </TableCell>
-                      <TableCell>
-                        {format(new Date(sale.sale_date), 'dd/MM/yyyy', { locale: fr })}
-                      </TableCell>
-                      <TableCell className="font-medium">{sale.profiles?.full_name || '-'}</TableCell>
-                      <TableCell>
-                        <Badge variant="outline">{sale.insurance_types?.name || '-'}</Badge>
-                      </TableCell>
-                      <TableCell className="font-mono text-sm">
-                        {renderEditableCell(sale, 'contract_number', sale.contract_number || '-')}
-                      </TableCell>
-                      <TableCell>
-                        {renderEditableCell(sale, 'client_name', sale.client_name || '-')}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {renderEditableCell(sale, 'amount', `${Number(sale.amount).toFixed(2)} €`, 'font-medium justify-end')}
-                      </TableCell>
-                      <TableCell className="text-right text-green-600 font-medium">
-                        {Number(sale.commission_amount || 0).toFixed(2)} €
-                      </TableCell>
-                      <TableCell>
-                        {renderEditableCell(sale, 'agency', sale.agency || '-')}
-                      </TableCell>
-                      <TableCell>
-                        {renderEditableCell(
-                          sale, 
-                          'status', 
-                          <Badge
-                            variant={sale.status === 'validated' ? 'default' : 'secondary'}
-                            className={sale.status === 'validated' ? 'bg-green-100 text-green-800' : ''}
-                          >
-                            {sale.status === 'validated' ? 'Validé' : 'En attente'}
-                          </Badge> as any
-                        )}
-                      </TableCell>
+                      {isColumnVisible('date') && (
+                        <TableCell>
+                          {format(new Date(sale.sale_date), 'dd/MM/yyyy', { locale: fr })}
+                        </TableCell>
+                      )}
+                      {isColumnVisible('employee') && (
+                        <TableCell className="font-medium">{sale.profiles?.full_name || '-'}</TableCell>
+                      )}
+                      {isColumnVisible('type') && (
+                        <TableCell>
+                          <Badge variant="outline">{sale.insurance_types?.name || '-'}</Badge>
+                        </TableCell>
+                      )}
+                      {isColumnVisible('contract') && (
+                        <TableCell className="font-mono text-sm">
+                          {renderEditableCell(sale, 'contract_number', sale.contract_number || '-')}
+                        </TableCell>
+                      )}
+                      {isColumnVisible('client') && (
+                        <TableCell>
+                          {renderEditableCell(sale, 'client_name', sale.client_name || '-')}
+                        </TableCell>
+                      )}
+                      {isColumnVisible('amount') && (
+                        <TableCell className="text-right">
+                          {renderEditableCell(sale, 'amount', `${Number(sale.amount).toFixed(2)} €`, 'font-medium justify-end')}
+                        </TableCell>
+                      )}
+                      {isColumnVisible('commission') && (
+                        <TableCell className="text-right text-green-600 font-medium">
+                          {Number(sale.commission_amount || 0).toFixed(2)} €
+                        </TableCell>
+                      )}
+                      {isColumnVisible('agency') && (
+                        <TableCell>
+                          {renderEditableCell(sale, 'agency', sale.agency || '-')}
+                        </TableCell>
+                      )}
+                      {isColumnVisible('status') && (
+                        <TableCell>
+                          {renderEditableCell(
+                            sale, 
+                            'status', 
+                            <Badge
+                              variant={sale.status === 'validated' ? 'default' : 'secondary'}
+                              className={sale.status === 'validated' ? 'bg-green-100 text-green-800' : ''}
+                            >
+                              {sale.status === 'validated' ? 'Validé' : 'En attente'}
+                            </Badge> as any
+                          )}
+                        </TableCell>
+                      )}
                     </TableRow>
                   ))
                 )}
