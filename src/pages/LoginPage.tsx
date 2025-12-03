@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate, Navigate } from 'react-router-dom';
+import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,7 +16,6 @@ export default function LoginPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { signIn, isAuthenticated, isAdmin, isLoading } = useAuth();
-  const navigate = useNavigate();
 
   // PAS DE useEffect POUR LA REDIRECTION ICI !
   // La redirection se fait UNIQUEMENT après le signIn réussi
