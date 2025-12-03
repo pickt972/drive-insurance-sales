@@ -5,7 +5,7 @@ import { fr } from 'date-fns/locale';
 
 interface Sale {
   sale_date: string;
-  employee_name: string;
+  employee_name?: string;
   insurance_type: string;
   contract_number: string;
   amount: number;
@@ -52,7 +52,7 @@ export function exportSalesPDF(sales: Sale[], title: string = 'Rapport des vente
     head: [['Date', 'Employé', 'Type', 'Contrat', 'Montant', 'Commission']],
     body: sales.map(sale => [
       format(new Date(sale.sale_date), 'dd/MM/yyyy'),
-      sale.employee_name,
+      sale.employee_name || '-',
       sale.insurance_type,
       sale.contract_number,
       `${sale.amount.toFixed(2)} €`,

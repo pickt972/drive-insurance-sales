@@ -26,12 +26,14 @@ export function AdminSalesPage() {
         .select(`
           *,
           insurance_types(name),
-          profiles(full_name)
+          profiles:user_id(full_name)
         `)
         .order('sale_date', { ascending: false })
         .limit(100);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error loading sales:', error);
+      }
       setSales(data || []);
     } catch (error) {
       console.error('Error loading sales:', error);

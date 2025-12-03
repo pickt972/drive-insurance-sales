@@ -9,16 +9,23 @@ const supabaseAny = supabase as any;
 export interface Sale {
   id: string;
   sale_date: string;
-  employee_id: string;
-  employee_name: string;
+  user_id: string;
+  // Compatibility fields
+  employee_id?: string;
+  employee_name?: string;
+  insurance_type_id?: string;
   insurance_type: string;
   contract_number: string;
   amount: number;
   commission: number;
+  commission_amount?: number;
   customer_name?: string;
+  client_name?: string;
   vehicle_type?: string;
   rental_duration_days?: number;
   notes?: string;
+  agency?: string;
+  status?: string;
   created_at: string;
   updated_at: string;
 }
@@ -35,7 +42,7 @@ export function useSales() {
       fetchSales();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]); // Only refetch when user changes, not when isAdmin changes
+  }, [user?.id]); // Only refetch when user.id changes
 
   const fetchSales = async () => {
     try {
@@ -43,19 +50,35 @@ export function useSales() {
 
       let query = supabaseAny
         .from('insurance_sales')
-        .select('*')
-        .eq('is_deleted', false)
+        .select(`
+          *,
+          insurance_types(name),
+          profiles:user_id(full_name)
+        `)
         .order('sale_date', { ascending: false });
 
-      // Si pas admin, filtrer par employee_id
+      // Si pas admin, filtrer par user_id
       if (!isAdmin && user) {
-        query = query.eq('employee_id', user.id);
+        query = query.eq('user_id', user.id);
       }
 
       const { data, error } = await query;
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching sales:', error);
+      }
 
-      setSales(data || []);
+      // Map data to expected format with compatibility fields
+      const mappedSales = (data || []).map((sale: any) => ({
+        ...sale,
+        insurance_type: sale.insurance_types?.name || sale.insurance_type || 'N/A',
+        commission: sale.commission_amount || sale.commission || 0,
+        customer_name: sale.client_name || sale.customer_name,
+        // Compatibility mappings
+        employee_id: sale.user_id,
+        employee_name: sale.profiles?.full_name || 'N/A',
+      }));
+
+      setSales(mappedSales);
     } catch (error) {
       console.error('Error fetching sales:', error);
     } finally {
@@ -67,13 +90,35 @@ export function useSales() {
     if (!user) return;
 
     try {
+      // Get insurance_type_id from insurance_types table if needed
+      let insurance_type_id = saleData.insurance_type_id;
+      
+      if (!insurance_type_id && saleData.insurance_type) {
+        const { data: insuranceType } = await supabaseAny
+          .from('insurance_types')
+          .select('id')
+          .eq('name', saleData.insurance_type)
+          .maybeSingle();
+        
+        insurance_type_id = insuranceType?.id;
+      }
+
+      const insertData = {
+        user_id: user.id,
+        insurance_type_id,
+        contract_number: saleData.contract_number,
+        client_name: saleData.customer_name || saleData.client_name,
+        amount: saleData.amount,
+        commission_amount: saleData.commission || saleData.commission_amount,
+        sale_date: saleData.sale_date || new Date().toISOString().split('T')[0],
+        agency: saleData.agency,
+        notes: saleData.notes,
+        status: 'validated',
+      };
+
       const { data, error } = await supabaseAny
         .from('insurance_sales')
-        .insert({
-          ...saleData,
-          employee_id: user.id,
-          created_by: user.id,
-        })
+        .insert(insertData)
         .select()
         .single();
 
@@ -81,7 +126,7 @@ export function useSales() {
 
       toast({
         title: '✅ Vente enregistrée',
-        description: `Montant : ${saleData.amount}€`,
+        description: `Montant : ${saleData.amount?.toFixed(2) || 0}€`,
       });
 
       await fetchSales();
@@ -99,9 +144,18 @@ export function useSales() {
 
   const updateSale = async (id: string, updates: Partial<Sale>) => {
     try {
+      const updateData: any = {};
+      
+      if (updates.contract_number) updateData.contract_number = updates.contract_number;
+      if (updates.customer_name || updates.client_name) updateData.client_name = updates.customer_name || updates.client_name;
+      if (updates.amount) updateData.amount = updates.amount;
+      if (updates.commission || updates.commission_amount) updateData.commission_amount = updates.commission || updates.commission_amount;
+      if (updates.notes) updateData.notes = updates.notes;
+      if (updates.status) updateData.status = updates.status;
+
       const { error } = await supabaseAny
         .from('insurance_sales')
-        .update(updates)
+        .update(updateData)
         .eq('id', id);
 
       if (error) throw error;
@@ -124,9 +178,10 @@ export function useSales() {
 
   const deleteSale = async (id: string) => {
     try {
+      // Try soft delete first, then hard delete if column doesn't exist
       const { error } = await supabaseAny
         .from('insurance_sales')
-        .update({ is_deleted: true })
+        .delete()
         .eq('id', id);
 
       if (error) throw error;

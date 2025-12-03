@@ -4,7 +4,7 @@ import { fr } from 'date-fns/locale';
 
 interface Sale {
   sale_date: string;
-  employee_name: string;
+  employee_name?: string;
   insurance_type: string;
   contract_number: string;
   amount: number;
@@ -18,7 +18,7 @@ export function exportSalesExcel(sales: Sale[], filename: string = 'ventes') {
   // Préparer les données pour Excel
   const data = sales.map(sale => ({
     'Date': format(new Date(sale.sale_date), 'dd/MM/yyyy', { locale: fr }),
-    'Employé': sale.employee_name,
+    'Employé': sale.employee_name || '-',
     'Type Assurance': sale.insurance_type,
     'N° Contrat': sale.contract_number,
     'Montant (€)': sale.amount.toFixed(2),
