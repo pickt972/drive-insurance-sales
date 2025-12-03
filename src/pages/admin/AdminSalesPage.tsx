@@ -7,9 +7,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Download, Search, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, CalendarIcon, X, CheckCircle, Trash2, Pencil, Check, XCircle, FileText, Settings2 } from 'lucide-react';
+import { Download, Search, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, CalendarIcon, X, CheckCircle, Trash2, Pencil, Check, XCircle, FileText, Settings2, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuCheckboxItem, DropdownMenuTrigger, DropdownMenuLabel, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { format, startOfMonth, endOfMonth, subDays, startOfQuarter, endOfQuarter } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -26,15 +26,15 @@ interface EditingCell {
 const ITEMS_PER_PAGE_OPTIONS = [10, 20, 50, 100];
 
 const COLUMNS = [
-  { key: 'date', label: 'Date', default: true },
-  { key: 'employee', label: 'Employé', default: true },
-  { key: 'type', label: 'Type', default: true },
-  { key: 'contract', label: 'N° Contrat', default: true },
-  { key: 'client', label: 'Client', default: true },
-  { key: 'amount', label: 'Montant', default: true },
-  { key: 'commission', label: 'Commission', default: true },
-  { key: 'agency', label: 'Agence', default: true },
-  { key: 'status', label: 'Statut', default: true },
+  { key: 'date', label: 'Date', default: true, sortKey: 'sale_date' },
+  { key: 'employee', label: 'Employé', default: true, sortKey: null },
+  { key: 'type', label: 'Type', default: true, sortKey: null },
+  { key: 'contract', label: 'N° Contrat', default: true, sortKey: 'contract_number' },
+  { key: 'client', label: 'Client', default: true, sortKey: 'client_name' },
+  { key: 'amount', label: 'Montant', default: true, sortKey: 'amount' },
+  { key: 'commission', label: 'Commission', default: true, sortKey: 'commission_amount' },
+  { key: 'agency', label: 'Agence', default: true, sortKey: 'agency' },
+  { key: 'status', label: 'Statut', default: true, sortKey: 'status' },
 ] as const;
 
 type ColumnKey = typeof COLUMNS[number]['key'];
@@ -84,6 +84,10 @@ export function AdminSalesPage() {
   const [visibleColumns, setVisibleColumns] = useState<Set<ColumnKey>>(
     new Set(COLUMNS.filter(c => c.default).map(c => c.key))
   );
+  
+  // Sorting state
+  const [sortColumn, setSortColumn] = useState<string>('sale_date');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
 
   const toggleColumn = (key: ColumnKey) => {
     const newVisible = new Set(visibleColumns);
@@ -96,6 +100,35 @@ export function AdminSalesPage() {
   };
 
   const isColumnVisible = (key: ColumnKey) => visibleColumns.has(key);
+  
+  const handleSort = (sortKey: string | null) => {
+    if (!sortKey) return;
+    if (sortColumn === sortKey) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortColumn(sortKey);
+      setSortDirection('desc');
+    }
+  };
+  
+  const getSortIcon = (sortKey: string | null) => {
+    if (!sortKey) return null;
+    if (sortColumn !== sortKey) return <ArrowUpDown className="h-3 w-3 ml-1 opacity-50" />;
+    return sortDirection === 'asc' 
+      ? <ArrowUp className="h-3 w-3 ml-1" /> 
+      : <ArrowDown className="h-3 w-3 ml-1" />;
+  };
+  
+  // Calculate stats for selected rows
+  const selectedStats = useMemo(() => {
+    if (selectedIds.size === 0) return null;
+    const selectedSales = sales.filter(s => selectedIds.has(s.id));
+    return {
+      count: selectedSales.length,
+      totalAmount: selectedSales.reduce((sum, s) => sum + Number(s.amount || 0), 0),
+      totalCommission: selectedSales.reduce((sum, s) => sum + Number(s.commission_amount || 0), 0),
+    };
+  }, [selectedIds, sales]);
 
   const totalPages = Math.ceil(totalCount / itemsPerPage);
 
@@ -181,9 +214,9 @@ export function AdminSalesPage() {
       const from = (currentPage - 1) * itemsPerPage;
       const to = from + itemsPerPage - 1;
       
-      // Execute paginated query
+      // Execute paginated query with dynamic sorting
       const { data, error, count } = await query
-        .order('sale_date', { ascending: false })
+        .order(sortColumn, { ascending: sortDirection === 'asc' })
         .range(from, to);
 
       if (error) {
@@ -200,7 +233,7 @@ export function AdminSalesPage() {
     } finally {
       setLoading(false);
     }
-  }, [currentPage, itemsPerPage, searchTerm, startDate, endDate, selectedEmployee, selectedInsuranceType, selectedStatus, selectedAgency]);
+  }, [currentPage, itemsPerPage, searchTerm, startDate, endDate, selectedEmployee, selectedInsuranceType, selectedStatus, selectedAgency, sortColumn, sortDirection]);
 
   const loadStats = async (search: string, start?: Date, end?: Date, employeeId?: string, insuranceTypeId?: string, status?: string, agency?: string) => {
     try {
@@ -254,10 +287,10 @@ export function AdminSalesPage() {
     loadSales();
   }, [loadSales]);
 
-  // Reset to page 1 when filters change
+  // Reset to page 1 when filters or sort change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, startDate, endDate, selectedEmployee, selectedInsuranceType, selectedStatus, selectedAgency]);
+  }, [searchTerm, startDate, endDate, selectedEmployee, selectedInsuranceType, selectedStatus, selectedAgency, sortColumn, sortDirection]);
 
   const clearDateFilter = () => {
     setStartDate(undefined);
@@ -871,11 +904,19 @@ export function AdminSalesPage() {
         </CardHeader>
         <CardContent>
           {/* Bulk Actions Bar */}
-          {selectedIds.size > 0 && (
-            <div className="flex items-center gap-3 mb-4 p-3 bg-muted rounded-lg">
+          {selectedIds.size > 0 && selectedStats && (
+            <div className="flex flex-wrap items-center gap-3 mb-4 p-3 bg-muted rounded-lg">
               <span className="text-sm font-medium">
                 {selectedIds.size} vente(s) sélectionnée(s)
               </span>
+              <div className="flex items-center gap-4 text-sm">
+                <span className="text-muted-foreground">
+                  Montant: <span className="font-medium text-foreground">{selectedStats.totalAmount.toFixed(2)} €</span>
+                </span>
+                <span className="text-muted-foreground">
+                  Commission: <span className="font-medium text-green-600">{selectedStats.totalCommission.toFixed(2)} €</span>
+                </span>
+              </div>
               <div className="flex gap-2 ml-auto">
                 <Button
                   size="sm"
@@ -912,15 +953,64 @@ export function AdminSalesPage() {
                       aria-label="Sélectionner tout"
                     />
                   </TableHead>
-                  {isColumnVisible('date') && <TableHead>Date</TableHead>}
+                  {isColumnVisible('date') && (
+                    <TableHead 
+                      className="cursor-pointer hover:bg-muted/50 select-none"
+                      onClick={() => handleSort('sale_date')}
+                    >
+                      <div className="flex items-center">Date{getSortIcon('sale_date')}</div>
+                    </TableHead>
+                  )}
                   {isColumnVisible('employee') && <TableHead>Employé</TableHead>}
                   {isColumnVisible('type') && <TableHead>Type</TableHead>}
-                  {isColumnVisible('contract') && <TableHead>N° Contrat</TableHead>}
-                  {isColumnVisible('client') && <TableHead>Client</TableHead>}
-                  {isColumnVisible('amount') && <TableHead className="text-right">Montant</TableHead>}
-                  {isColumnVisible('commission') && <TableHead className="text-right">Commission</TableHead>}
-                  {isColumnVisible('agency') && <TableHead>Agence</TableHead>}
-                  {isColumnVisible('status') && <TableHead>Statut</TableHead>}
+                  {isColumnVisible('contract') && (
+                    <TableHead 
+                      className="cursor-pointer hover:bg-muted/50 select-none"
+                      onClick={() => handleSort('contract_number')}
+                    >
+                      <div className="flex items-center">N° Contrat{getSortIcon('contract_number')}</div>
+                    </TableHead>
+                  )}
+                  {isColumnVisible('client') && (
+                    <TableHead 
+                      className="cursor-pointer hover:bg-muted/50 select-none"
+                      onClick={() => handleSort('client_name')}
+                    >
+                      <div className="flex items-center">Client{getSortIcon('client_name')}</div>
+                    </TableHead>
+                  )}
+                  {isColumnVisible('amount') && (
+                    <TableHead 
+                      className="text-right cursor-pointer hover:bg-muted/50 select-none"
+                      onClick={() => handleSort('amount')}
+                    >
+                      <div className="flex items-center justify-end">Montant{getSortIcon('amount')}</div>
+                    </TableHead>
+                  )}
+                  {isColumnVisible('commission') && (
+                    <TableHead 
+                      className="text-right cursor-pointer hover:bg-muted/50 select-none"
+                      onClick={() => handleSort('commission_amount')}
+                    >
+                      <div className="flex items-center justify-end">Commission{getSortIcon('commission_amount')}</div>
+                    </TableHead>
+                  )}
+                  {isColumnVisible('agency') && (
+                    <TableHead 
+                      className="cursor-pointer hover:bg-muted/50 select-none"
+                      onClick={() => handleSort('agency')}
+                    >
+                      <div className="flex items-center">Agence{getSortIcon('agency')}</div>
+                    </TableHead>
+                  )}
+                  {isColumnVisible('status') && (
+                    <TableHead 
+                      className="cursor-pointer hover:bg-muted/50 select-none"
+                      onClick={() => handleSort('status')}
+                    >
+                      <div className="flex items-center">Statut{getSortIcon('status')}</div>
+                    </TableHead>
+                  )}
                 </TableRow>
               </TableHeader>
               <TableBody>
