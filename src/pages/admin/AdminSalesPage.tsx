@@ -28,6 +28,10 @@ export function AdminSalesPage() {
   const [employees, setEmployees] = useState<{ id: string; full_name: string }[]>([]);
   const [selectedEmployee, setSelectedEmployee] = useState<string>('all');
   
+  // Insurance type filter state
+  const [insuranceTypes, setInsuranceTypes] = useState<{ id: string; name: string }[]>([]);
+  const [selectedInsuranceType, setSelectedInsuranceType] = useState<string>('all');
+  
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
@@ -39,7 +43,7 @@ export function AdminSalesPage() {
 
   const totalPages = Math.ceil(totalCount / itemsPerPage);
 
-  // Load employees list
+  // Load employees and insurance types
   useEffect(() => {
     const loadEmployees = async () => {
       const { data } = await (supabase as any)
@@ -49,7 +53,16 @@ export function AdminSalesPage() {
         .order('full_name');
       setEmployees(data || []);
     };
+    const loadInsuranceTypes = async () => {
+      const { data } = await (supabase as any)
+        .from('insurance_types')
+        .select('id, name')
+        .eq('is_active', true)
+        .order('name');
+      setInsuranceTypes(data || []);
+    };
     loadEmployees();
+    loadInsuranceTypes();
   }, []);
 
   const loadSales = useCallback(async () => {
@@ -79,6 +92,11 @@ export function AdminSalesPage() {
         query = query.eq('user_id', selectedEmployee);
       }
       
+      // Apply insurance type filter
+      if (selectedInsuranceType && selectedInsuranceType !== 'all') {
+        query = query.eq('insurance_type_id', selectedInsuranceType);
+      }
+      
       // Apply search filter if present
       if (searchTerm) {
         query = query.or(`contract_number.ilike.%${searchTerm}%,client_name.ilike.%${searchTerm}%`);
@@ -101,15 +119,15 @@ export function AdminSalesPage() {
       setTotalCount(count || 0);
       
       // Load aggregated stats separately (for all matching records)
-      await loadStats(searchTerm, startDate, endDate, selectedEmployee);
+      await loadStats(searchTerm, startDate, endDate, selectedEmployee, selectedInsuranceType);
     } catch (error) {
       console.error('Error loading sales:', error);
     } finally {
       setLoading(false);
     }
-  }, [currentPage, itemsPerPage, searchTerm, startDate, endDate, selectedEmployee]);
+  }, [currentPage, itemsPerPage, searchTerm, startDate, endDate, selectedEmployee, selectedInsuranceType]);
 
-  const loadStats = async (search: string, start?: Date, end?: Date, employeeId?: string) => {
+  const loadStats = async (search: string, start?: Date, end?: Date, employeeId?: string, insuranceTypeId?: string) => {
     try {
       const supabaseAny = supabase as any;
       
@@ -126,6 +144,10 @@ export function AdminSalesPage() {
       
       if (employeeId && employeeId !== 'all') {
         query = query.eq('user_id', employeeId);
+      }
+      
+      if (insuranceTypeId && insuranceTypeId !== 'all') {
+        query = query.eq('insurance_type_id', insuranceTypeId);
       }
       
       if (search) {
@@ -152,7 +174,7 @@ export function AdminSalesPage() {
   // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, startDate, endDate, selectedEmployee]);
+  }, [searchTerm, startDate, endDate, selectedEmployee, selectedInsuranceType]);
 
   const clearDateFilter = () => {
     setStartDate(undefined);
@@ -186,6 +208,10 @@ export function AdminSalesPage() {
       
       if (selectedEmployee && selectedEmployee !== 'all') {
         query = query.eq('user_id', selectedEmployee);
+      }
+      
+      if (selectedInsuranceType && selectedInsuranceType !== 'all') {
+        query = query.eq('insurance_type_id', selectedInsuranceType);
       }
       
       if (searchTerm) {
@@ -369,14 +395,30 @@ export function AdminSalesPage() {
                 </Select>
               </div>
               
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">Type:</span>
+                <Select value={selectedInsuranceType} onValueChange={setSelectedInsuranceType}>
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Tous les types" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Tous les types</SelectItem>
+                    {insuranceTypes.map(type => (
+                      <SelectItem key={type.id} value={type.id}>{type.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
               <Button variant="outline" size="sm" onClick={setThisMonth}>
                 Ce mois
               </Button>
               
-              {(startDate || endDate || selectedEmployee !== 'all') && (
+              {(startDate || endDate || selectedEmployee !== 'all' || selectedInsuranceType !== 'all') && (
                 <Button variant="ghost" size="sm" onClick={() => {
                   clearDateFilter();
                   setSelectedEmployee('all');
+                  setSelectedInsuranceType('all');
                 }}>
                   <X className="h-4 w-4 mr-1" />
                   Effacer filtres
