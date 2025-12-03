@@ -408,31 +408,40 @@ export function AdminUsersPage() {
   const deleteUser = async () => {
     if (!userToDelete) return;
 
+    setSaving(true);
     try {
-      const supabaseAny = supabase as any;
-      
-      const { error } = await supabaseAny
-        .from('profiles')
-        .update({ is_active: false })
-        .eq('id', userToDelete.id);
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('Non authentifié');
 
-      if (error) throw error;
+      const response = await supabase.functions.invoke('delete-user', {
+        body: { userId: userToDelete.id },
+      });
+
+      if (response.error) {
+        throw new Error(response.error.message || 'Erreur lors de la suppression');
+      }
+
+      if (!response.data?.success) {
+        throw new Error(response.data?.error || 'Erreur lors de la suppression');
+      }
 
       toast({
         title: 'Succès',
-        description: 'Utilisateur désactivé avec succès',
+        description: 'Utilisateur supprimé définitivement',
       });
       
       setDeleteDialogOpen(false);
       setUserToDelete(null);
       loadUsers();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error deleting user:', error);
       toast({
         title: 'Erreur',
-        description: 'Impossible de supprimer l\'utilisateur',
+        description: error.message || 'Impossible de supprimer l\'utilisateur',
         variant: 'destructive',
       });
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -897,20 +906,20 @@ export function AdminUsersPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Deactivate Confirmation Dialog */}
+      {/* Delete Confirmation Dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Confirmer la désactivation</AlertDialogTitle>
+            <AlertDialogTitle>Supprimer définitivement</AlertDialogTitle>
             <AlertDialogDescription>
-              Êtes-vous sûr de vouloir désactiver l'utilisateur "{userToDelete?.full_name}" ?
-              Cette action peut être annulée en réactivant l'utilisateur.
+              Êtes-vous sûr de vouloir supprimer définitivement l'utilisateur "{userToDelete?.full_name}" ?
+              Cette action est irréversible et toutes les données associées seront perdues.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction onClick={deleteUser} className="bg-red-600 hover:bg-red-700">
-              Désactiver
+            <AlertDialogCancel disabled={saving}>Annuler</AlertDialogCancel>
+            <AlertDialogAction onClick={deleteUser} disabled={saving} className="bg-destructive hover:bg-destructive/90">
+              {saving ? 'Suppression...' : 'Supprimer définitivement'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
