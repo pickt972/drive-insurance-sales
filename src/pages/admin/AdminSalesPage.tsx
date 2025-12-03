@@ -32,6 +32,9 @@ export function AdminSalesPage() {
   const [insuranceTypes, setInsuranceTypes] = useState<{ id: string; name: string }[]>([]);
   const [selectedInsuranceType, setSelectedInsuranceType] = useState<string>('all');
   
+  // Status filter state
+  const [selectedStatus, setSelectedStatus] = useState<string>('all');
+  
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
@@ -97,6 +100,11 @@ export function AdminSalesPage() {
         query = query.eq('insurance_type_id', selectedInsuranceType);
       }
       
+      // Apply status filter
+      if (selectedStatus && selectedStatus !== 'all') {
+        query = query.eq('status', selectedStatus);
+      }
+      
       // Apply search filter if present
       if (searchTerm) {
         query = query.or(`contract_number.ilike.%${searchTerm}%,client_name.ilike.%${searchTerm}%`);
@@ -119,15 +127,15 @@ export function AdminSalesPage() {
       setTotalCount(count || 0);
       
       // Load aggregated stats separately (for all matching records)
-      await loadStats(searchTerm, startDate, endDate, selectedEmployee, selectedInsuranceType);
+      await loadStats(searchTerm, startDate, endDate, selectedEmployee, selectedInsuranceType, selectedStatus);
     } catch (error) {
       console.error('Error loading sales:', error);
     } finally {
       setLoading(false);
     }
-  }, [currentPage, itemsPerPage, searchTerm, startDate, endDate, selectedEmployee, selectedInsuranceType]);
+  }, [currentPage, itemsPerPage, searchTerm, startDate, endDate, selectedEmployee, selectedInsuranceType, selectedStatus]);
 
-  const loadStats = async (search: string, start?: Date, end?: Date, employeeId?: string, insuranceTypeId?: string) => {
+  const loadStats = async (search: string, start?: Date, end?: Date, employeeId?: string, insuranceTypeId?: string, status?: string) => {
     try {
       const supabaseAny = supabase as any;
       
@@ -148,6 +156,10 @@ export function AdminSalesPage() {
       
       if (insuranceTypeId && insuranceTypeId !== 'all') {
         query = query.eq('insurance_type_id', insuranceTypeId);
+      }
+      
+      if (status && status !== 'all') {
+        query = query.eq('status', status);
       }
       
       if (search) {
@@ -174,7 +186,7 @@ export function AdminSalesPage() {
   // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, startDate, endDate, selectedEmployee, selectedInsuranceType]);
+  }, [searchTerm, startDate, endDate, selectedEmployee, selectedInsuranceType, selectedStatus]);
 
   const clearDateFilter = () => {
     setStartDate(undefined);
@@ -212,6 +224,10 @@ export function AdminSalesPage() {
       
       if (selectedInsuranceType && selectedInsuranceType !== 'all') {
         query = query.eq('insurance_type_id', selectedInsuranceType);
+      }
+      
+      if (selectedStatus && selectedStatus !== 'all') {
+        query = query.eq('status', selectedStatus);
       }
       
       if (searchTerm) {
@@ -410,15 +426,30 @@ export function AdminSalesPage() {
                 </Select>
               </div>
               
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">Statut:</span>
+                <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+                  <SelectTrigger className="w-[140px]">
+                    <SelectValue placeholder="Tous" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Tous</SelectItem>
+                    <SelectItem value="validated">Validé</SelectItem>
+                    <SelectItem value="pending">En attente</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
               <Button variant="outline" size="sm" onClick={setThisMonth}>
                 Ce mois
               </Button>
               
-              {(startDate || endDate || selectedEmployee !== 'all' || selectedInsuranceType !== 'all') && (
+              {(startDate || endDate || selectedEmployee !== 'all' || selectedInsuranceType !== 'all' || selectedStatus !== 'all') && (
                 <Button variant="ghost" size="sm" onClick={() => {
                   clearDateFilter();
                   setSelectedEmployee('all');
                   setSelectedInsuranceType('all');
+                  setSelectedStatus('all');
                 }}>
                   <X className="h-4 w-4 mr-1" />
                   Effacer filtres
