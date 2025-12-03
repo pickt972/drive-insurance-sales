@@ -16,6 +16,12 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { 
   Search, 
   Trash2, 
@@ -23,7 +29,8 @@ import {
   ChevronLeft,
   ChevronRight,
   FileText,
-  FileSpreadsheet
+  FileSpreadsheet,
+  Info
 } from 'lucide-react';
 import { format, subMonths } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -228,8 +235,35 @@ export const SalesHistory = () => {
                     <TableCell className="text-right font-semibold">
                       {sale.amount.toFixed(2)} €
                     </TableCell>
-                    <TableCell className="text-right text-green-600 font-semibold">
-                      {sale.commission.toFixed(2)} €
+                    <TableCell className="text-right">
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div className="inline-flex items-center gap-1.5 cursor-help">
+                              <span className="text-green-600 font-semibold">
+                                {sale.commission.toFixed(2)} €
+                              </span>
+                              <Badge 
+                                variant="outline" 
+                                className={`text-[10px] px-1.5 py-0 ${
+                                  sale.commission_is_fixed 
+                                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
+                                    : 'bg-blue-50 text-blue-700 border-blue-200'
+                                }`}
+                              >
+                                {sale.commission_is_fixed ? 'Fixe' : '%'}
+                              </Badge>
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent side="left" className="text-xs">
+                            {sale.commission_is_fixed ? (
+                              <p>Commission fixe : {sale.commission_fixed_amount?.toFixed(2)} €</p>
+                            ) : (
+                              <p>Taux appliqué : {sale.commission_rate_used}% sur {sale.amount.toFixed(2)} €</p>
+                            )}
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                     </TableCell>
                     <TableCell>{sale.customer_name || '-'}</TableCell>
                     <TableCell className="text-right">

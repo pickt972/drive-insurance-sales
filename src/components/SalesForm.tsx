@@ -4,7 +4,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, Calculator } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Plus, Calculator, Info } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
 import { useSales } from "@/hooks/useSales";
 import { useInsuranceTypes, InsuranceType } from "@/hooks/useInsuranceTypes";
@@ -38,16 +45,26 @@ export const SalesForm = ({ onSaleAdded }: SalesFormProps) => {
 
   // Calcul de la commission simulée
   const simulatedCommission = useMemo(() => {
+    const amount = parseFloat(saleAmount) || 0;
+    
     return selectedInsurances.map(insuranceName => {
       const insurance = insuranceTypesLocal.find(ins => ins.name === insuranceName);
-      if (!insurance) return { name: insuranceName, commission: 0 };
+      if (!insurance) return { name: insuranceName, commission: 0, isFixed: false, rate: 0 };
+      
+      const isFixed = insurance.commission_amount > 0;
+      const commission = isFixed 
+        ? insurance.commission_amount 
+        : (amount * (insurance.commission_rate / 100));
       
       return {
         name: insuranceName,
-        commission: insurance.commission_amount || 0,
+        commission: Math.round(commission * 100) / 100,
+        isFixed,
+        rate: insurance.commission_rate,
+        fixedAmount: insurance.commission_amount,
       };
     });
-  }, [selectedInsurances, insuranceTypesLocal]);
+  }, [selectedInsurances, saleAmount, insuranceTypesLocal]);
 
   const totalSimulatedCommission = useMemo(() => {
     return simulatedCommission.reduce((sum, item) => sum + item.commission, 0);
@@ -157,7 +174,9 @@ export const SalesForm = ({ onSaleAdded }: SalesFormProps) => {
         <div className="space-y-4">
           <Label className="text-sm lg:text-base font-bold text-foreground">🛡️ Assurances souscrites <span className="text-destructive">*</span></Label>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 lg:gap-4">
-              {insuranceTypesLocal.filter(ins => ins.is_active).map((insurance) => (
+              {insuranceTypesLocal.filter(ins => ins.is_active).map((insurance) => {
+                const isFixed = insurance.commission_amount > 0;
+                return (
                   <div key={insurance.id} className="modern-card p-3 lg:p-4 cursor-pointer hover:scale-105 transition-all duration-300 group">
                     <div className="flex items-center space-x-3 lg:space-x-4">
                       <Checkbox
@@ -172,16 +191,33 @@ export const SalesForm = ({ onSaleAdded }: SalesFormProps) => {
                         className="scale-110 lg:scale-125"
                       />
                       <div className="flex-1">
-                        <Label className="font-semibold text-sm lg:text-base group-hover:text-primary transition-colors duration-300">
-                          {insurance.name}
-                        </Label>
+                        <div className="flex items-center gap-2">
+                          <Label className="font-semibold text-sm lg:text-base group-hover:text-primary transition-colors duration-300">
+                            {insurance.name}
+                          </Label>
+                          <Badge 
+                            variant="outline" 
+                            className={`text-[10px] px-1.5 py-0 ${
+                              isFixed 
+                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
+                                : 'bg-blue-50 text-blue-700 border-blue-200'
+                            }`}
+                          >
+                            {isFixed ? 'Fixe' : '%'}
+                          </Badge>
+                        </div>
                         <div className="success-indicator mt-1 lg:mt-2 text-xs lg:text-sm">
-                          <span className="font-bold">+{insurance.commission_amount.toFixed(2)} €</span>
+                          <span className="font-bold">
+                            {isFixed 
+                              ? `+${insurance.commission_amount.toFixed(2)} €` 
+                              : `+${insurance.commission_rate}%`}
+                          </span>
                         </div>
                       </div>
                     </div>
                   </div>
-                ))}
+                );
+              })}
           </div>
         </div>
 
@@ -206,7 +242,30 @@ export const SalesForm = ({ onSaleAdded }: SalesFormProps) => {
             <div className="space-y-2 mb-4">
               {simulatedCommission.map((item, index) => (
                 <div key={index} className="flex items-center justify-between text-sm bg-background/50 rounded-lg p-2">
-                  <span className="font-medium">{item.name}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium">{item.name}</span>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger>
+                          <Badge 
+                            variant="outline" 
+                            className={`text-[10px] px-1.5 py-0 ${
+                              item.isFixed 
+                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
+                                : 'bg-blue-50 text-blue-700 border-blue-200'
+                            }`}
+                          >
+                            {item.isFixed ? 'Fixe' : `${item.rate}%`}
+                          </Badge>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          {item.isFixed 
+                            ? `Commission fixe : ${item.fixedAmount?.toFixed(2)} €`
+                            : `${item.rate}% sur ${saleAmount || '0'} € = ${item.commission.toFixed(2)} €`}
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
                   <span className="font-semibold text-success">+{item.commission.toFixed(2)} €</span>
                 </div>
               ))}
