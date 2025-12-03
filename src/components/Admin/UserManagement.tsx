@@ -17,16 +17,42 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Shield, User as UserIcon, Users as UsersIcon } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import { Shield, User as UserIcon, Users as UsersIcon, Trash2, UserX } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { useState } from 'react';
 
 export function UserManagement() {
-  const { users, updateUserRole, loading } = useUsers();
+  const { users, updateUserRole, removeUser, deleteUserPermanently, loading } = useUsers();
+  const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
 
   const handleRoleChange = async (userId: string, newRole: 'user' | 'admin') => {
     if (confirm(`Confirmer le changement de rôle vers "${newRole}" ?`)) {
       await updateUserRole(userId, newRole);
+    }
+  };
+
+  const handleDeactivate = async (userId: string) => {
+    await removeUser(userId);
+  };
+
+  const handleDeletePermanently = async (userId: string) => {
+    setDeletingUserId(userId);
+    try {
+      await deleteUserPermanently(userId);
+    } finally {
+      setDeletingUserId(null);
     }
   };
 
@@ -101,18 +127,61 @@ export function UserManagement() {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">
-                      <Select
-                        value={user.role}
-                        onValueChange={(value) => handleRoleChange(user.id, value as 'user' | 'admin')}
-                      >
-                        <SelectTrigger className="w-[120px] hover:border-primary transition-colors">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="user">User</SelectItem>
-                          <SelectItem value="admin">Admin</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      <div className="flex items-center justify-end gap-2">
+                        <Select
+                          value={user.role}
+                          onValueChange={(value) => handleRoleChange(user.id, value as 'user' | 'admin')}
+                        >
+                          <SelectTrigger className="w-[100px] hover:border-primary transition-colors">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="user">User</SelectItem>
+                            <SelectItem value="admin">Admin</SelectItem>
+                          </SelectContent>
+                        </Select>
+
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => handleDeactivate(user.id)}
+                          title={user.is_active ? "Désactiver" : "Réactiver"}
+                          className="h-8 w-8"
+                        >
+                          <UserX className="h-4 w-4" />
+                        </Button>
+
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              variant="destructive"
+                              size="icon"
+                              title="Supprimer définitivement"
+                              className="h-8 w-8"
+                              disabled={deletingUserId === user.id}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Supprimer définitivement ?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Cette action est <strong>irréversible</strong>. L'utilisateur <strong>{user.full_name}</strong> ({user.email}) sera supprimé définitivement ainsi que toutes ses données associées.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Annuler</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => handleDeletePermanently(user.id)}
+                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                              >
+                                Supprimer définitivement
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))

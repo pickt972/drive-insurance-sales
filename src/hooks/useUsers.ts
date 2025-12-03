@@ -164,6 +164,42 @@ export function useUsers() {
     }
   };
 
+  const deleteUserPermanently = async (userId: string) => {
+    if (!isAdmin) throw new Error('Accès refusé');
+
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData?.session?.access_token;
+
+      if (!token) {
+        throw new Error('Session invalide');
+      }
+
+      const response = await supabase.functions.invoke('delete-user', {
+        body: { userId },
+      });
+
+      if (response.error) {
+        throw new Error(response.error.message || 'Erreur lors de la suppression');
+      }
+
+      toast({
+        title: '✅ Utilisateur supprimé',
+        description: 'L\'utilisateur a été supprimé définitivement',
+      });
+
+      await fetchUsers();
+    } catch (error: any) {
+      console.error('Error deleting user permanently:', error);
+      toast({
+        title: '❌ Erreur',
+        description: error.message || 'Impossible de supprimer l\'utilisateur',
+        variant: 'destructive',
+      });
+      throw error;
+    }
+  };
+
   const updatePassword = async (userId: string, newPassword: string) => {
     if (!isAdmin) throw new Error('Accès refusé');
 
@@ -196,6 +232,7 @@ export function useUsers() {
     updateUser,
     updateUserRole,
     removeUser,
+    deleteUserPermanently,
     updatePassword,
   };
 }
