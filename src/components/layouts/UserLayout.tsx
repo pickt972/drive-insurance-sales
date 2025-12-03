@@ -22,7 +22,11 @@ export function UserLayout({ children }: UserLayoutProps) {
             <div className="space-y-1">
               <div className="flex items-center gap-3">
                 <div className="p-2 rounded-xl bg-gradient-to-br from-primary to-primary-variant shadow-lg animate-float-gentle">
-                  <Home className="h-6 w-6 text-primary-foreground" />
+                  {appSettings.app_logo ? (
+                    <img src={appSettings.app_logo} alt="Logo" className="h-6 w-6 object-contain" />
+                  ) : (
+                    <Home className="h-6 w-6 text-primary-foreground" />
+                  )}
                 </div>
                 <div>
                   <h1 className="text-2xl font-bold bg-gradient-to-r from-primary via-info to-primary-variant bg-clip-text text-transparent">

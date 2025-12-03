@@ -77,7 +77,11 @@ export default function AdminLayout() {
         <div className="fixed inset-y-0 left-0 w-72 bg-white shadow-xl">
           <div className="flex items-center justify-between h-16 px-6 border-b">
             <div className="flex items-center gap-2">
-              <Car className="h-8 w-8 text-blue-600" />
+              {appSettings.app_logo ? (
+                <img src={appSettings.app_logo} alt="Logo" className="h-8 w-8 object-contain" />
+              ) : (
+                <Car className="h-8 w-8 text-blue-600" />
+              )}
               <span className="text-xl font-bold text-gray-900">{appSettings.app_name}</span>
             </div>
             <button onClick={() => setSidebarOpen(false)}>
@@ -112,7 +116,11 @@ export default function AdminLayout() {
         <div className="flex flex-col flex-grow bg-white border-r border-gray-200">
           {/* Logo */}
           <div className="flex items-center h-16 px-6 border-b border-gray-200">
-            <Car className="h-8 w-8 text-blue-600" />
+            {appSettings.app_logo ? (
+              <img src={appSettings.app_logo} alt="Logo" className="h-8 w-8 object-contain" />
+            ) : (
+              <Car className="h-8 w-8 text-blue-600" />
+            )}
             <span className="ml-2 text-xl font-bold text-gray-900">{appSettings.app_name}</span>
           </div>
 
