@@ -162,7 +162,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // Listener pour les changements d'auth
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, newSession) => {
+      (event, newSession) => {
         console.log('[AUTH] onAuthStateChange:', event, newSession?.user?.email);
 
         if (!mounted) return;
@@ -179,23 +179,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (event === 'SIGNED_IN' && newSession?.user) {
           setSession(newSession);
           setUser(newSession.user);
-          setIsLoading(true);
+          
+          // IMPORTANT: Utiliser setTimeout pour éviter le deadlock Supabase
+          setTimeout(async () => {
+            if (!mounted) return;
+            
+            try {
+              const [userProfile, userRole] = await Promise.all([
+                fetchProfile(newSession.user.id),
+                fetchRole(newSession.user.id)
+              ]);
 
-          // Petit délai pour laisser le trigger créer le profil si nécessaire
-          await new Promise(resolve => setTimeout(resolve, 200));
+              console.log('[AUTH] After SIGNED_IN - profile:', userProfile, 'role:', userRole);
 
-          const [userProfile, userRole] = await Promise.all([
-            fetchProfile(newSession.user.id),
-            fetchRole(newSession.user.id)
-          ]);
-
-          console.log('[AUTH] After SIGNED_IN - profile:', userProfile, 'role:', userRole);
-
-          if (mounted) {
-            setProfile(userProfile);
-            setRole(userRole);
-            setIsLoading(false);
-          }
+              if (mounted) {
+                setProfile(userProfile);
+                setRole(userRole);
+                setIsLoading(false);
+              }
+            } catch (err) {
+              console.error('[AUTH] Error fetching profile/role:', err);
+              if (mounted) {
+                setIsLoading(false);
+              }
+            }
+          }, 0);
         }
       }
     );
