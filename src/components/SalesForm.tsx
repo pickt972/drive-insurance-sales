@@ -12,8 +12,9 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Plus, Calculator, CalendarIcon, TrendingUp, Target, Trophy, Lightbulb } from "lucide-react";
+import { Plus, Calculator, CalendarIcon, TrendingUp, Target, Trophy, Lightbulb, HelpCircle } from "lucide-react";
 import { SalesPitchGenerator } from "@/components/SalesPitchGenerator";
+import { FAQViewer } from "@/components/FAQViewer";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { useSales } from "@/hooks/useSales";
@@ -243,11 +244,14 @@ export const SalesForm = ({ onSaleAdded }: SalesFormProps) => {
         </div>
       </div>
 
-      <div className="flex items-center gap-3 lg:gap-4 mb-6 lg:mb-8">
-        <div className="icon-wrapper">
-          <Plus className="h-6 w-6 text-primary" />
+      <div className="flex items-center justify-between mb-6 lg:mb-8">
+        <div className="flex items-center gap-3 lg:gap-4">
+          <div className="icon-wrapper">
+            <Plus className="h-6 w-6 text-primary" />
+          </div>
+          <h2 className="text-xl lg:text-3xl font-bold gradient-text">✨ Nouvelle Vente</h2>
         </div>
-        <h2 className="text-xl lg:text-3xl font-bold gradient-text">✨ Nouvelle Vente</h2>
+        <FAQViewer />
       </div>
       
       <form onSubmit={handleSubmit} className="space-y-6">
