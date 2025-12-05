@@ -14,6 +14,7 @@ import { AdminReportsPage } from '@/pages/admin/AdminReportsPage';
 import { AdminAuditLogsPage } from '@/pages/admin/AdminAuditLogsPage';
 import { AdminSettingsPage } from '@/pages/admin/AdminSettingsPage';
 import { AdminArgumentsPage } from '@/pages/admin/AdminArgumentsPage';
+import { AdminFAQPage } from '@/pages/admin/AdminFAQPage';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { AdminRoute } from '@/components/auth/AdminRoute';
 import { AuthProvider } from '@/hooks/useAuth';
@@ -46,6 +47,7 @@ const App = () => {
               <Route path="audit-logs" element={<AdminAuditLogsPage />} />
               <Route path="settings" element={<AdminSettingsPage />} />
               <Route path="arguments" element={<AdminArgumentsPage />} />
+              <Route path="faq" element={<AdminFAQPage />} />
             </Route>
           </Route>
           

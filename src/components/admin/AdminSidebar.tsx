@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users, ShieldCheck, Target, TrendingUp, Settings, FileText, DollarSign, MessageSquareQuote } from 'lucide-react';
+import { LayoutDashboard, Users, ShieldCheck, Target, TrendingUp, Settings, FileText, DollarSign, MessageSquareQuote, HelpCircle } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import {
   Sidebar,
@@ -21,6 +21,7 @@ const adminMenuItems = [
   { title: 'Objectifs', url: '/admin/objectives', icon: Target },
   { title: 'Bonus', url: '/admin/bonuses', icon: DollarSign },
   { title: 'Argumentaires', url: '/admin/arguments', icon: MessageSquareQuote },
+  { title: 'FAQ', url: '/admin/faq', icon: HelpCircle },
   { title: 'Logs d\'audit', url: '/admin/audit-logs', icon: FileText },
   { title: 'Paramètres', url: '/admin/settings', icon: Settings },
 ];
