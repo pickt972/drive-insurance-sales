@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
@@ -12,7 +12,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Plus, Calculator, CalendarIcon, TrendingUp, Target, Trophy, Lightbulb, HelpCircle } from "lucide-react";
+import { Plus, Calculator, CalendarIcon, TrendingUp, Target, Trophy } from "lucide-react";
 import { SalesPitchGenerator } from "@/components/SalesPitchGenerator";
 import { FAQViewer } from "@/components/FAQViewer";
 import { cn } from "@/lib/utils";
@@ -22,6 +22,7 @@ import { useInsuranceTypes, InsuranceType } from "@/hooks/useInsuranceTypes";
 import { useAppSettings } from "@/hooks/useAppSettings";
 import { toast } from "@/hooks/use-toast";
 import { CelebrationPopup } from "@/components/ui/celebration-popup";
+import { validateSaleForm } from "@/lib/salesValidation";
 
 interface SalesFormProps {
   onSaleAdded: () => void;
@@ -37,6 +38,7 @@ export const SalesForm = ({ onSaleAdded }: SalesFormProps) => {
   const [lastSaleAmount, setLastSaleAmount] = useState(0);
   const [insuranceTypesLocal, setInsuranceTypesLocal] = useState<InsuranceType[]>([]);
   const [objectiveReachedNotified, setObjectiveReachedNotified] = useState(false);
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   
   const { profile } = useAuth();
   const { sales, addSale, loading: saleLoading, fetchSales } = useSales();
@@ -103,13 +105,35 @@ export const SalesForm = ({ onSaleAdded }: SalesFormProps) => {
     return simulatedCommission.reduce((sum, item) => sum + item.commission, 0);
   }, [simulatedCommission]);
 
+  // Effacer l'erreur d'un champ quand il change
+  const clearFieldError = (field: string) => {
+    if (formErrors[field]) {
+      setFormErrors(prev => {
+        const updated = { ...prev };
+        delete updated[field];
+        return updated;
+      });
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setFormErrors({});
     
-    if (!clientName || !reservationNumber || selectedInsurances.length === 0) {
+    // Validation avec zod
+    const validationResult = validateSaleForm({
+      clientName,
+      reservationNumber,
+      notes,
+      saleDate,
+      selectedInsurances,
+    });
+
+    if (!validationResult.success) {
+      setFormErrors(validationResult.errors);
       toast({
-        title: "Erreur",
-        description: "Veuillez remplir tous les champs obligatoires",
+        title: "Erreur de validation",
+        description: "Veuillez corriger les erreurs dans le formulaire",
         variant: "destructive",
       });
       return;
@@ -126,13 +150,13 @@ export const SalesForm = ({ onSaleAdded }: SalesFormProps) => {
           employee_name: profile?.full_name || '',
           insurance_type: insuranceItem.name,
           insurance_type_id: insuranceItem.id,
-          contract_number: reservationNumber,
+          contract_number: validationResult.data.reservationNumber,
           amount: insuranceItem.commission,
           commission: insuranceItem.commission,
-          customer_name: clientName,
+          customer_name: validationResult.data.clientName,
           vehicle_type: null,
           rental_duration_days: 1,
-          notes: notes || null,
+          notes: validationResult.data.notes || null,
         });
       });
 
@@ -149,7 +173,9 @@ export const SalesForm = ({ onSaleAdded }: SalesFormProps) => {
       setShowCelebration(true);
 
     } catch (error) {
-      console.error('Error creating sales:', error);
+      if (import.meta.env.DEV) {
+        console.error('Error creating sales:', error);
+      }
     }
   };
 
@@ -161,6 +187,7 @@ export const SalesForm = ({ onSaleAdded }: SalesFormProps) => {
     setSelectedInsurances([]);
     setNotes("");
     setSaleDate(new Date());
+    setFormErrors({});
     fetchSales();
     onSaleAdded();
   };
@@ -262,11 +289,21 @@ export const SalesForm = ({ onSaleAdded }: SalesFormProps) => {
             <Input
               id="clientName"
               value={clientName}
-              onChange={(e) => setClientName(e.target.value)}
+              onChange={(e) => {
+                setClientName(e.target.value);
+                clearFieldError('clientName');
+              }}
               placeholder="Nom du client"
-              className="friendly-input text-sm lg:text-base h-11"
+              className={cn(
+                "friendly-input text-sm lg:text-base h-11",
+                formErrors.clientName && "border-destructive focus-visible:ring-destructive"
+              )}
+              maxLength={100}
               required
             />
+            {formErrors.clientName && (
+              <p className="text-xs text-destructive">{formErrors.clientName}</p>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -274,11 +311,21 @@ export const SalesForm = ({ onSaleAdded }: SalesFormProps) => {
             <Input
               id="reservationNumber"
               value={reservationNumber}
-              onChange={(e) => setReservationNumber(e.target.value)}
+              onChange={(e) => {
+                setReservationNumber(e.target.value);
+                clearFieldError('reservationNumber');
+              }}
               placeholder="Ex: LOC-2024-001"
-              className="friendly-input text-sm lg:text-base h-11"
+              className={cn(
+                "friendly-input text-sm lg:text-base h-11",
+                formErrors.reservationNumber && "border-destructive focus-visible:ring-destructive"
+              )}
+              maxLength={50}
               required
             />
+            {formErrors.reservationNumber && (
+              <p className="text-xs text-destructive">{formErrors.reservationNumber}</p>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -289,7 +336,8 @@ export const SalesForm = ({ onSaleAdded }: SalesFormProps) => {
                   variant="outline"
                   className={cn(
                     "w-full h-11 justify-start text-left font-normal friendly-input",
-                    !saleDate && "text-muted-foreground"
+                    !saleDate && "text-muted-foreground",
+                    formErrors.saleDate && "border-destructive"
                   )}
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />
@@ -300,7 +348,12 @@ export const SalesForm = ({ onSaleAdded }: SalesFormProps) => {
                 <Calendar
                   mode="single"
                   selected={saleDate}
-                  onSelect={(date) => date && setSaleDate(date)}
+                  onSelect={(date) => {
+                    if (date) {
+                      setSaleDate(date);
+                      clearFieldError('saleDate');
+                    }
+                  }}
                   disabled={(date) => date > new Date()}
                   initialFocus
                   locale={fr}
@@ -308,6 +361,9 @@ export const SalesForm = ({ onSaleAdded }: SalesFormProps) => {
                 />
               </PopoverContent>
             </Popover>
+            {formErrors.saleDate && (
+              <p className="text-xs text-destructive">{formErrors.saleDate}</p>
+            )}
           </div>
         </div>
 
@@ -320,6 +376,9 @@ export const SalesForm = ({ onSaleAdded }: SalesFormProps) => {
               </span>
             )}
           </Label>
+          {formErrors.selectedInsurances && (
+            <p className="text-xs text-destructive">{formErrors.selectedInsurances}</p>
+          )}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 lg:gap-4">
               {insuranceTypesLocal.filter(ins => ins.is_active).map((insurance) => (
                 <div 
@@ -334,6 +393,7 @@ export const SalesForm = ({ onSaleAdded }: SalesFormProps) => {
                     } else {
                       setSelectedInsurances([...selectedInsurances, insurance.name]);
                     }
+                    clearFieldError('selectedInsurances');
                   }}
                 >
                   <div className="flex items-center justify-between">
@@ -346,6 +406,7 @@ export const SalesForm = ({ onSaleAdded }: SalesFormProps) => {
                           } else {
                             setSelectedInsurances(selectedInsurances.filter(name => name !== insurance.name));
                           }
+                          clearFieldError('selectedInsurances');
                         }}
                         className="scale-110 lg:scale-125"
                         onClick={(e) => e.stopPropagation()}
@@ -371,10 +432,21 @@ export const SalesForm = ({ onSaleAdded }: SalesFormProps) => {
             <Input
               id="notes"
               value={notes}
-              onChange={(e) => setNotes(e.target.value)}
+              onChange={(e) => {
+                setNotes(e.target.value);
+                clearFieldError('notes');
+              }}
               placeholder="Informations complémentaires..."
-              className="friendly-input text-sm lg:text-base h-11"
+              className={cn(
+                "friendly-input text-sm lg:text-base h-11",
+                formErrors.notes && "border-destructive focus-visible:ring-destructive"
+              )}
+              maxLength={500}
             />
+            {formErrors.notes && (
+              <p className="text-xs text-destructive">{formErrors.notes}</p>
+            )}
+            <p className="text-xs text-muted-foreground text-right">{notes.length}/500</p>
         </div>
 
         {selectedInsurances.length > 0 && (

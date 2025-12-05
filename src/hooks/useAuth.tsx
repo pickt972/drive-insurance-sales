@@ -24,6 +24,25 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Helper pour log sécurisé (uniquement en dev)
+const devLog = (message: string, ...args: unknown[]) => {
+  if (import.meta.env.DEV) {
+    console.log(message, ...args);
+  }
+};
+
+const devWarn = (message: string, ...args: unknown[]) => {
+  if (import.meta.env.DEV) {
+    console.warn(message, ...args);
+  }
+};
+
+const devError = (message: string, ...args: unknown[]) => {
+  if (import.meta.env.DEV) {
+    console.error(message, ...args);
+  }
+};
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -33,7 +52,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Récupérer le profil avec retry et fallback
   const fetchProfile = useCallback(async (userId: string) => {
-    console.log('[AUTH] fetchProfile called for:', userId);
+    devLog('[AUTH] fetchProfile called for:', userId);
     
     // Retry jusqu'à 3 fois
     for (let attempt = 0; attempt < 3; attempt++) {
@@ -45,19 +64,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           .maybeSingle();
 
         if (!error && data) {
-          console.log('[AUTH] ✅ Profile loaded:', data);
+          devLog('[AUTH] ✅ Profile loaded:', data);
           return data;
         }
 
-        console.log(`[AUTH] ⚠️ Profile attempt ${attempt + 1} failed:`, error);
+        devLog(`[AUTH] ⚠️ Profile attempt ${attempt + 1} failed:`, error);
         if (attempt < 2) await new Promise(resolve => setTimeout(resolve, 500));
       } catch (err) {
-        console.error(`[AUTH] fetchProfile exception (attempt ${attempt + 1}):`, err);
+        devError(`[AUTH] fetchProfile exception (attempt ${attempt + 1}):`, err);
       }
     }
 
     // Fallback: construire depuis user_metadata
-    console.log('[AUTH] 🔄 Using user_metadata fallback');
+    devLog('[AUTH] 🔄 Using user_metadata fallback');
     const { data: { user } } = await supabase.auth.getUser();
     if (user?.user_metadata) {
       return {
@@ -74,7 +93,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Récupérer le rôle via RPC avec retry
   const fetchRole = useCallback(async (userId: string) => {
-    console.log('[AUTH] fetchRole called for:', userId);
+    devLog('[AUTH] fetchRole called for:', userId);
     
     // Retry jusqu'à 3 fois
     for (let attempt = 0; attempt < 3; attempt++) {
@@ -83,19 +102,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           .rpc('get_user_role', { _user_id: userId });
 
         if (!error && data) {
-          console.log('[AUTH] ✅ Role loaded:', data);
+          devLog('[AUTH] ✅ Role loaded:', data);
           return data;
         }
         
-        console.log(`[AUTH] ⚠️ Role attempt ${attempt + 1} failed:`, error);
+        devLog(`[AUTH] ⚠️ Role attempt ${attempt + 1} failed:`, error);
         if (attempt < 2) await new Promise(resolve => setTimeout(resolve, 500));
       } catch (err) {
-        console.error(`[AUTH] fetchRole exception (attempt ${attempt + 1}):`, err);
+        devError(`[AUTH] fetchRole exception (attempt ${attempt + 1}):`, err);
       }
     }
 
     // Fallback: vérifier user_metadata
-    console.log('[AUTH] 🔄 Using user_metadata fallback for role');
+    devLog('[AUTH] 🔄 Using user_metadata fallback for role');
     const { data: { user } } = await supabase.auth.getUser();
     return user?.user_metadata?.role || 'user';
   }, []);
@@ -104,7 +123,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const timeout = setTimeout(() => {
       if (isLoading) {
-        console.warn('[AUTH] ⚠️ Timeout after 5s - forcing isLoading to false');
+        devWarn('[AUTH] ⚠️ Timeout after 5s - forcing isLoading to false');
         setIsLoading(false);
       }
     }, 5000);
@@ -115,17 +134,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Initialisation
   useEffect(() => {
     let mounted = true;
-    console.log('[AUTH] useEffect init started');
+    devLog('[AUTH] useEffect init started');
 
     const initialize = async () => {
       try {
-        console.log('[AUTH] Getting session...');
+        devLog('[AUTH] Getting session...');
         const { data: { session: currentSession }, error } = await supabase.auth.getSession();
         
-        console.log('[AUTH] Session:', currentSession?.user?.email, 'Error:', error);
+        devLog('[AUTH] Session:', currentSession?.user?.email, 'Error:', error);
 
         if (error || !currentSession?.user) {
-          console.log('[AUTH] No session, setting isLoading false');
+          devLog('[AUTH] No session, setting isLoading false');
           if (mounted) {
             setIsLoading(false);
           }
@@ -136,24 +155,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setSession(currentSession);
           setUser(currentSession.user);
 
-          console.log('[AUTH] Fetching profile and role...');
+          devLog('[AUTH] Fetching profile and role...');
           const [userProfile, userRole] = await Promise.all([
             fetchProfile(currentSession.user.id),
             fetchRole(currentSession.user.id)
           ]);
 
-          console.log('[AUTH] Got profile:', userProfile);
-          console.log('[AUTH] Got role:', userRole);
+          devLog('[AUTH] Got profile:', userProfile);
+          devLog('[AUTH] Got role:', userRole);
 
           if (mounted) {
             setProfile(userProfile);
             setRole(userRole);
             setIsLoading(false);
-            console.log('[AUTH] Init complete. isAdmin:', userRole === 'admin');
+            devLog('[AUTH] Init complete. isAdmin:', userRole === 'admin');
           }
         }
       } catch (err) {
-        console.error('[AUTH] Init error:', err);
+        devError('[AUTH] Init error:', err);
         if (mounted) {
           setIsLoading(false);
         }
@@ -163,7 +182,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Listener pour les changements d'auth
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, newSession) => {
-        console.log('[AUTH] onAuthStateChange:', event, newSession?.user?.email);
+        devLog('[AUTH] onAuthStateChange:', event, newSession?.user?.email);
 
         if (!mounted) return;
 
@@ -190,7 +209,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 fetchRole(newSession.user.id)
               ]);
 
-              console.log('[AUTH] After SIGNED_IN - profile:', userProfile, 'role:', userRole);
+              devLog('[AUTH] After SIGNED_IN - profile:', userProfile, 'role:', userRole);
 
               if (mounted) {
                 setProfile(userProfile);
@@ -198,7 +217,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 setIsLoading(false);
               }
             } catch (err) {
-              console.error('[AUTH] Error fetching profile/role:', err);
+              devError('[AUTH] Error fetching profile/role:', err);
               if (mounted) {
                 setIsLoading(false);
               }
@@ -225,7 +244,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         ? identifier.toLowerCase().trim()
         : `${identifier.toLowerCase().trim()}@aloelocation.internal`;
 
-      console.log('[AUTH] signIn attempt:', email);
+      devLog('[AUTH] signIn attempt:', email);
 
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -233,23 +252,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
 
       if (error) {
-        console.error('[AUTH] signIn error:', error);
+        devError('[AUTH] signIn error:', error);
         setIsLoading(false);
         return { error };
       }
 
-      console.log('[AUTH] signIn success:', data.user?.id);
+      devLog('[AUTH] signIn success:', data.user?.id);
       // onAuthStateChange gère le reste
       return { error: null };
     } catch (err) {
-      console.error('[AUTH] signIn exception:', err);
+      devError('[AUTH] signIn exception:', err);
       setIsLoading(false);
       return { error: err as Error };
     }
   };
 
   const signOut = async () => {
-    console.log('[AUTH] signOut');
+    devLog('[AUTH] signOut');
     await supabase.auth.signOut();
     setUser(null);
     setProfile(null);
@@ -269,7 +288,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     signOut,
   };
 
-  console.log('[AUTH] Render - isLoading:', isLoading, 'role:', role, 'isAdmin:', role === 'admin');
+  devLog('[AUTH] Render - isLoading:', isLoading, 'role:', role, 'isAdmin:', role === 'admin');
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
