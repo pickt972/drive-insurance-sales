@@ -147,21 +147,22 @@ export const SalesForm = ({ onSaleAdded }: SalesFormProps) => {
       // Déclencher l'animation de célébration
       setLastSaleAmount(totalSimulatedCommission);
       setShowCelebration(true);
-      
-      // Réinitialiser le formulaire après un délai
-      setTimeout(() => {
-        setClientName("");
-        setReservationNumber("");
-        setSelectedInsurances([]);
-        setNotes("");
-        setSaleDate(new Date());
-        fetchSales(); // Rafraîchir les ventes
-        onSaleAdded();
-      }, 6200);
 
     } catch (error) {
       console.error('Error creating sales:', error);
     }
+  };
+
+  // Handler quand la célébration se ferme
+  const handleCelebrationClose = () => {
+    setShowCelebration(false);
+    setClientName("");
+    setReservationNumber("");
+    setSelectedInsurances([]);
+    setNotes("");
+    setSaleDate(new Date());
+    fetchSales();
+    onSaleAdded();
   };
 
   // Couleur de la barre de progression
@@ -415,7 +416,7 @@ export const SalesForm = ({ onSaleAdded }: SalesFormProps) => {
       {/* Animation de célébration */}
       <CelebrationPopup
         isOpen={showCelebration}
-        onClose={() => setShowCelebration(false)}
+        onClose={handleCelebrationClose}
         saleAmount={lastSaleAmount}
       />
     </div>

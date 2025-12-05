@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
-import { PartyPopper, CircleCheck as CheckCircle, Trophy, Star, Zap, Target, Gift, Flame, Rocket, Crown } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { PartyPopper, CircleCheck as CheckCircle, Trophy, Star, Zap, Target, Gift, Flame, Rocket, Crown, ArrowRight } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useAppSettings } from '@/hooks/useAppSettings';
 import { useSales } from '@/hooks/useSales';
@@ -215,24 +216,22 @@ export const CelebrationPopup = ({ isOpen, onClose, saleAmount }: CelebrationPop
       const phase3 = setTimeout(() => setAnimationPhase(3), 800);
       const phase4 = setTimeout(() => setAnimationPhase(4), 1200);
       
-      // Fermer automatiquement
-      const autoClose = setTimeout(() => {
-        setShowEffects(false);
-        onClose();
-      }, 8000);
-      
       return () => {
         clearTimeout(phase1);
         clearTimeout(phase2);
         clearTimeout(phase3);
         clearTimeout(phase4);
-        clearTimeout(autoClose);
       };
     } else {
       setShowEffects(false);
       setAnimationPhase(0);
     }
-  }, [isOpen, onClose, firstName, todaySalesCount, dailyObjective, todayCommission, saleAmount]);
+  }, [isOpen, firstName, todaySalesCount, dailyObjective, todayCommission, saleAmount]);
+
+  const handleClose = () => {
+    setShowEffects(false);
+    onClose();
+  };
 
   const confettiColors = [
     '#FFD700', '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', 
@@ -346,6 +345,19 @@ export const CelebrationPopup = ({ isOpen, onClose, saleAmount }: CelebrationPop
               {/* Message d'encouragement */}
               <div className={`text-sm italic text-muted-foreground transition-all duration-1000 delay-1000 ${animationPhase >= 4 ? 'opacity-100' : 'opacity-0'}`}>
                 {encouragementMessage}
+              </div>
+
+              {/* Bouton Continuer */}
+              <div className={`pt-4 transition-all duration-1000 delay-1200 ${animationPhase >= 4 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+                <Button 
+                  onClick={handleClose}
+                  size="lg"
+                  className="bg-gradient-to-r from-primary to-success hover:from-primary/90 hover:to-success/90 text-white font-bold px-8 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 gap-2"
+                >
+                  <Rocket className="w-5 h-5" />
+                  Continuer les ventes
+                  <ArrowRight className="w-5 h-5" />
+                </Button>
               </div>
             </div>
           </div>
