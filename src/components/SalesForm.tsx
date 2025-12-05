@@ -1,18 +1,18 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Calendar } from "@/components/ui/calendar";
+import { Progress } from "@/components/ui/progress";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Plus, Calculator, CalendarIcon, TrendingUp, ShoppingCart } from "lucide-react";
+import { Plus, Calculator, CalendarIcon, TrendingUp, Target } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { useSales } from "@/hooks/useSales";
@@ -23,6 +23,9 @@ import { CelebrationPopup } from "@/components/ui/celebration-popup";
 interface SalesFormProps {
   onSaleAdded: () => void;
 }
+
+// Objectif journalier par défaut (configurable)
+const DAILY_OBJECTIVE = 5; // Nombre de ventes par jour
 
 export const SalesForm = ({ onSaleAdded }: SalesFormProps) => {
   const [clientName, setClientName] = useState("");
@@ -35,7 +38,7 @@ export const SalesForm = ({ onSaleAdded }: SalesFormProps) => {
   const [insuranceTypesLocal, setInsuranceTypesLocal] = useState<InsuranceType[]>([]);
   
   const { profile } = useAuth();
-  const { sales, addSale, loading: saleLoading } = useSales();
+  const { sales, addSale, loading: saleLoading, fetchSales } = useSales();
   const { insuranceTypes, loading: insuranceLoading } = useInsuranceTypes();
 
   const loading = saleLoading || insuranceLoading;
@@ -50,9 +53,13 @@ export const SalesForm = ({ onSaleAdded }: SalesFormProps) => {
     const today = format(new Date(), 'yyyy-MM-dd');
     const todaySales = sales.filter(sale => sale.sale_date === today);
     const totalCommission = todaySales.reduce((sum, sale) => sum + (sale.commission || 0), 0);
+    const progress = Math.min((todaySales.length / DAILY_OBJECTIVE) * 100, 100);
     return {
       count: todaySales.length,
       totalCommission: Math.round(totalCommission * 100) / 100,
+      progress,
+      objective: DAILY_OBJECTIVE,
+      isComplete: todaySales.length >= DAILY_OBJECTIVE,
     };
   }, [sales]);
 
@@ -60,7 +67,7 @@ export const SalesForm = ({ onSaleAdded }: SalesFormProps) => {
   const simulatedCommission = useMemo(() => {
     return selectedInsurances.map(insuranceName => {
       const insurance = insuranceTypesLocal.find(ins => ins.name === insuranceName);
-      if (!insurance) return { name: insuranceName, commission: 0 };
+      if (!insurance) return { name: insuranceName, commission: 0, id: '' };
       
       // Utiliser le montant fixe de commission
       const commission = insurance.commission_amount || 0;
@@ -68,6 +75,7 @@ export const SalesForm = ({ onSaleAdded }: SalesFormProps) => {
       return {
         name: insuranceName,
         commission: Math.round(commission * 100) / 100,
+        id: insurance.id,
       };
     });
   }, [selectedInsurances, insuranceTypesLocal]);
@@ -89,20 +97,25 @@ export const SalesForm = ({ onSaleAdded }: SalesFormProps) => {
     }
 
     try {
-      // Créer la vente via le hook
-      await addSale({
-        sale_date: format(saleDate, 'yyyy-MM-dd'),
-        employee_id: profile?.id || '',
-        employee_name: profile?.full_name || '',
-        insurance_type: selectedInsurances[0], // Première assurance sélectionnée
-        contract_number: reservationNumber,
-        amount: totalSimulatedCommission, // Montant = commission totale
-        commission: totalSimulatedCommission,
-        customer_name: clientName,
-        vehicle_type: null,
-        rental_duration_days: 1,
-        notes: notes || null,
+      // Créer une vente pour chaque assurance sélectionnée
+      const salePromises = simulatedCommission.map(async (insuranceItem) => {
+        return addSale({
+          sale_date: format(saleDate, 'yyyy-MM-dd'),
+          employee_id: profile?.id || '',
+          employee_name: profile?.full_name || '',
+          insurance_type: insuranceItem.name,
+          insurance_type_id: insuranceItem.id,
+          contract_number: reservationNumber,
+          amount: insuranceItem.commission,
+          commission: insuranceItem.commission,
+          customer_name: clientName,
+          vehicle_type: null,
+          rental_duration_days: 1,
+          notes: notes || null,
+        });
       });
+
+      await Promise.all(salePromises);
 
       // Déclencher l'animation de célébration
       setLastSaleAmount(totalSimulatedCommission);
@@ -115,20 +128,28 @@ export const SalesForm = ({ onSaleAdded }: SalesFormProps) => {
         setSelectedInsurances([]);
         setNotes("");
         setSaleDate(new Date());
+        fetchSales(); // Rafraîchir les ventes
         onSaleAdded();
-      }, 6200); // Attendre que l'animation se termine
+      }, 6200);
 
     } catch (error) {
-      console.error('Error creating sale:', error);
-      // Le toast d'erreur est déjà géré dans useSales
+      console.error('Error creating sales:', error);
     }
+  };
+
+  // Couleur de la barre de progression
+  const getProgressColor = (progress: number) => {
+    if (progress >= 100) return "bg-emerald-500";
+    if (progress >= 75) return "bg-blue-500";
+    if (progress >= 50) return "bg-yellow-500";
+    return "bg-orange-500";
   };
 
   return (
     <div className="modern-form animate-gentle-fade-in max-w-4xl mx-auto w-full overflow-x-hidden">
-      {/* Récapitulatif du jour */}
+      {/* Récapitulatif du jour avec objectif */}
       <div className="modern-card p-4 mb-6 bg-gradient-to-r from-emerald-500/10 to-blue-500/10 border-emerald-500/20">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-full bg-emerald-500/20">
               <TrendingUp className="h-5 w-5 text-emerald-600" />
@@ -146,6 +167,38 @@ export const SalesForm = ({ onSaleAdded }: SalesFormProps) => {
               {todaySummary.totalCommission.toFixed(2)} €
             </p>
           </div>
+        </div>
+        
+        {/* Objectif journalier */}
+        <div className="mt-4 pt-3 border-t border-border/50">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <Target className="h-4 w-4 text-primary" />
+              <span className="text-sm font-medium">Objectif journalier</span>
+            </div>
+            <span className="text-sm font-bold">
+              {todaySummary.count} / {todaySummary.objective}
+              {todaySummary.isComplete && " 🎉"}
+            </span>
+          </div>
+          <div className="relative">
+            <Progress 
+              value={todaySummary.progress} 
+              className="h-3"
+            />
+            <div 
+              className={cn(
+                "absolute top-0 left-0 h-full rounded-full transition-all duration-500",
+                getProgressColor(todaySummary.progress)
+              )}
+              style={{ width: `${todaySummary.progress}%` }}
+            />
+          </div>
+          <p className="text-xs text-muted-foreground mt-1 text-center">
+            {todaySummary.isComplete 
+              ? "Objectif atteint ! Bravo ! 🏆" 
+              : `Plus que ${todaySummary.objective - todaySummary.count} vente${todaySummary.objective - todaySummary.count > 1 ? 's' : ''} pour atteindre votre objectif`}
+          </p>
         </div>
       </div>
 
@@ -213,10 +266,30 @@ export const SalesForm = ({ onSaleAdded }: SalesFormProps) => {
         </div>
 
         <div className="space-y-4">
-          <Label className="text-sm lg:text-base font-bold text-foreground">🛡️ Assurances souscrites <span className="text-destructive">*</span></Label>
+          <Label className="text-sm lg:text-base font-bold text-foreground">
+            🛡️ Assurances souscrites <span className="text-destructive">*</span>
+            {selectedInsurances.length > 0 && (
+              <span className="ml-2 text-primary font-normal">
+                ({selectedInsurances.length} sélectionnée{selectedInsurances.length > 1 ? 's' : ''})
+              </span>
+            )}
+          </Label>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 lg:gap-4">
               {insuranceTypesLocal.filter(ins => ins.is_active).map((insurance) => (
-                <div key={insurance.id} className="modern-card p-3 lg:p-4 cursor-pointer hover:scale-105 transition-all duration-300 group">
+                <div 
+                  key={insurance.id} 
+                  className={cn(
+                    "modern-card p-3 lg:p-4 cursor-pointer hover:scale-105 transition-all duration-300 group",
+                    selectedInsurances.includes(insurance.name) && "ring-2 ring-primary bg-primary/5"
+                  )}
+                  onClick={() => {
+                    if (selectedInsurances.includes(insurance.name)) {
+                      setSelectedInsurances(selectedInsurances.filter(name => name !== insurance.name));
+                    } else {
+                      setSelectedInsurances([...selectedInsurances, insurance.name]);
+                    }
+                  }}
+                >
                   <div className="flex items-center space-x-3 lg:space-x-4">
                     <Checkbox
                       checked={selectedInsurances.includes(insurance.name)}
@@ -253,7 +326,9 @@ export const SalesForm = ({ onSaleAdded }: SalesFormProps) => {
           <div className="modern-card p-4 lg:p-6 bg-gradient-to-r from-primary/10 to-primary/5 border-primary/30">
             <div className="flex items-center gap-2 mb-3">
               <Calculator className="h-5 w-5 text-primary" />
-              <span className="text-base lg:text-lg font-semibold text-primary">Commission estimée</span>
+              <span className="text-base lg:text-lg font-semibold text-primary">
+                Commission estimée ({selectedInsurances.length} assurance{selectedInsurances.length > 1 ? 's' : ''})
+              </span>
             </div>
             
             <div className="space-y-2 mb-4">
@@ -279,7 +354,7 @@ export const SalesForm = ({ onSaleAdded }: SalesFormProps) => {
           className="modern-button w-full h-12 lg:h-14 text-base lg:text-lg font-bold" 
           disabled={loading}
         >
-          {loading ? "🔄 Enregistrement..." : "🚀 Enregistrer la vente"}
+          {loading ? "🔄 Enregistrement..." : `🚀 Enregistrer ${selectedInsurances.length > 1 ? `les ${selectedInsurances.length} ventes` : 'la vente'}`}
         </Button>
       </form>
       
