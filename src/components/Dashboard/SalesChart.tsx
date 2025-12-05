@@ -1,15 +1,17 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useSales } from '@/hooks/useSales';
 import { useMemo } from 'react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
 import { format, subMonths, startOfMonth, endOfMonth } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
 export function SalesChart() {
-  const { sales } = useSales();
+  const { sales, loading } = useSales();
 
   // Données des 6 derniers mois
   const chartData = useMemo(() => {
+    if (!sales) return [];
+    
     const months = [];
     const now = new Date();
 
@@ -36,6 +38,22 @@ export function SalesChart() {
     return months;
   }, [sales]);
 
+  if (loading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Évolution des ventes</CardTitle>
+          <CardDescription>Chargement...</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="h-[300px] flex items-center justify-center text-muted-foreground">
+            Chargement des données...
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card>
       <CardHeader>
@@ -43,8 +61,8 @@ export function SalesChart() {
         <CardDescription>6 derniers mois</CardDescription>
       </CardHeader>
       <CardContent>
-        <ResponsiveContainer width="100%" height={300}>
-          <LineChart data={chartData}>
+        <div style={{ width: '100%', height: 300 }}>
+          <LineChart width={500} height={300} data={chartData} style={{ width: '100%', maxWidth: '100%' }}>
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="month" />
             <YAxis />
@@ -60,7 +78,7 @@ export function SalesChart() {
               dot={{ fill: '#2563eb' }}
             />
           </LineChart>
-        </ResponsiveContainer>
+        </div>
       </CardContent>
     </Card>
   );
