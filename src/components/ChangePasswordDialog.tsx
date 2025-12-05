@@ -14,6 +14,8 @@ import {
 } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { Eye, EyeOff, Lock } from 'lucide-react';
+import { validatePassword } from '@/lib/passwordValidation';
+import { PasswordStrengthIndicator } from '@/components/PasswordStrengthIndicator';
 
 interface ChangePasswordDialogProps {
   open: boolean;
@@ -43,8 +45,9 @@ export function ChangePasswordDialog({ open, onOpenChange }: ChangePasswordDialo
       return;
     }
 
-    if (newPassword.length < 6) {
-      toast.error('Le nouveau mot de passe doit contenir au moins 6 caractères');
+    const passwordValidation = validatePassword(newPassword);
+    if (!passwordValidation.isValid) {
+      toast.error('Le mot de passe ne respecte pas toutes les règles de sécurité');
       return;
     }
     
@@ -137,9 +140,9 @@ export function ChangePasswordDialog({ open, onOpenChange }: ChangePasswordDialo
                 type={showNewPassword ? 'text' : 'password'}
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="••••••••"
+              placeholder="••••••••"
                 required
-                minLength={6}
+                minLength={8}
               />
               <Button
                 type="button"
@@ -155,6 +158,7 @@ export function ChangePasswordDialog({ open, onOpenChange }: ChangePasswordDialo
                 )}
               </Button>
             </div>
+            <PasswordStrengthIndicator password={newPassword} />
           </div>
           <div className="space-y-2">
             <Label htmlFor="confirm-password">Confirmer le nouveau mot de passe</Label>
@@ -165,7 +169,7 @@ export function ChangePasswordDialog({ open, onOpenChange }: ChangePasswordDialo
               onChange={(e) => setConfirmPassword(e.target.value)}
               placeholder="••••••••"
               required
-              minLength={6}
+              minLength={8}
             />
           </div>
           <DialogFooter>
