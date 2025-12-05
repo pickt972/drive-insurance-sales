@@ -8,7 +8,7 @@ import { UserObjectiveProgress } from '@/components/Dashboard/UserObjectiveProgr
 import { DailyLeaderboard } from '@/components/Dashboard/DailyLeaderboard';
 import { Button } from '@/components/ui/button';
 import { PlusCircle } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { SalesForm } from './SalesForm';
 import { SalesHistory } from './SalesHistory';
 
@@ -17,10 +17,13 @@ export const Dashboard = () => {
   const [showForm, setShowForm] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
 
-  // Écouter les nouvelles ventes en temps réel
-  useRealtimeSales(() => {
+  // Stable callback for realtime updates
+  const handleRealtimeUpdate = useCallback(() => {
     setRefreshKey(prev => prev + 1);
-  });
+  }, []);
+
+  // Écouter les nouvelles ventes en temps réel
+  useRealtimeSales(handleRealtimeUpdate);
 
   const username = profile?.full_name?.split(' ')[0] || profile?.email?.split('@')[0] || '';
 

@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
@@ -6,6 +6,10 @@ import { useAuth } from '@/hooks/useAuth';
 export function useRealtimeSales(onNewSale?: () => void) {
   const { toast } = useToast();
   const { user, isAdmin } = useAuth();
+  
+  // Use ref to avoid re-subscribing when callback changes
+  const onNewSaleRef = useRef(onNewSale);
+  onNewSaleRef.current = onNewSale;
 
   useEffect(() => {
     if (!user) return;
@@ -31,12 +35,12 @@ export function useRealtimeSales(onNewSale?: () => void) {
           // Notification visuelle
           toast({
             title: '🎉 Nouvelle vente enregistrée !',
-            description: `${sale.employee_name} - ${sale.amount.toFixed(2)} € (Commission: ${sale.commission.toFixed(2)} €)`,
+            description: `${sale.employee_name || 'Employé'} - ${(sale.amount || 0).toFixed(2)} €`,
             duration: 5000,
           });
 
           // Callback pour rafraîchir les données
-          onNewSale?.();
+          onNewSaleRef.current?.();
         }
       )
       .subscribe((status) => {
@@ -47,5 +51,5 @@ export function useRealtimeSales(onNewSale?: () => void) {
       console.log('🔴 Unsubscribing from realtime sales');
       supabase.removeChannel(channel);
     };
-  }, [user?.id, isAdmin, onNewSale, toast]); // Use user?.id for stable reference
+  }, [user?.id, isAdmin, toast]);
 }
