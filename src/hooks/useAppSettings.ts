@@ -4,11 +4,13 @@ import { supabase } from '@/integrations/supabase/client';
 interface AppSettings {
   app_name: string;
   app_logo: string | null;
+  daily_objective: number;
 }
 
 const DEFAULT_SETTINGS: AppSettings = {
   app_name: 'Gestion des Ventes',
   app_logo: null,
+  daily_objective: 5,
 };
 
 export function useAppSettings() {
@@ -24,7 +26,7 @@ export function useAppSettings() {
       const { data, error } = await (supabase as any)
         .from('system_settings')
         .select('key, value')
-        .in('key', ['app_name', 'app_logo']);
+        .in('key', ['app_name', 'app_logo', 'daily_objective']);
 
       if (error) {
         console.error('Error fetching app settings:', error);
@@ -37,6 +39,8 @@ export function useAppSettings() {
           settingsObj.app_name = setting.value;
         } else if (setting.key === 'app_logo') {
           settingsObj.app_logo = setting.value;
+        } else if (setting.key === 'daily_objective') {
+          settingsObj.daily_objective = Number(setting.value) || 5;
         }
       });
 

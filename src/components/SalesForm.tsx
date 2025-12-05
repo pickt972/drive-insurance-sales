@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
@@ -12,20 +12,18 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Plus, Calculator, CalendarIcon, TrendingUp, Target } from "lucide-react";
+import { Plus, Calculator, CalendarIcon, TrendingUp, Target, Trophy } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { useSales } from "@/hooks/useSales";
 import { useInsuranceTypes, InsuranceType } from "@/hooks/useInsuranceTypes";
+import { useAppSettings } from "@/hooks/useAppSettings";
 import { toast } from "@/hooks/use-toast";
 import { CelebrationPopup } from "@/components/ui/celebration-popup";
 
 interface SalesFormProps {
   onSaleAdded: () => void;
 }
-
-// Objectif journalier par défaut (configurable)
-const DAILY_OBJECTIVE = 5; // Nombre de ventes par jour
 
 export const SalesForm = ({ onSaleAdded }: SalesFormProps) => {
   const [clientName, setClientName] = useState("");
@@ -36,12 +34,15 @@ export const SalesForm = ({ onSaleAdded }: SalesFormProps) => {
   const [showCelebration, setShowCelebration] = useState(false);
   const [lastSaleAmount, setLastSaleAmount] = useState(0);
   const [insuranceTypesLocal, setInsuranceTypesLocal] = useState<InsuranceType[]>([]);
+  const [objectiveReachedNotified, setObjectiveReachedNotified] = useState(false);
   
   const { profile } = useAuth();
   const { sales, addSale, loading: saleLoading, fetchSales } = useSales();
   const { insuranceTypes, loading: insuranceLoading } = useInsuranceTypes();
+  const { settings: appSettings } = useAppSettings();
 
   const loading = saleLoading || insuranceLoading;
+  const dailyObjective = appSettings.daily_objective || 5;
 
   // Charger les types d'assurance au montage
   useEffect(() => {
@@ -53,15 +54,31 @@ export const SalesForm = ({ onSaleAdded }: SalesFormProps) => {
     const today = format(new Date(), 'yyyy-MM-dd');
     const todaySales = sales.filter(sale => sale.sale_date === today);
     const totalCommission = todaySales.reduce((sum, sale) => sum + (sale.commission || 0), 0);
-    const progress = Math.min((todaySales.length / DAILY_OBJECTIVE) * 100, 100);
+    const progress = Math.min((todaySales.length / dailyObjective) * 100, 100);
     return {
       count: todaySales.length,
       totalCommission: Math.round(totalCommission * 100) / 100,
       progress,
-      objective: DAILY_OBJECTIVE,
-      isComplete: todaySales.length >= DAILY_OBJECTIVE,
+      objective: dailyObjective,
+      isComplete: todaySales.length >= dailyObjective,
     };
-  }, [sales]);
+  }, [sales, dailyObjective]);
+
+  // Notification quand l'objectif est atteint
+  useEffect(() => {
+    if (todaySummary.isComplete && !objectiveReachedNotified) {
+      setObjectiveReachedNotified(true);
+      toast({
+        title: "🏆 Objectif atteint !",
+        description: `Félicitations ! Vous avez atteint votre objectif de ${dailyObjective} ventes aujourd'hui !`,
+        duration: 8000,
+      });
+    }
+    // Reset notification flag at midnight
+    if (!todaySummary.isComplete && objectiveReachedNotified) {
+      setObjectiveReachedNotified(false);
+    }
+  }, [todaySummary.isComplete, objectiveReachedNotified, dailyObjective]);
 
   // Calcul de la commission simulée (uniquement commissions fixes)
   const simulatedCommission = useMemo(() => {
@@ -97,6 +114,8 @@ export const SalesForm = ({ onSaleAdded }: SalesFormProps) => {
     }
 
     try {
+      const previousCount = todaySummary.count;
+      
       // Créer une vente pour chaque assurance sélectionnée
       const salePromises = simulatedCommission.map(async (insuranceItem) => {
         return addSale({
@@ -116,6 +135,12 @@ export const SalesForm = ({ onSaleAdded }: SalesFormProps) => {
       });
 
       await Promise.all(salePromises);
+
+      // Vérifier si l'objectif vient d'être atteint avec cette vente
+      const newCount = previousCount + selectedInsurances.length;
+      if (newCount >= dailyObjective && previousCount < dailyObjective) {
+        // La notification sera affichée via le useEffect
+      }
 
       // Déclencher l'animation de célébration
       setLastSaleAmount(totalSimulatedCommission);
@@ -148,16 +173,29 @@ export const SalesForm = ({ onSaleAdded }: SalesFormProps) => {
   return (
     <div className="modern-form animate-gentle-fade-in max-w-4xl mx-auto w-full overflow-x-hidden">
       {/* Récapitulatif du jour avec objectif */}
-      <div className="modern-card p-4 mb-6 bg-gradient-to-r from-emerald-500/10 to-blue-500/10 border-emerald-500/20">
+      <div className={cn(
+        "modern-card p-4 mb-6 border",
+        todaySummary.isComplete 
+          ? "bg-gradient-to-r from-emerald-500/20 to-yellow-500/10 border-emerald-500/30" 
+          : "bg-gradient-to-r from-emerald-500/10 to-blue-500/10 border-emerald-500/20"
+      )}>
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-full bg-emerald-500/20">
-              <TrendingUp className="h-5 w-5 text-emerald-600" />
+            <div className={cn(
+              "p-2 rounded-full",
+              todaySummary.isComplete ? "bg-emerald-500/30" : "bg-emerald-500/20"
+            )}>
+              {todaySummary.isComplete ? (
+                <Trophy className="h-5 w-5 text-yellow-600" />
+              ) : (
+                <TrendingUp className="h-5 w-5 text-emerald-600" />
+              )}
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Vos ventes aujourd'hui</p>
               <p className="text-lg font-bold text-foreground">
                 {todaySummary.count} vente{todaySummary.count > 1 ? 's' : ''}
+                {todaySummary.isComplete && " 🏆"}
               </p>
             </div>
           </div>
@@ -176,16 +214,15 @@ export const SalesForm = ({ onSaleAdded }: SalesFormProps) => {
               <Target className="h-4 w-4 text-primary" />
               <span className="text-sm font-medium">Objectif journalier</span>
             </div>
-            <span className="text-sm font-bold">
+            <span className={cn(
+              "text-sm font-bold",
+              todaySummary.isComplete && "text-emerald-600"
+            )}>
               {todaySummary.count} / {todaySummary.objective}
-              {todaySummary.isComplete && " 🎉"}
+              {todaySummary.isComplete && " ✓"}
             </span>
           </div>
-          <div className="relative">
-            <Progress 
-              value={todaySummary.progress} 
-              className="h-3"
-            />
+          <div className="relative h-3 bg-muted rounded-full overflow-hidden">
             <div 
               className={cn(
                 "absolute top-0 left-0 h-full rounded-full transition-all duration-500",
@@ -194,9 +231,12 @@ export const SalesForm = ({ onSaleAdded }: SalesFormProps) => {
               style={{ width: `${todaySummary.progress}%` }}
             />
           </div>
-          <p className="text-xs text-muted-foreground mt-1 text-center">
+          <p className={cn(
+            "text-xs mt-1 text-center",
+            todaySummary.isComplete ? "text-emerald-600 font-medium" : "text-muted-foreground"
+          )}>
             {todaySummary.isComplete 
-              ? "Objectif atteint ! Bravo ! 🏆" 
+              ? "🎉 Objectif atteint ! Bravo ! Continuez comme ça ! 🎉" 
               : `Plus que ${todaySummary.objective - todaySummary.count} vente${todaySummary.objective - todaySummary.count > 1 ? 's' : ''} pour atteindre votre objectif`}
           </p>
         </div>
