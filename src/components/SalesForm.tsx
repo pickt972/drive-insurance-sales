@@ -12,7 +12,8 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Plus, Calculator, CalendarIcon, TrendingUp, Target, Trophy } from "lucide-react";
+import { Plus, Calculator, CalendarIcon, TrendingUp, Target, Trophy, Lightbulb } from "lucide-react";
+import { SalesPitchGenerator } from "@/components/SalesPitchGenerator";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { useSales } from "@/hooks/useSales";
@@ -330,21 +331,30 @@ export const SalesForm = ({ onSaleAdded }: SalesFormProps) => {
                     }
                   }}
                 >
-                  <div className="flex items-center space-x-3 lg:space-x-4">
-                    <Checkbox
-                      checked={selectedInsurances.includes(insurance.name)}
-                      onCheckedChange={(checked) => {
-                        if (checked) {
-                          setSelectedInsurances([...selectedInsurances, insurance.name]);
-                        } else {
-                          setSelectedInsurances(selectedInsurances.filter(name => name !== insurance.name));
-                        }
-                      }}
-                      className="scale-110 lg:scale-125"
-                    />
-                    <Label className="font-semibold text-sm lg:text-base group-hover:text-primary transition-colors duration-300 cursor-pointer">
-                      {insurance.name}
-                    </Label>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3 lg:space-x-4">
+                      <Checkbox
+                        checked={selectedInsurances.includes(insurance.name)}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            setSelectedInsurances([...selectedInsurances, insurance.name]);
+                          } else {
+                            setSelectedInsurances(selectedInsurances.filter(name => name !== insurance.name));
+                          }
+                        }}
+                        className="scale-110 lg:scale-125"
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                      <Label className="font-semibold text-sm lg:text-base group-hover:text-primary transition-colors duration-300 cursor-pointer">
+                        {insurance.name}
+                      </Label>
+                    </div>
+                    <div onClick={(e) => e.stopPropagation()}>
+                      <SalesPitchGenerator 
+                        insuranceType={insurance.name}
+                        insuranceDescription={insurance.description}
+                      />
+                    </div>
                   </div>
                 </div>
               ))}
