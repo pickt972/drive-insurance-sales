@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Eye, EyeOff, Loader2, Car } from 'lucide-react';
+import { ForgotPasswordDialog } from '@/components/ForgotPasswordDialog';
 
 export default function LoginPage() {
   const [identifier, setIdentifier] = useState('');
@@ -15,6 +16,7 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false);
 
   const { signIn, isAuthenticated, isAdmin, isLoading } = useAuth();
   const { settings } = useAppSettings();
@@ -117,6 +119,13 @@ export default function LoginPage() {
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
+              <button
+                type="button"
+                onClick={() => setForgotPasswordOpen(true)}
+                className="text-sm text-primary hover:underline"
+              >
+                Mot de passe oublié ?
+              </button>
             </div>
 
             <Button type="submit" className="w-full" disabled={isSubmitting}>
@@ -132,6 +141,11 @@ export default function LoginPage() {
           </form>
         </CardContent>
       </Card>
+
+      <ForgotPasswordDialog 
+        open={forgotPasswordOpen} 
+        onOpenChange={setForgotPasswordOpen} 
+      />
     </div>
   );
 }
