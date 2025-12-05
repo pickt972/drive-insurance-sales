@@ -13,6 +13,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { validatePassword } from '@/lib/passwordValidation';
+import { PasswordStrengthIndicator } from '@/components/PasswordStrengthIndicator';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -240,10 +242,11 @@ export function AdminUsersPage() {
       return;
     }
 
-    if (createFormData.password.length < 6) {
+    const passwordValidation = validatePassword(createFormData.password);
+    if (!passwordValidation.isValid) {
       toast({
         title: 'Erreur',
-        description: 'Le mot de passe doit contenir au moins 6 caractères',
+        description: 'Le mot de passe ne respecte pas toutes les règles de sécurité',
         variant: 'destructive',
       });
       return;
@@ -460,10 +463,11 @@ export function AdminUsersPage() {
   const resetPassword = async () => {
     if (!userToResetPassword) return;
 
-    if (newPassword.length < 6) {
+    const passwordValidation = validatePassword(newPassword);
+    if (!passwordValidation.isValid) {
       toast({
         title: 'Erreur',
-        description: 'Le mot de passe doit contenir au moins 6 caractères',
+        description: 'Le mot de passe ne respecte pas toutes les règles de sécurité',
         variant: 'destructive',
       });
       return;
@@ -762,7 +766,7 @@ export function AdminUsersPage() {
                   type={showPassword ? 'text' : 'password'}
                   value={createFormData.password}
                   onChange={(e) => handleCreateFormChange('password', e.target.value)}
-                  placeholder="Minimum 6 caractères"
+                  placeholder="Mot de passe sécurisé"
                 />
                 <Button
                   type="button"
@@ -774,6 +778,7 @@ export function AdminUsersPage() {
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </Button>
               </div>
+              <PasswordStrengthIndicator password={createFormData.password} />
             </div>
             <div className="grid gap-2">
               <Label htmlFor="create_phone">Téléphone</Label>
@@ -948,7 +953,7 @@ export function AdminUsersPage() {
                   type={showNewPassword ? 'text' : 'password'}
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
-                  placeholder="Minimum 6 caractères"
+                  placeholder="Mot de passe sécurisé"
                 />
                 <Button
                   type="button"
@@ -960,13 +965,14 @@ export function AdminUsersPage() {
                   {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </Button>
               </div>
+              <PasswordStrengthIndicator password={newPassword} />
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setResetPasswordDialogOpen(false)}>
               Annuler
             </Button>
-            <Button onClick={resetPassword} disabled={saving || newPassword.length < 6}>
+            <Button onClick={resetPassword} disabled={saving || !validatePassword(newPassword).isValid}>
               {saving ? 'Réinitialisation...' : 'Réinitialiser'}
             </Button>
           </DialogFooter>
