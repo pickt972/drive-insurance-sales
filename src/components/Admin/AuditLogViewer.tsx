@@ -5,10 +5,14 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
-import { Shield, Search, AlertCircle } from 'lucide-react';
-import { format } from 'date-fns';
+import { Button } from '@/components/ui/button';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { Shield, Search, AlertCircle, CalendarIcon, X } from 'lucide-react';
+import { format, isWithinInterval, startOfDay, endOfDay } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
 
 interface AuditLog {
   id: string;
@@ -28,6 +32,8 @@ export function AuditLogViewer() {
   const [filterAction, setFilterAction] = useState('all');
   const [filterUser, setFilterUser] = useState('all');
   const [search, setSearch] = useState('');
+  const [dateFrom, setDateFrom] = useState<Date | undefined>(undefined);
+  const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -60,10 +66,36 @@ export function AuditLogViewer() {
     if (filterUser !== 'all' && log.user_email !== filterUser) return false;
     if (search && !log.user_email.toLowerCase().includes(search.toLowerCase()) &&
         !log.table_name.toLowerCase().includes(search.toLowerCase())) return false;
+    
+    // Date range filtering
+    if (dateFrom || dateTo) {
+      const logDate = new Date(log.created_at);
+      if (dateFrom && dateTo) {
+        if (!isWithinInterval(logDate, { start: startOfDay(dateFrom), end: endOfDay(dateTo) })) return false;
+      } else if (dateFrom) {
+        if (logDate < startOfDay(dateFrom)) return false;
+      } else if (dateTo) {
+        if (logDate > endOfDay(dateTo)) return false;
+      }
+    }
+    
     return true;
   });
 
   const uniqueUsers = Array.from(new Set(logs.map(l => l.user_email))).sort();
+
+  const clearDateFilters = () => {
+    setDateFrom(undefined);
+    setDateTo(undefined);
+  };
+
+  const clearAllFilters = () => {
+    setFilterAction('all');
+    setFilterUser('all');
+    setSearch('');
+    setDateFrom(undefined);
+    setDateTo(undefined);
+  };
 
   const getActionBadge = (action: string) => {
     const variants: Record<string, { variant: "default" | "destructive" | "secondary"; color: string }> = {
@@ -91,42 +123,115 @@ export function AuditLogViewer() {
       </CardHeader>
       <CardContent>
         {/* Filtres */}
-        <div className="flex flex-col md:flex-row gap-4 mb-6">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Rechercher..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-10"
-            />
+        <div className="flex flex-col gap-4 mb-6">
+          {/* Row 1: Search and action filters */}
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Rechercher..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+
+            <Select value={filterAction} onValueChange={setFilterAction}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Action" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Toutes les actions</SelectItem>
+                <SelectItem value="INSERT">Création</SelectItem>
+                <SelectItem value="UPDATE">Modification</SelectItem>
+                <SelectItem value="DELETE">Suppression</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select value={filterUser} onValueChange={setFilterUser}>
+              <SelectTrigger className="w-[200px]">
+                <SelectValue placeholder="Utilisateur" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tous les utilisateurs</SelectItem>
+                {uniqueUsers.map(user => (
+                  <SelectItem key={user} value={user}>
+                    {user}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
-          <Select value={filterAction} onValueChange={setFilterAction}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Action" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Toutes les actions</SelectItem>
-              <SelectItem value="INSERT">Création</SelectItem>
-              <SelectItem value="UPDATE">Modification</SelectItem>
-              <SelectItem value="DELETE">Suppression</SelectItem>
-            </SelectContent>
-          </Select>
+          {/* Row 2: Date filters */}
+          <div className="flex flex-col md:flex-row gap-4 items-end">
+            <div className="flex flex-col gap-1">
+              <label className="text-sm text-muted-foreground">Date début</label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-[180px] justify-start text-left font-normal",
+                      !dateFrom && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {dateFrom ? format(dateFrom, "dd/MM/yyyy", { locale: fr }) : "Sélectionner"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={dateFrom}
+                    onSelect={setDateFrom}
+                    locale={fr}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
 
-          <Select value={filterUser} onValueChange={setFilterUser}>
-            <SelectTrigger className="w-[200px]">
-              <SelectValue placeholder="Utilisateur" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Tous les utilisateurs</SelectItem>
-              {uniqueUsers.map(user => (
-                <SelectItem key={user} value={user}>
-                  {user}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            <div className="flex flex-col gap-1">
+              <label className="text-sm text-muted-foreground">Date fin</label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-[180px] justify-start text-left font-normal",
+                      !dateTo && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {dateTo ? format(dateTo, "dd/MM/yyyy", { locale: fr }) : "Sélectionner"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={dateTo}
+                    onSelect={setDateTo}
+                    locale={fr}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            {(dateFrom || dateTo) && (
+              <Button variant="ghost" size="sm" onClick={clearDateFilters} className="h-10">
+                <X className="h-4 w-4 mr-1" />
+                Effacer dates
+              </Button>
+            )}
+
+            {(filterAction !== 'all' || filterUser !== 'all' || search || dateFrom || dateTo) && (
+              <Button variant="outline" size="sm" onClick={clearAllFilters} className="h-10">
+                Réinitialiser filtres
+              </Button>
+            )}
+          </div>
         </div>
 
         {/* Tableau des logs */}
