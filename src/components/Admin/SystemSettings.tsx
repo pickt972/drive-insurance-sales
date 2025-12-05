@@ -5,7 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
-import { Settings, Save, RefreshCw, Upload, X, Image as ImageIcon } from 'lucide-react';
+import { Settings, Save, RefreshCw, Upload, X, Image as ImageIcon, Target } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface SystemSetting {
@@ -22,6 +22,7 @@ export function SystemSettings() {
     notification_email: '',
     commission_rate: 15,
     max_sales_per_day: 50,
+    daily_objective: 5,
   });
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -56,6 +57,7 @@ export function SystemSettings() {
         notification_email: settingsObj.notification_email || '',
         commission_rate: settingsObj.commission_rate || 15,
         max_sales_per_day: settingsObj.max_sales_per_day || 50,
+        daily_objective: settingsObj.daily_objective || 5,
       });
     } catch (error: any) {
       toast({
@@ -366,6 +368,39 @@ export function SystemSettings() {
             />
             <p className="text-xs text-muted-foreground">
               Nombre maximum de ventes qu'un employé peut créer par jour
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Objectif journalier */}
+      <Card className="modern-card animate-gentle-fade-in">
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <div className="p-2 rounded-lg bg-gradient-to-br from-emerald-500/10 to-emerald-500/5">
+              <Target className="h-5 w-5 text-emerald-600" />
+            </div>
+            <div>
+              <CardTitle>Objectif journalier</CardTitle>
+              <CardDescription>Objectif de ventes affiché aux employés</CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="daily-objective">Nombre de ventes par jour</Label>
+            <Input
+              id="daily-objective"
+              type="number"
+              min={1}
+              max={50}
+              value={settings.daily_objective}
+              onChange={(e) => 
+                setSettings({ ...settings, daily_objective: parseInt(e.target.value) || 5 })
+              }
+            />
+            <p className="text-xs text-muted-foreground">
+              Objectif affiché dans le formulaire de saisie des ventes avec barre de progression
             </p>
           </div>
         </CardContent>
