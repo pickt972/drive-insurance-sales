@@ -1,8 +1,17 @@
 import { useAuth } from '@/hooks/useAuth';
 import { useAppSettings } from '@/hooks/useAppSettings';
 import { Button } from '@/components/ui/button';
-import { LogOut, Home, PlusCircle, BarChart } from 'lucide-react';
+import { LogOut, Home, Key } from 'lucide-react';
 import { useState } from 'react';
+import { ChangePasswordDialog } from '@/components/ChangePasswordDialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 
 interface UserLayoutProps {
   children: React.ReactNode;
@@ -11,7 +20,7 @@ interface UserLayoutProps {
 export function UserLayout({ children }: UserLayoutProps) {
   const { profile, signOut } = useAuth();
   const { settings: appSettings } = useAppSettings();
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const [changePasswordOpen, setChangePasswordOpen] = useState(false);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-primary-light/30 to-background">
@@ -39,18 +48,37 @@ export function UserLayout({ children }: UserLayoutProps) {
               </div>
             </div>
             <div className="flex items-center gap-4">
-              <div className="text-right hidden sm:block">
-                <p className="text-sm font-semibold text-foreground">{profile?.full_name}</p>
-                <p className="text-xs text-muted-foreground">{profile?.email}</p>
-              </div>
-              <Button
-                variant="outline"
-                onClick={signOut}
-                className="border-primary/30 text-primary hover:bg-primary hover:text-primary-foreground transition-all duration-300 hover:shadow-lg hover:scale-105"
-              >
-                <LogOut className="mr-2 h-4 w-4" />
-                Déconnexion
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="flex items-center gap-3 hover:bg-primary/10 px-3">
+                    <div className="text-right hidden sm:block">
+                      <p className="text-sm font-semibold text-foreground">{profile?.full_name}</p>
+                      <p className="text-xs text-muted-foreground">{profile?.email}</p>
+                    </div>
+                    <Avatar className="h-9 w-9 border-2 border-primary/30">
+                      <AvatarFallback className="bg-primary/10 text-primary font-semibold">
+                        {profile?.full_name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'U'}
+                      </AvatarFallback>
+                    </Avatar>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <div className="px-2 py-1.5">
+                    <p className="text-sm font-medium">{profile?.full_name}</p>
+                    <p className="text-xs text-muted-foreground">{profile?.email}</p>
+                  </div>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => setChangePasswordOpen(true)}>
+                    <Key className="mr-2 h-4 w-4" />
+                    Modifier mon mot de passe
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={signOut} className="text-destructive focus:text-destructive">
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Déconnexion
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
         </div>
@@ -75,6 +103,11 @@ export function UserLayout({ children }: UserLayoutProps) {
           </div>
         </div>
       </footer>
+
+      <ChangePasswordDialog 
+        open={changePasswordOpen} 
+        onOpenChange={setChangePasswordOpen} 
+      />
     </div>
   );
 }
