@@ -1,14 +1,16 @@
 import { useMemo } from 'react';
 import { useSales } from '@/hooks/useSales';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
 import { format, subMonths, startOfMonth, endOfMonth } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
 export function ComparisonChart() {
-  const { sales } = useSales();
+  const { sales, loading } = useSales();
 
   const chartData = useMemo(() => {
+    if (!sales || sales.length === 0) return [];
+    
     const months = [];
     const now = new Date();
 
@@ -38,6 +40,22 @@ export function ComparisonChart() {
     return months;
   }, [sales]);
 
+  if (loading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Comparaison annuelle</CardTitle>
+          <CardDescription>Chargement...</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="h-[300px] flex items-center justify-center text-muted-foreground">
+            Chargement des données...
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card>
       <CardHeader>
@@ -45,8 +63,8 @@ export function ComparisonChart() {
         <CardDescription>Année en cours vs année précédente</CardDescription>
       </CardHeader>
       <CardContent>
-        <ResponsiveContainer width="100%" height={300}>
-          <LineChart data={chartData}>
+        <div style={{ width: '100%', height: 300 }}>
+          <LineChart width={500} height={300} data={chartData} style={{ width: '100%', maxWidth: '100%' }}>
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="month" />
             <YAxis />
@@ -68,7 +86,7 @@ export function ComparisonChart() {
               name="2024"
             />
           </LineChart>
-        </ResponsiveContainer>
+        </div>
       </CardContent>
     </Card>
   );

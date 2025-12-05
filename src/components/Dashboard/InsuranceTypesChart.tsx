@@ -1,15 +1,17 @@
 import { useMemo } from 'react';
 import { useSales } from '@/hooks/useSales';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
+import { PieChart, Pie, Cell, Legend, Tooltip } from 'recharts';
 import { startOfMonth, endOfMonth } from 'date-fns';
 
 const COLORS = ['#2563eb', '#16a34a', '#eab308', '#dc2626', '#9333ea'];
 
 export function InsuranceTypesChart() {
-  const { sales } = useSales();
+  const { sales, loading } = useSales();
 
   const chartData = useMemo(() => {
+    if (!sales || sales.length === 0) return [];
+    
     const now = new Date();
     const firstDay = startOfMonth(now);
     const lastDay = endOfMonth(now);
@@ -36,6 +38,38 @@ export function InsuranceTypesChart() {
     }));
   }, [sales]);
 
+  if (loading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Répartition par type d'assurance</CardTitle>
+          <CardDescription>Chargement...</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="h-[300px] flex items-center justify-center text-muted-foreground">
+            Chargement des données...
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (chartData.length === 0) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Répartition par type d'assurance</CardTitle>
+          <CardDescription>Mois en cours</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="h-[300px] flex items-center justify-center text-muted-foreground">
+            Aucune vente ce mois-ci
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card>
       <CardHeader>
@@ -43,8 +77,8 @@ export function InsuranceTypesChart() {
         <CardDescription>Mois en cours</CardDescription>
       </CardHeader>
       <CardContent>
-        <ResponsiveContainer width="100%" height={300}>
-          <PieChart>
+        <div style={{ width: '100%', height: 300 }}>
+          <PieChart width={400} height={300} style={{ width: '100%', maxWidth: '100%' }}>
             <Pie
               data={chartData}
               cx="50%"
@@ -64,7 +98,7 @@ export function InsuranceTypesChart() {
             />
             <Legend />
           </PieChart>
-        </ResponsiveContainer>
+        </div>
       </CardContent>
     </Card>
   );
