@@ -10,7 +10,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Shield, Search, AlertCircle, CalendarIcon, X, Eye, ArrowRight } from 'lucide-react';
+import { Shield, Search, AlertCircle, CalendarIcon, X, Eye, ArrowRight, RotateCcw, Loader2 } from 'lucide-react';
 import { format, isWithinInterval, startOfDay, endOfDay } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useToast } from '@/hooks/use-toast';
@@ -56,6 +56,7 @@ export function AuditLogViewer() {
   const [dateFrom, setDateFrom] = useState<Date | undefined>(undefined);
   const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
   const [selectedLog, setSelectedLog] = useState<AuditLog | null>(null);
+  const [restoring, setRestoring] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -80,6 +81,47 @@ export function AuditLogViewer() {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const restoreSale = async (log: AuditLog) => {
+    if (!log.old_values || log.table_name !== 'insurance_sales') {
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de restaurer cet enregistrement',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    setRestoring(true);
+    try {
+      const { id, created_at, updated_at, ...saleData } = log.old_values;
+      
+      const { error } = await supabase
+        .from('insurance_sales')
+        .insert({
+          ...saleData,
+          notes: `${saleData.notes || ''} [Restauré le ${format(new Date(), 'dd/MM/yyyy HH:mm', { locale: fr })}]`.trim()
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: 'Vente restaurée',
+        description: 'La vente a été restaurée avec succès',
+      });
+
+      setSelectedLog(null);
+      fetchLogs();
+    } catch (error: any) {
+      toast({
+        title: 'Erreur',
+        description: error.message || 'Impossible de restaurer la vente',
+        variant: 'destructive'
+      });
+    } finally {
+      setRestoring(false);
     }
   };
 
@@ -435,7 +477,25 @@ export function AuditLogViewer() {
                   </div>
                 ) : selectedLog.action === 'DELETE' && selectedLog.old_values ? (
                   <div className="space-y-3">
-                    <h4 className="font-medium text-sm">Données supprimées :</h4>
+                    <div className="flex items-center justify-between">
+                      <h4 className="font-medium text-sm">Données supprimées :</h4>
+                      {selectedLog.table_name === 'insurance_sales' && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => restoreSale(selectedLog)}
+                          disabled={restoring}
+                          className="text-primary hover:text-primary"
+                        >
+                          {restoring ? (
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          ) : (
+                            <RotateCcw className="h-4 w-4 mr-2" />
+                          )}
+                          Restaurer cette vente
+                        </Button>
+                      )}
+                    </div>
                     <div className="border rounded-lg overflow-hidden">
                       <Table>
                         <TableHeader>
