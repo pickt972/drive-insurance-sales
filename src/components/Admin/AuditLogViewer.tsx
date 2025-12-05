@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Shield, Search, AlertCircle, CalendarIcon, X, Eye, ArrowRight, RotateCcw, Loader2 } from 'lucide-react';
 import { format, isWithinInterval, startOfDay, endOfDay } from 'date-fns';
@@ -57,6 +58,7 @@ export function AuditLogViewer() {
   const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
   const [selectedLog, setSelectedLog] = useState<AuditLog | null>(null);
   const [restoring, setRestoring] = useState(false);
+  const [confirmRestore, setConfirmRestore] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -483,7 +485,7 @@ export function AuditLogViewer() {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => restoreSale(selectedLog)}
+                          onClick={() => setConfirmRestore(true)}
                           disabled={restoring}
                           className="text-primary hover:text-primary"
                         >
@@ -529,6 +531,37 @@ export function AuditLogViewer() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Confirmation Dialog */}
+      <AlertDialog open={confirmRestore} onOpenChange={setConfirmRestore}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmer la restauration</AlertDialogTitle>
+            <AlertDialogDescription>
+              Êtes-vous sûr de vouloir restaurer cette vente ? Une nouvelle entrée sera créée avec les données d'origine.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={restoring}>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (selectedLog) {
+                  restoreSale(selectedLog);
+                  setConfirmRestore(false);
+                }
+              }}
+              disabled={restoring}
+            >
+              {restoring ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <RotateCcw className="h-4 w-4 mr-2" />
+              )}
+              Restaurer
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 }
