@@ -8,6 +8,3 @@ verify_jwt = true
 
 [functions.reset-user-password]
 verify_jwt = true
-
-[functions.ensure-admins]
-verify_jwt = true
