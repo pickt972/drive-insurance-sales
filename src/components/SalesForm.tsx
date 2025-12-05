@@ -130,7 +130,8 @@ export const SalesForm = ({ onSaleAdded }: SalesFormProps) => {
     });
 
     if (!validationResult.success) {
-      setFormErrors(validationResult.errors);
+      const errors = validationResult.errors as Record<string, string>;
+      setFormErrors(errors);
       toast({
         title: "Erreur de validation",
         description: "Veuillez corriger les erreurs dans le formulaire",
