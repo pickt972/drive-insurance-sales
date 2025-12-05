@@ -129,9 +129,8 @@ export const SalesForm = ({ onSaleAdded }: SalesFormProps) => {
       selectedInsurances,
     });
 
-    if (!validationResult.success) {
-      const errors = validationResult.errors as Record<string, string>;
-      setFormErrors(errors);
+    if (validationResult.success === false) {
+      setFormErrors(validationResult.errors);
       toast({
         title: "Erreur de validation",
         description: "Veuillez corriger les erreurs dans le formulaire",
