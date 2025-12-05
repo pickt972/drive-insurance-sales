@@ -464,20 +464,17 @@
   }
 }
 
-/* Classes d'animation */
+/* Classes d'animation - opacity définie dans keyframes, pas en initial state */
 .animate-gentle-fade-in {
   animation: gentle-fade-in 0.8s ease-out forwards;
-  opacity: 0;
 }
 
 .animate-smooth-scale-in {
   animation: smooth-scale-in 0.6s ease-out forwards;
-  opacity: 0;
 }
 
 .animate-elegant-slide {
   animation: elegant-slide 0.7s ease-out forwards;
-  opacity: 0;
 }
 
 .animate-float-gentle {
