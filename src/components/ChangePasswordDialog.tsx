@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -20,40 +21,69 @@ interface ChangePasswordDialogProps {
 }
 
 export function ChangePasswordDialog({ open, onOpenChange }: ChangePasswordDialogProps) {
+  const { profile } = useAuth();
+  const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  const resetForm = () => {
+    setCurrentPassword('');
+    setNewPassword('');
+    setConfirmPassword('');
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    if (!profile?.email) {
+      toast.error('Erreur: profil utilisateur non trouvé');
+      return;
+    }
+
     if (newPassword.length < 6) {
-      toast.error('Le mot de passe doit contenir au moins 6 caractères');
+      toast.error('Le nouveau mot de passe doit contenir au moins 6 caractères');
       return;
     }
     
     if (newPassword !== confirmPassword) {
-      toast.error('Les mots de passe ne correspondent pas');
+      toast.error('Les nouveaux mots de passe ne correspondent pas');
+      return;
+    }
+
+    if (currentPassword === newPassword) {
+      toast.error('Le nouveau mot de passe doit être différent de l\'ancien');
       return;
     }
 
     setIsLoading(true);
     try {
-      const { error } = await supabase.auth.updateUser({
+      // Verify current password by attempting to sign in
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: profile.email,
+        password: currentPassword,
+      });
+
+      if (signInError) {
+        toast.error('Mot de passe actuel incorrect');
+        return;
+      }
+
+      // Current password verified, now update to new password
+      const { error: updateError } = await supabase.auth.updateUser({
         password: newPassword
       });
 
-      if (error) {
-        throw error;
+      if (updateError) {
+        throw updateError;
       }
 
       toast.success('Mot de passe modifié avec succès');
-      setNewPassword('');
-      setConfirmPassword('');
+      resetForm();
       onOpenChange(false);
     } catch (error: any) {
-      console.error('Error updating password:', error);
       toast.error(error.message || 'Erreur lors de la modification du mot de passe');
     } finally {
       setIsLoading(false);
@@ -74,11 +104,37 @@ export function ChangePasswordDialog({ open, onOpenChange }: ChangePasswordDialo
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
+            <Label htmlFor="current-password">Mot de passe actuel</Label>
+            <div className="relative">
+              <Input
+                id="current-password"
+                type={showCurrentPassword ? 'text' : 'password'}
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                placeholder="••••••••"
+                required
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+              >
+                {showCurrentPassword ? (
+                  <EyeOff className="h-4 w-4 text-muted-foreground" />
+                ) : (
+                  <Eye className="h-4 w-4 text-muted-foreground" />
+                )}
+              </Button>
+            </div>
+          </div>
+          <div className="space-y-2">
             <Label htmlFor="new-password">Nouveau mot de passe</Label>
             <div className="relative">
               <Input
                 id="new-password"
-                type={showPassword ? 'text' : 'password'}
+                type={showNewPassword ? 'text' : 'password'}
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 placeholder="••••••••"
@@ -90,9 +146,9 @@ export function ChangePasswordDialog({ open, onOpenChange }: ChangePasswordDialo
                 variant="ghost"
                 size="sm"
                 className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
-                onClick={() => setShowPassword(!showPassword)}
+                onClick={() => setShowNewPassword(!showNewPassword)}
               >
-                {showPassword ? (
+                {showNewPassword ? (
                   <EyeOff className="h-4 w-4 text-muted-foreground" />
                 ) : (
                   <Eye className="h-4 w-4 text-muted-foreground" />
@@ -101,10 +157,10 @@ export function ChangePasswordDialog({ open, onOpenChange }: ChangePasswordDialo
             </div>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="confirm-password">Confirmer le mot de passe</Label>
+            <Label htmlFor="confirm-password">Confirmer le nouveau mot de passe</Label>
             <Input
               id="confirm-password"
-              type={showPassword ? 'text' : 'password'}
+              type={showNewPassword ? 'text' : 'password'}
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               placeholder="••••••••"
