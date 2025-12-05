@@ -27,16 +27,20 @@ export function FAQViewer() {
   const [activeTab, setActiveTab] = useState<string>('');
   const [openItems, setOpenItems] = useState<Record<string, boolean>>({});
 
+  // Ensure categories and items are always arrays
+  const categories = Array.isArray(faq?.categories) ? faq.categories : [];
+  const items = Array.isArray(faq?.items) ? faq.items : [];
+
   const toggleItem = (itemId: string) => {
     setOpenItems(prev => ({ ...prev, [itemId]: !prev[itemId] }));
   };
 
   const filteredItems = searchQuery.trim()
-    ? faq.items.filter(item =>
-        item.question.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.answer.toLowerCase().includes(searchQuery.toLowerCase())
+    ? items.filter(item =>
+        item.question?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.answer?.toLowerCase().includes(searchQuery.toLowerCase())
       )
-    : faq.items;
+    : items;
 
   const getItemsByCategory = (category: string) => {
     return filteredItems.filter(item => item.category === category);
@@ -44,8 +48,8 @@ export function FAQViewer() {
 
   const handleOpen = (open: boolean) => {
     setIsOpen(open);
-    if (open && faq.categories.length > 0 && !activeTab) {
-      setActiveTab(faq.categories[0]);
+    if (open && categories.length > 0 && !activeTab) {
+      setActiveTab(categories[0]);
     }
   };
 
@@ -135,11 +139,11 @@ export function FAQViewer() {
                   )}
                 </div>
               </ScrollArea>
-            ) : (
+            ) : categories.length > 0 ? (
               /* Category tabs */
-              <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0">
+              <Tabs value={activeTab || categories[0]} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0">
                 <TabsList className="flex flex-wrap h-auto gap-1 justify-start">
-                  {faq.categories.map((category) => (
+                  {categories.map((category) => (
                     <TabsTrigger key={category} value={category} className="text-xs">
                       {category}
                       <Badge variant="secondary" className="ml-1 text-[10px]">
@@ -149,7 +153,7 @@ export function FAQViewer() {
                   ))}
                 </TabsList>
 
-                {faq.categories.map((category) => {
+                {categories.map((category) => {
                   const categoryItems = getItemsByCategory(category);
 
                   return (
@@ -194,6 +198,10 @@ export function FAQViewer() {
                   );
                 })}
               </Tabs>
+            ) : (
+              <p className="text-center text-muted-foreground py-8">
+                Aucune FAQ disponible
+              </p>
             )}
           </div>
         )}
