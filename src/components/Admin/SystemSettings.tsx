@@ -5,7 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
-import { Settings, Save, RefreshCw, Upload, X, Image as ImageIcon, Target } from 'lucide-react';
+import { Settings, Save, RefreshCw, Upload, X, Image as ImageIcon, Target, Mail } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface SystemSetting {
@@ -23,6 +23,7 @@ export function SystemSettings() {
     commission_rate: 15,
     max_sales_per_day: 50,
     daily_objective: 5,
+    admin_reset_email: '',
   });
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -58,6 +59,7 @@ export function SystemSettings() {
         commission_rate: settingsObj.commission_rate || 15,
         max_sales_per_day: settingsObj.max_sales_per_day || 50,
         daily_objective: settingsObj.daily_objective || 5,
+        admin_reset_email: settingsObj.admin_reset_email || '',
       });
     } catch (error: any) {
       toast({
@@ -401,6 +403,38 @@ export function SystemSettings() {
             />
             <p className="text-xs text-muted-foreground">
               Objectif affiché dans le formulaire de saisie des ventes avec barre de progression
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Email administrateur pour réinitialisation */}
+      <Card className="modern-card animate-gentle-fade-in">
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <div className="p-2 rounded-lg bg-gradient-to-br from-orange-500/10 to-orange-500/5">
+              <Mail className="h-5 w-5 text-orange-600" />
+            </div>
+            <div>
+              <CardTitle>Réinitialisation mot de passe</CardTitle>
+              <CardDescription>Email pour recevoir les demandes de réinitialisation</CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="admin-reset-email">Email administrateur</Label>
+            <Input
+              id="admin-reset-email"
+              type="email"
+              placeholder="admin@example.com"
+              value={settings.admin_reset_email}
+              onChange={(e) => 
+                setSettings({ ...settings, admin_reset_email: e.target.value })
+              }
+            />
+            <p className="text-xs text-muted-foreground">
+              Cet email recevra les demandes de réinitialisation de mot de passe des employés
             </p>
           </div>
         </CardContent>
