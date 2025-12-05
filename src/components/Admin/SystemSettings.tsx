@@ -24,6 +24,7 @@ export function SystemSettings() {
     max_sales_per_day: 50,
     daily_objective: 5,
     admin_reset_email: '',
+    sender_email: 'onboarding@resend.dev',
   });
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -60,6 +61,7 @@ export function SystemSettings() {
         max_sales_per_day: settingsObj.max_sales_per_day || 50,
         daily_objective: settingsObj.daily_objective || 5,
         admin_reset_email: settingsObj.admin_reset_email || '',
+        sender_email: settingsObj.sender_email || 'onboarding@resend.dev',
       });
     } catch (error: any) {
       toast({
@@ -416,14 +418,30 @@ export function SystemSettings() {
               <Mail className="h-5 w-5 text-orange-600" />
             </div>
             <div>
-              <CardTitle>Réinitialisation mot de passe</CardTitle>
-              <CardDescription>Email pour recevoir les demandes de réinitialisation</CardDescription>
+              <CardTitle>Configuration des emails</CardTitle>
+              <CardDescription>Paramètres d'envoi et de réception des emails</CardDescription>
             </div>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="admin-reset-email">Email administrateur</Label>
+            <Label htmlFor="sender-email">Email expéditeur (domaine vérifié Resend)</Label>
+            <Input
+              id="sender-email"
+              type="email"
+              placeholder="noreply@votredomaine.com"
+              value={settings.sender_email}
+              onChange={(e) => 
+                setSettings({ ...settings, sender_email: e.target.value })
+              }
+            />
+            <p className="text-xs text-muted-foreground">
+              Adresse email utilisée pour envoyer les notifications (nécessite un domaine vérifié sur Resend)
+            </p>
+          </div>
+
+          <div className="space-y-2 pt-4 border-t">
+            <Label htmlFor="admin-reset-email">Email destinataire (demandes de réinitialisation)</Label>
             <Input
               id="admin-reset-email"
               type="email"
