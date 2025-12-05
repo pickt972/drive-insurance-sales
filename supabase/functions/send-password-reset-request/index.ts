@@ -64,9 +64,20 @@ const handler = async (req: Request): Promise<Response> => {
 
     const appName = appNameData?.value || "Gestion des Ventes";
 
+    // Get sender email from system_settings (for verified domain)
+    const { data: senderEmailData } = await supabase
+      .from("system_settings")
+      .select("value")
+      .eq("key", "sender_email")
+      .single();
+
+    // Use configured sender email or fallback to resend.dev
+    const senderEmail = senderEmailData?.value || "onboarding@resend.dev";
+    console.log("Using sender email:", senderEmail);
+
     // Send email to admin
     const emailResponse = await resend.emails.send({
-      from: `${appName} <onboarding@resend.dev>`,
+      from: `${appName} <${senderEmail}>`,
       to: [adminEmail],
       subject: `🔐 Demande de réinitialisation de mot de passe - ${username}`,
       html: `
