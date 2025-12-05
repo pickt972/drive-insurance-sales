@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -31,6 +31,13 @@ export function FAQViewer() {
   const categories = Array.isArray(faq?.categories) ? faq.categories : [];
   const items = Array.isArray(faq?.items) ? faq.items : [];
 
+  // Set default active tab when categories are loaded (only once)
+  useEffect(() => {
+    if (categories.length > 0 && activeTab === '') {
+      setActiveTab(categories[0]);
+    }
+  }, [categories.length]); // Only depend on length change
+
   const toggleItem = (itemId: string) => {
     setOpenItems(prev => ({ ...prev, [itemId]: !prev[itemId] }));
   };
@@ -48,10 +55,10 @@ export function FAQViewer() {
 
   const handleOpen = (open: boolean) => {
     setIsOpen(open);
-    if (open && categories.length > 0 && !activeTab) {
-      setActiveTab(categories[0]);
-    }
   };
+
+  // Don't render Tabs if activeTab is not set yet
+  const effectiveActiveTab = activeTab || (categories.length > 0 ? categories[0] : '');
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpen}>
@@ -139,9 +146,9 @@ export function FAQViewer() {
                   )}
                 </div>
               </ScrollArea>
-            ) : categories.length > 0 ? (
+            ) : categories.length > 0 && effectiveActiveTab ? (
               /* Category tabs */
-              <Tabs value={activeTab || categories[0]} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0">
+              <Tabs value={effectiveActiveTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0">
                 <TabsList className="flex flex-wrap h-auto gap-1 justify-start">
                   {categories.map((category) => (
                     <TabsTrigger key={category} value={category} className="text-xs">
