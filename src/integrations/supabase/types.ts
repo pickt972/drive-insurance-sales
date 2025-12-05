@@ -169,34 +169,49 @@ export type Database = {
       employee_objectives: {
         Row: {
           created_at: string | null
+          description: string | null
           id: string
+          is_active: boolean | null
+          objective_mode: string | null
           period_end: string
           period_start: string
           period_type: string
           target_amount: number
+          target_by_insurance_type: Json | null
           target_sales: number
+          target_sales_count: number | null
           updated_at: string | null
           user_id: string | null
         }
         Insert: {
           created_at?: string | null
+          description?: string | null
           id?: string
+          is_active?: boolean | null
+          objective_mode?: string | null
           period_end: string
           period_start: string
           period_type: string
           target_amount?: number
+          target_by_insurance_type?: Json | null
           target_sales?: number
+          target_sales_count?: number | null
           updated_at?: string | null
           user_id?: string | null
         }
         Update: {
           created_at?: string | null
+          description?: string | null
           id?: string
+          is_active?: boolean | null
+          objective_mode?: string | null
           period_end?: string
           period_start?: string
           period_type?: string
           target_amount?: number
+          target_by_insurance_type?: Json | null
           target_sales?: number
+          target_sales_count?: number | null
           updated_at?: string | null
           user_id?: string | null
         }

@@ -6,12 +6,21 @@ import { useToast } from '@/hooks/use-toast';
 // Temporary workaround for Supabase types
 const supabaseAny = supabase as any;
 
+export type ObjectiveMode = 'amount' | 'count' | 'by_type' | 'mixed';
+
+export interface TargetByInsuranceType {
+  [insuranceTypeId: string]: number;
+}
+
 export interface Objective {
   id: string;
+  user_id?: string;
   employee_name: string;
   objective_type: string;
+  objective_mode: ObjectiveMode;
   target_amount: number;
   target_sales_count: number;
+  target_by_insurance_type: TargetByInsuranceType;
   period_start: string;
   period_end: string;
   description?: string;
@@ -26,7 +35,7 @@ export interface Objective {
 }
 
 export function useObjectives() {
-  const { user, isAdmin } = useAuth();
+  const { user } = useAuth();
   const { toast } = useToast();
   const [objectives, setObjectives] = useState<Objective[]>([]);
   const [loading, setLoading] = useState(false);
@@ -36,7 +45,7 @@ export function useObjectives() {
       fetchObjectives();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.id]); // Use stable user.id instead of user and isAdmin
+  }, [user?.id]);
 
   const fetchObjectives = async () => {
     try {
@@ -45,12 +54,10 @@ export function useObjectives() {
       const { data, error } = await supabaseAny
         .from('employee_objectives')
         .select('*')
-        .eq('is_active', true)
         .order('created_at', { ascending: false });
 
       if (error) {
-        // Si la table n'existe pas encore, retourner un tableau vide
-        console.log('Objectives table not ready yet');
+        console.log('Objectives table not ready yet:', error.message);
         setObjectives([]);
         return;
       }
@@ -58,6 +65,9 @@ export function useObjectives() {
       // Mapper pour compatibilité
       const mapped = (data || []).map((obj: any) => ({
         ...obj,
+        objective_mode: obj.objective_mode || 'amount',
+        target_sales_count: obj.target_sales_count || 0,
+        target_by_insurance_type: obj.target_by_insurance_type || {},
         employeeName: obj.employee_name,
         startDate: obj.period_start,
         endDate: obj.period_end,
@@ -78,10 +88,12 @@ export function useObjectives() {
       const { data, error } = await supabaseAny
         .from('employee_objectives')
         .insert({
-          employee_name: objectiveData.employee_name || objectiveData.employeeName,
-          objective_type: objectiveData.objective_type,
-          target_amount: objectiveData.target_amount,
-          target_sales_count: objectiveData.target_sales_count,
+          user_id: objectiveData.user_id,
+          period_type: objectiveData.objective_type || 'monthly',
+          objective_mode: objectiveData.objective_mode || 'amount',
+          target_amount: objectiveData.target_amount || 0,
+          target_sales: objectiveData.target_sales_count || 0,
+          target_by_insurance_type: objectiveData.target_by_insurance_type || {},
           period_start: objectiveData.period_start || objectiveData.startDate,
           period_end: objectiveData.period_end || objectiveData.endDate,
           description: objectiveData.description,
@@ -114,10 +126,12 @@ export function useObjectives() {
       const { error } = await supabaseAny
         .from('employee_objectives')
         .update({
-          employee_name: updates.employee_name || updates.employeeName,
-          objective_type: updates.objective_type,
+          user_id: updates.user_id,
+          period_type: updates.objective_type,
+          objective_mode: updates.objective_mode,
           target_amount: updates.target_amount,
-          target_sales_count: updates.target_sales_count,
+          target_sales: updates.target_sales_count,
+          target_by_insurance_type: updates.target_by_insurance_type,
           period_start: updates.period_start || updates.startDate,
           period_end: updates.period_end || updates.endDate,
           description: updates.description,
