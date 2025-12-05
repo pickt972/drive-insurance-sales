@@ -8,7 +8,9 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { Shield, Search, AlertCircle, CalendarIcon, X } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Shield, Search, AlertCircle, CalendarIcon, X, Eye, ArrowRight } from 'lucide-react';
 import { format, isWithinInterval, startOfDay, endOfDay } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useToast } from '@/hooks/use-toast';
@@ -22,9 +24,28 @@ interface AuditLog {
   action: string;
   table_name: string;
   record_id: string;
-  old_data?: any;
-  new_data?: any;
+  old_values?: any;
+  new_values?: any;
 }
+
+// Field labels for better readability
+const FIELD_LABELS: Record<string, string> = {
+  id: 'ID',
+  user_id: 'ID Utilisateur',
+  insurance_type_id: 'Type assurance',
+  amount: 'Montant',
+  commission_amount: 'Commission',
+  sale_date: 'Date de vente',
+  created_at: 'Créé le',
+  updated_at: 'Modifié le',
+  notes: 'Notes',
+  status: 'Statut',
+  agency: 'Agence',
+  vehicle_registration: 'Immatriculation',
+  client_phone: 'Téléphone client',
+  client_name: 'Nom client',
+  contract_number: 'N° Contrat',
+};
 
 export function AuditLogViewer() {
   const [logs, setLogs] = useState<AuditLog[]>([]);
@@ -34,6 +55,7 @@ export function AuditLogViewer() {
   const [search, setSearch] = useState('');
   const [dateFrom, setDateFrom] = useState<Date | undefined>(undefined);
   const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
+  const [selectedLog, setSelectedLog] = useState<AuditLog | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -265,7 +287,11 @@ export function AuditLogViewer() {
                 </TableRow>
               ) : (
                 filteredLogs.map((log) => (
-                  <TableRow key={log.id}>
+                  <TableRow 
+                    key={log.id} 
+                    className="cursor-pointer hover:bg-muted/50 transition-colors"
+                    onClick={() => setSelectedLog(log)}
+                  >
                     <TableCell className="whitespace-nowrap">
                       {format(new Date(log.created_at), 'dd/MM/yyyy HH:mm:ss', { locale: fr })}
                     </TableCell>
@@ -285,7 +311,10 @@ export function AuditLogViewer() {
                     </TableCell>
                     <TableCell className="font-mono text-sm">{log.table_name}</TableCell>
                     <TableCell className="font-mono text-sm text-muted-foreground">
-                      {log.record_id?.slice(0, 8)}...
+                      <div className="flex items-center gap-2">
+                        <span>{log.record_id?.slice(0, 8)}...</span>
+                        <Eye className="h-4 w-4 text-muted-foreground" />
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))
@@ -298,6 +327,173 @@ export function AuditLogViewer() {
           Affichage de {filteredLogs.length} log(s) sur {logs.length}
         </div>
       </CardContent>
+
+      {/* Details Dialog */}
+      <Dialog open={!!selectedLog} onOpenChange={(open) => !open && setSelectedLog(null)}>
+        <DialogContent className="max-w-3xl max-h-[80vh]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Shield className="h-5 w-5" />
+              Détails de la modification
+            </DialogTitle>
+            <DialogDescription>
+              {selectedLog && (
+                <span>
+                  {format(new Date(selectedLog.created_at), "dd MMMM yyyy 'à' HH:mm:ss", { locale: fr })} 
+                  {' '}par {selectedLog.user_email}
+                </span>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedLog && (
+            <ScrollArea className="max-h-[60vh]">
+              <div className="space-y-4">
+                {/* Action info */}
+                <div className="flex items-center gap-4 p-3 bg-muted/50 rounded-lg">
+                  <Badge variant={getActionBadge(selectedLog.action).variant}>
+                    {selectedLog.action === 'INSERT' ? 'Création' : 
+                     selectedLog.action === 'UPDATE' ? 'Modification' : 'Suppression'}
+                  </Badge>
+                  <span className="text-sm text-muted-foreground">
+                    Table: <span className="font-mono">{selectedLog.table_name}</span>
+                  </span>
+                  <span className="text-sm text-muted-foreground">
+                    ID: <span className="font-mono">{selectedLog.record_id}</span>
+                  </span>
+                </div>
+
+                {/* Values comparison */}
+                {selectedLog.action === 'UPDATE' && selectedLog.old_values && selectedLog.new_values ? (
+                  <div className="space-y-3">
+                    <h4 className="font-medium text-sm">Modifications apportées :</h4>
+                    <div className="border rounded-lg overflow-hidden">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead className="w-1/4">Champ</TableHead>
+                            <TableHead className="w-[37.5%]">Ancienne valeur</TableHead>
+                            <TableHead className="w-[37.5%]">Nouvelle valeur</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {Object.keys(selectedLog.new_values).map((key) => {
+                            const oldVal = selectedLog.old_values?.[key];
+                            const newVal = selectedLog.new_values?.[key];
+                            const hasChanged = JSON.stringify(oldVal) !== JSON.stringify(newVal);
+                            
+                            if (!hasChanged && key !== 'updated_at') return null;
+                            
+                            return (
+                              <TableRow key={key} className={hasChanged ? 'bg-yellow-50/50' : ''}>
+                                <TableCell className="font-medium text-sm">
+                                  {FIELD_LABELS[key] || key}
+                                </TableCell>
+                                <TableCell className="text-sm text-muted-foreground">
+                                  {formatValue(oldVal)}
+                                </TableCell>
+                                <TableCell className="text-sm">
+                                  <div className="flex items-center gap-2">
+                                    {hasChanged && <ArrowRight className="h-3 w-3 text-primary" />}
+                                    <span className={hasChanged ? 'font-medium text-primary' : ''}>
+                                      {formatValue(newVal)}
+                                    </span>
+                                  </div>
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </div>
+                ) : selectedLog.action === 'INSERT' && selectedLog.new_values ? (
+                  <div className="space-y-3">
+                    <h4 className="font-medium text-sm">Données créées :</h4>
+                    <div className="border rounded-lg overflow-hidden">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead className="w-1/3">Champ</TableHead>
+                            <TableHead>Valeur</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {Object.entries(selectedLog.new_values).map(([key, value]) => (
+                            <TableRow key={key}>
+                              <TableCell className="font-medium text-sm">
+                                {FIELD_LABELS[key] || key}
+                              </TableCell>
+                              <TableCell className="text-sm">
+                                {formatValue(value)}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </div>
+                ) : selectedLog.action === 'DELETE' && selectedLog.old_values ? (
+                  <div className="space-y-3">
+                    <h4 className="font-medium text-sm">Données supprimées :</h4>
+                    <div className="border rounded-lg overflow-hidden">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead className="w-1/3">Champ</TableHead>
+                            <TableHead>Valeur</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {Object.entries(selectedLog.old_values).map(([key, value]) => (
+                            <TableRow key={key}>
+                              <TableCell className="font-medium text-sm">
+                                {FIELD_LABELS[key] || key}
+                              </TableCell>
+                              <TableCell className="text-sm text-destructive">
+                                {formatValue(value)}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    Aucune donnée détaillée disponible pour cet enregistrement.
+                  </div>
+                )}
+              </div>
+            </ScrollArea>
+          )}
+        </DialogContent>
+      </Dialog>
     </Card>
   );
+}
+
+// Helper function to format values for display
+function formatValue(value: any): string {
+  if (value === null || value === undefined) return '-';
+  if (typeof value === 'boolean') return value ? 'Oui' : 'Non';
+  if (typeof value === 'number') {
+    // Check if it looks like a currency amount
+    if (value >= 1 && value <= 100000) {
+      return `${value.toFixed(2)} €`;
+    }
+    return value.toString();
+  }
+  if (typeof value === 'string') {
+    // Check if it's a date
+    if (/^\d{4}-\d{2}-\d{2}/.test(value)) {
+      try {
+        return format(new Date(value), 'dd/MM/yyyy HH:mm', { locale: fr });
+      } catch {
+        return value;
+      }
+    }
+    return value;
+  }
+  return JSON.stringify(value);
 }
