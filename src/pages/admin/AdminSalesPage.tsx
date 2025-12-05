@@ -134,6 +134,97 @@ export function AdminSalesPage() {
   // State for viewing sale details
   const [viewingSale, setViewingSale] = useState<any | null>(null);
   
+  // State for editing sale
+  const [editingSale, setEditingSale] = useState<any | null>(null);
+  const [editForm, setEditForm] = useState<any>({});
+  const [savingEditForm, setSavingEditForm] = useState(false);
+  
+  // State for deleting sale
+  const [deletingSale, setDeletingSale] = useState<any | null>(null);
+  const [deleteReason, setDeleteReason] = useState('');
+  const [deletingLoading, setDeletingLoading] = useState(false);
+  
+  // Open edit dialog
+  const openEditDialog = (sale: any) => {
+    setEditingSale(sale);
+    setEditForm({
+      client_name: sale.client_name || '',
+      client_phone: sale.client_phone || '',
+      contract_number: sale.contract_number || '',
+      amount: sale.amount || 0,
+      agency: sale.agency || '',
+      status: sale.status || 'pending',
+      notes: sale.notes || '',
+      sale_date: sale.sale_date,
+      insurance_type_id: sale.insurance_type_id || '',
+    });
+  };
+  
+  // Save edited sale
+  const saveEditedSale = async () => {
+    if (!editingSale) return;
+    setSavingEditForm(true);
+    try {
+      const { error } = await (supabase as any)
+        .from('insurance_sales')
+        .update({
+          client_name: editForm.client_name,
+          client_phone: editForm.client_phone,
+          contract_number: editForm.contract_number,
+          amount: parseFloat(editForm.amount) || 0,
+          agency: editForm.agency,
+          status: editForm.status,
+          notes: editForm.notes,
+          sale_date: editForm.sale_date,
+          insurance_type_id: editForm.insurance_type_id || null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', editingSale.id);
+      
+      if (error) throw error;
+      
+      toast({ title: 'Vente modifiée', description: 'Les modifications ont été enregistrées (trace dans les logs)' });
+      setEditingSale(null);
+      loadSales();
+    } catch (error: any) {
+      console.error('Error updating sale:', error);
+      toast({ title: 'Erreur', description: error.message || 'Impossible de modifier la vente', variant: 'destructive' });
+    } finally {
+      setSavingEditForm(false);
+    }
+  };
+  
+  // Delete sale with reason
+  const deleteSale = async () => {
+    if (!deletingSale) return;
+    setDeletingLoading(true);
+    try {
+      // First update the notes with the deletion reason (for audit trail)
+      await (supabase as any)
+        .from('insurance_sales')
+        .update({ notes: `[SUPPRIMÉ: ${deleteReason || 'Aucune raison'}] ${deletingSale.notes || ''}` })
+        .eq('id', deletingSale.id);
+      
+      // Then delete
+      const { error } = await (supabase as any)
+        .from('insurance_sales')
+        .delete()
+        .eq('id', deletingSale.id);
+      
+      if (error) throw error;
+      
+      toast({ title: 'Vente supprimée', description: 'La vente a été supprimée (trace conservée dans les logs d\'audit)' });
+      setDeletingSale(null);
+      setDeleteReason('');
+      loadSales();
+    } catch (error: any) {
+      console.error('Error deleting sale:', error);
+      toast({ title: 'Erreur', description: error.message || 'Impossible de supprimer la vente', variant: 'destructive' });
+    } finally {
+      setDeletingLoading(false);
+    }
+  };
+  
   // Duplicate sale function
   const duplicateSale = async (sale: any) => {
     try {
@@ -1135,16 +1226,21 @@ export function AdminSalesPage() {
                               <Eye className="h-4 w-4 mr-2" />
                               Voir détails
                             </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => openEditDialog(sale)}>
+                              <Pencil className="h-4 w-4 mr-2" />
+                              Modifier
+                            </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => duplicateSale(sale)}>
                               <Copy className="h-4 w-4 mr-2" />
                               Dupliquer
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem 
-                              onClick={() => toast({ title: 'Fonctionnalité à venir', description: 'L\'envoi d\'email sera disponible prochainement' })}
+                              onClick={() => setDeletingSale(sale)}
+                              className="text-destructive focus:text-destructive"
                             >
-                              <Mail className="h-4 w-4 mr-2" />
-                              Envoyer par email
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              Supprimer
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
@@ -1216,6 +1312,163 @@ export function AdminSalesPage() {
                       <p className="text-sm mt-1 p-2 bg-muted rounded">{viewingSale.notes}</p>
                     </div>
                   )}
+                </div>
+              )}
+            </DialogContent>
+          </Dialog>
+
+          {/* Edit Sale Dialog */}
+          <Dialog open={!!editingSale} onOpenChange={() => setEditingSale(null)}>
+            <DialogContent className="max-w-lg">
+              <DialogHeader>
+                <DialogTitle>Modifier la vente</DialogTitle>
+              </DialogHeader>
+              {editingSale && (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Date de vente</label>
+                      <Input
+                        type="date"
+                        value={editForm.sale_date}
+                        onChange={(e) => setEditForm({ ...editForm, sale_date: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Type d'assurance</label>
+                      <Select value={editForm.insurance_type_id} onValueChange={(v) => setEditForm({ ...editForm, insurance_type_id: v })}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Sélectionner" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {insuranceTypes.map((type) => (
+                            <SelectItem key={type.id} value={type.id}>{type.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Client</label>
+                      <Input
+                        value={editForm.client_name}
+                        onChange={(e) => setEditForm({ ...editForm, client_name: e.target.value })}
+                        placeholder="Nom du client"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Téléphone</label>
+                      <Input
+                        value={editForm.client_phone}
+                        onChange={(e) => setEditForm({ ...editForm, client_phone: e.target.value })}
+                        placeholder="Téléphone"
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">N° Contrat</label>
+                      <Input
+                        value={editForm.contract_number}
+                        onChange={(e) => setEditForm({ ...editForm, contract_number: e.target.value })}
+                        placeholder="Numéro de contrat"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Montant (€)</label>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        value={editForm.amount}
+                        onChange={(e) => setEditForm({ ...editForm, amount: e.target.value })}
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Agence</label>
+                      <Select value={editForm.agency} onValueChange={(v) => setEditForm({ ...editForm, agency: v })}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Sélectionner" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {agencies.map((ag) => (
+                            <SelectItem key={ag} value={ag}>{ag}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Statut</label>
+                      <Select value={editForm.status} onValueChange={(v) => setEditForm({ ...editForm, status: v })}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="validated">Validé</SelectItem>
+                          <SelectItem value="pending">En attente</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Notes</label>
+                    <Input
+                      value={editForm.notes}
+                      onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })}
+                      placeholder="Notes additionnelles..."
+                    />
+                  </div>
+                  <div className="flex justify-end gap-2 pt-4">
+                    <Button variant="outline" onClick={() => setEditingSale(null)}>Annuler</Button>
+                    <Button onClick={saveEditedSale} disabled={savingEditForm}>
+                      {savingEditForm ? 'Enregistrement...' : 'Enregistrer'}
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </DialogContent>
+          </Dialog>
+
+          {/* Delete Confirmation Dialog */}
+          <Dialog open={!!deletingSale} onOpenChange={() => { setDeletingSale(null); setDeleteReason(''); }}>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle className="text-destructive">Supprimer la vente</DialogTitle>
+              </DialogHeader>
+              {deletingSale && (
+                <div className="space-y-4">
+                  <p className="text-sm text-muted-foreground">
+                    Êtes-vous sûr de vouloir supprimer cette vente ? Cette action est irréversible mais une trace sera conservée dans les logs d'audit.
+                  </p>
+                  <div className="p-3 bg-muted rounded-lg text-sm">
+                    <p><strong>Contrat:</strong> {deletingSale.contract_number}</p>
+                    <p><strong>Client:</strong> {deletingSale.client_name}</p>
+                    <p><strong>Montant:</strong> {Number(deletingSale.amount).toFixed(2)} €</p>
+                    <p><strong>Employé:</strong> {deletingSale.profiles?.full_name}</p>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Motif de suppression *</label>
+                    <Input
+                      value={deleteReason}
+                      onChange={(e) => setDeleteReason(e.target.value)}
+                      placeholder="Ex: Erreur de saisie, doublon, fausse vente..."
+                      required
+                    />
+                  </div>
+                  <div className="flex justify-end gap-2 pt-4">
+                    <Button variant="outline" onClick={() => { setDeletingSale(null); setDeleteReason(''); }}>
+                      Annuler
+                    </Button>
+                    <Button 
+                      variant="destructive" 
+                      onClick={deleteSale} 
+                      disabled={deletingLoading || !deleteReason.trim()}
+                    >
+                      {deletingLoading ? 'Suppression...' : 'Supprimer définitivement'}
+                    </Button>
+                  </div>
                 </div>
               )}
             </DialogContent>
