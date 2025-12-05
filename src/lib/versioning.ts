@@ -9,7 +9,6 @@ export interface AppVersion {
   description: string;
   data: {
     users: any[];
-    passwords: Record<string, string>;
     insuranceTypes: any[];
     sales: any[];
     objectives: any[];
@@ -112,7 +111,6 @@ export class VersioningSystem {
     try {
       return {
         users: JSON.parse(localStorage.getItem(this.STORAGE_PREFIX + 'users') || '[]'),
-        passwords: JSON.parse(localStorage.getItem(this.STORAGE_PREFIX + 'passwords') || '{}'),
         insuranceTypes: JSON.parse(localStorage.getItem(this.STORAGE_PREFIX + 'insurance_types') || '[]'),
         sales: JSON.parse(localStorage.getItem(this.STORAGE_PREFIX + 'sales') || '[]'),
         objectives: JSON.parse(localStorage.getItem(this.STORAGE_PREFIX + 'objectives') || '[]'),
@@ -122,7 +120,6 @@ export class VersioningSystem {
       console.error('Erreur récupération données:', error);
       return {
         users: [],
-        passwords: {},
         insuranceTypes: [],
         sales: [],
         objectives: [],
@@ -222,10 +219,9 @@ export class VersioningSystem {
       // Créer une sauvegarde avant restauration
       this.createVersion(`Sauvegarde avant restauration vers ${version}`, ['Sauvegarde automatique'], 'Système');
 
-      // Restaurer les données
+      // Restaurer les données (sans mots de passe - gérés par Supabase Auth)
       const { data } = versionData;
       localStorage.setItem(this.STORAGE_PREFIX + 'users', JSON.stringify(data.users));
-      localStorage.setItem(this.STORAGE_PREFIX + 'passwords', JSON.stringify(data.passwords));
       localStorage.setItem(this.STORAGE_PREFIX + 'insurance_types', JSON.stringify(data.insuranceTypes));
       localStorage.setItem(this.STORAGE_PREFIX + 'sales', JSON.stringify(data.sales));
       localStorage.setItem(this.STORAGE_PREFIX + 'objectives', JSON.stringify(data.objectives));
