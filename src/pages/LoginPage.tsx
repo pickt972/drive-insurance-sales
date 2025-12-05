@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { useAppSettings } from '@/hooks/useAppSettings';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -16,6 +17,7 @@ export default function LoginPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { signIn, isAuthenticated, isAdmin, isLoading } = useAuth();
+  const { settings } = useAppSettings();
 
   // PAS DE useEffect POUR LA REDIRECTION ICI !
   // La redirection se fait UNIQUEMENT après le signIn réussi
@@ -56,9 +58,17 @@ export default function LoginPage() {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">
-            <div className="h-16 w-16 bg-blue-600 rounded-full flex items-center justify-center">
-              <Car className="h-8 w-8 text-white" />
-            </div>
+            {settings.app_logo ? (
+              <img 
+                src={settings.app_logo} 
+                alt="Logo" 
+                className="h-16 w-16 object-contain rounded-lg"
+              />
+            ) : (
+              <div className="h-16 w-16 bg-blue-600 rounded-full flex items-center justify-center">
+                <Car className="h-8 w-8 text-white" />
+              </div>
+            )}
           </div>
           <CardTitle className="text-2xl font-bold text-gray-900">Connexion</CardTitle>
           <CardDescription>Connectez-vous à votre compte</CardDescription>
