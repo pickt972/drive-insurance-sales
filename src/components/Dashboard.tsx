@@ -5,6 +5,7 @@ import { SalesChart } from '@/components/Dashboard/SalesChart';
 import { InsuranceTypesChart } from '@/components/Dashboard/InsuranceTypesChart';
 import { ComparisonChart } from '@/components/Dashboard/ComparisonChart';
 import { UserObjectiveProgress } from '@/components/Dashboard/UserObjectiveProgress';
+import { DailyLeaderboard } from '@/components/Dashboard/DailyLeaderboard';
 import { Button } from '@/components/ui/button';
 import { PlusCircle } from 'lucide-react';
 import { useState } from 'react';
@@ -61,9 +62,10 @@ export const Dashboard = () => {
         <StatsCards />
       </div>
 
-      {/* Progression des objectifs */}
-      <div className="animate-elegant-slide" style={{ animationDelay: '0.15s' }}>
+      {/* Progression des objectifs et Classement */}
+      <div className="grid gap-6 lg:grid-cols-2 animate-elegant-slide" style={{ animationDelay: '0.15s' }}>
         <UserObjectiveProgress />
+        <DailyLeaderboard key={refreshKey} />
       </div>
 
       {/* Graphique principal avec animation */}
