@@ -15,6 +15,7 @@ import { AdminAuditLogsPage } from '@/pages/admin/AdminAuditLogsPage';
 import { AdminSettingsPage } from '@/pages/admin/AdminSettingsPage';
 import { AdminArgumentsPage } from '@/pages/admin/AdminArgumentsPage';
 import { AdminFAQPage } from '@/pages/admin/AdminFAQPage';
+import { AdminNewSalePage } from '@/pages/admin/AdminNewSalePage';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { AdminRoute } from '@/components/auth/AdminRoute';
 import { AuthProvider } from '@/hooks/useAuth';
@@ -37,6 +38,7 @@ const App = () => {
             <Route path="/admin" element={<AdminLayout />}>
               <Route index element={<AdminDashboard />} />
               <Route path="dashboard" element={<AdminDashboard />} />
+              <Route path="new-sale" element={<AdminNewSalePage />} />
               <Route path="sales" element={<AdminSalesPage />} />
               <Route path="users" element={<AdminUsersPage />} />
               <Route path="insurance-types" element={<AdminInsuranceTypesPage />} />

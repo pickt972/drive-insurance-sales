@@ -18,7 +18,8 @@ import {
   X,
   ChevronDown,
   Bell,
-  Car
+  Car,
+  PlusCircle
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -33,6 +34,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 
 const navigation = [
   { name: 'Tableau de bord', href: '/admin/dashboard', icon: LayoutDashboard },
+  { name: 'Nouvelle Vente', href: '/admin/new-sale', icon: PlusCircle },
   { name: 'Ventes', href: '/admin/sales', icon: ShoppingCart },
   { name: 'Utilisateurs', href: '/admin/users', icon: Users },
   { name: 'Types d\'assurances', href: '/admin/insurance-types', icon: Shield },
