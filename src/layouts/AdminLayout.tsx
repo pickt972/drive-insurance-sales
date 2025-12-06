@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useAppSettings } from '@/hooks/useAppSettings';
+import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 import {
   LayoutDashboard,
@@ -19,7 +20,8 @@ import {
   ChevronDown,
   Bell,
   Car,
-  PlusCircle
+  PlusCircle,
+  TrendingUp
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -48,9 +50,29 @@ const navigation = [
 
 export default function AdminLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [todaySalesCount, setTodaySalesCount] = useState(0);
   const { profile, signOut } = useAuth();
   const { settings: appSettings } = useAppSettings();
   const navigate = useNavigate();
+
+  // Fetch today's sales count
+  useEffect(() => {
+    const fetchTodaySales = async () => {
+      const today = new Date().toISOString().split('T')[0];
+      const { count } = await supabase
+        .from('insurance_sales')
+        .select('*', { count: 'exact', head: true })
+        .eq('sale_date', today);
+      
+      setTodaySalesCount(count || 0);
+    };
+
+    fetchTodaySales();
+
+    // Refresh every 30 seconds
+    const interval = setInterval(fetchTodaySales, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   const handleSignOut = async () => {
     await signOut();
@@ -177,6 +199,14 @@ export default function AdminLayout() {
             >
               <Menu className="h-6 w-6" />
             </button>
+
+            {/* Today's sales counter */}
+            <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-primary/10 rounded-lg">
+              <TrendingUp className="h-4 w-4 text-primary" />
+              <span className="text-sm font-medium text-primary">
+                {todaySalesCount} vente{todaySalesCount !== 1 ? 's' : ''} aujourd'hui
+              </span>
+            </div>
 
             <div className="flex-1 lg:flex-none" />
 
