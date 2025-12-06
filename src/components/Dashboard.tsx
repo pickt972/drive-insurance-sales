@@ -7,6 +7,7 @@ import { ComparisonChart } from '@/components/Dashboard/ComparisonChart';
 import { UserObjectiveProgress } from '@/components/Dashboard/UserObjectiveProgress';
 import { DailyLeaderboard } from '@/components/Dashboard/DailyLeaderboard';
 import { WeeklySummary } from '@/components/Dashboard/WeeklySummary';
+import { MonthlySummary } from '@/components/Dashboard/MonthlySummary';
 import { Button } from '@/components/ui/button';
 import { PlusCircle } from 'lucide-react';
 import { useState, useCallback } from 'react';
@@ -66,9 +67,10 @@ export const Dashboard = () => {
         <StatsCards />
       </div>
 
-      {/* Récapitulatif hebdomadaire */}
-      <div className="animate-elegant-slide" style={{ animationDelay: '0.12s' }}>
+      {/* Récapitulatifs hebdo et mensuel */}
+      <div className="grid gap-6 lg:grid-cols-2 animate-elegant-slide" style={{ animationDelay: '0.12s' }}>
         <WeeklySummary />
+        <MonthlySummary />
       </div>
 
       {/* Progression des objectifs et Classement */}
