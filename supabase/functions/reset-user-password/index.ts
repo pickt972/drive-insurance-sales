@@ -6,6 +6,26 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+// Strong password validation matching client-side rules
+function validatePassword(password: string): { valid: boolean; message: string } {
+  if (!password || password.length < 8) {
+    return { valid: false, message: 'Le mot de passe doit contenir au moins 8 caractères' };
+  }
+  if (!/[A-Z]/.test(password)) {
+    return { valid: false, message: 'Le mot de passe doit contenir au moins une majuscule' };
+  }
+  if (!/[a-z]/.test(password)) {
+    return { valid: false, message: 'Le mot de passe doit contenir au moins une minuscule' };
+  }
+  if (!/[0-9]/.test(password)) {
+    return { valid: false, message: 'Le mot de passe doit contenir au moins un chiffre' };
+  }
+  if (!/[!@#$%^&*(),.?":{}|<>_\-+=\[\]\\\/`~]/.test(password)) {
+    return { valid: false, message: 'Le mot de passe doit contenir au moins un caractère spécial' };
+  }
+  return { valid: true, message: '' };
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
@@ -65,9 +85,11 @@ serve(async (req) => {
       )
     }
 
-    if (new_password.length < 6) {
+    // Validate password strength
+    const passwordValidation = validatePassword(new_password);
+    if (!passwordValidation.valid) {
       return new Response(
-        JSON.stringify({ success: false, error: 'Le mot de passe doit contenir au moins 6 caractères' }),
+        JSON.stringify({ success: false, error: passwordValidation.message }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
       )
     }
