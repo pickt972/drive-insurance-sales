@@ -6,6 +6,7 @@ import { InsuranceTypesChart } from '@/components/Dashboard/InsuranceTypesChart'
 import { ComparisonChart } from '@/components/Dashboard/ComparisonChart';
 import { UserObjectiveProgress } from '@/components/Dashboard/UserObjectiveProgress';
 import { DailyLeaderboard } from '@/components/Dashboard/DailyLeaderboard';
+import { WeeklySummary } from '@/components/Dashboard/WeeklySummary';
 import { Button } from '@/components/ui/button';
 import { PlusCircle } from 'lucide-react';
 import { useState, useCallback } from 'react';
@@ -63,6 +64,11 @@ export const Dashboard = () => {
       {/* Statistiques avec animation en cascade */}
       <div className="animate-elegant-slide" style={{ animationDelay: '0.1s' }}>
         <StatsCards />
+      </div>
+
+      {/* Récapitulatif hebdomadaire */}
+      <div className="animate-elegant-slide" style={{ animationDelay: '0.12s' }}>
+        <WeeklySummary />
       </div>
 
       {/* Progression des objectifs et Classement */}
