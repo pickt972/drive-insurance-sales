@@ -12,7 +12,14 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Plus, Calculator, CalendarIcon, TrendingUp, Target, Trophy } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Plus, Calculator, CalendarIcon, TrendingUp, Target, Trophy, Users } from "lucide-react";
 import { SalesPitchGenerator } from "@/components/SalesPitchGenerator";
 import { FAQViewer } from "@/components/FAQViewer";
 import { cn } from "@/lib/utils";
@@ -20,6 +27,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useSales } from "@/hooks/useSales";
 import { useInsuranceTypes, InsuranceType } from "@/hooks/useInsuranceTypes";
 import { useAppSettings } from "@/hooks/useAppSettings";
+import { useUsers } from "@/hooks/useUsers";
 import { toast } from "@/hooks/use-toast";
 import { CelebrationPopup } from "@/components/ui/celebration-popup";
 import { validateSaleForm } from "@/lib/salesValidation";
@@ -39,14 +47,30 @@ export const SalesForm = ({ onSaleAdded }: SalesFormProps) => {
   const [insuranceTypesLocal, setInsuranceTypesLocal] = useState<InsuranceType[]>([]);
   const [objectiveReachedNotified, setObjectiveReachedNotified] = useState(false);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  const [selectedUserId, setSelectedUserId] = useState<string>("");
   
-  const { profile } = useAuth();
+  const { profile, isAdmin } = useAuth();
   const { sales, addSale, loading: saleLoading, fetchSales } = useSales();
   const { insuranceTypes, loading: insuranceLoading } = useInsuranceTypes();
   const { settings: appSettings } = useAppSettings();
+  const { users, loading: usersLoading } = useUsers();
 
-  const loading = saleLoading || insuranceLoading;
+  const loading = saleLoading || insuranceLoading || usersLoading;
   const dailyObjective = appSettings.daily_objective || 5;
+
+  // Initialiser l'utilisateur sélectionné au profil courant
+  useEffect(() => {
+    if (profile?.id && !selectedUserId) {
+      setSelectedUserId(profile.id);
+    }
+  }, [profile?.id, selectedUserId]);
+
+  // Obtenir l'utilisateur sélectionné pour l'affichage
+  const selectedUser = useMemo(() => {
+    if (!selectedUserId) return profile;
+    if (selectedUserId === profile?.id) return profile;
+    return users.find(u => u.id === selectedUserId) || profile;
+  }, [selectedUserId, profile, users]);
 
   // Charger les types d'assurance au montage
   useEffect(() => {
@@ -142,12 +166,16 @@ export const SalesForm = ({ onSaleAdded }: SalesFormProps) => {
     try {
       const previousCount = todaySummary.count;
       
+      // Déterminer l'utilisateur pour qui la vente est enregistrée
+      const targetUserId = selectedUserId || profile?.id || '';
+      const targetUserName = selectedUser?.full_name || profile?.full_name || '';
+
       // Créer une vente pour chaque assurance sélectionnée
       const salePromises = simulatedCommission.map(async (insuranceItem) => {
         return addSale({
           sale_date: format(saleDate, 'yyyy-MM-dd'),
-          employee_id: profile?.id || '',
-          employee_name: profile?.full_name || '',
+          employee_id: targetUserId,
+          employee_name: targetUserName,
           insurance_type: insuranceItem.name,
           insurance_type_id: insuranceItem.id,
           contract_number: validationResult.data.reservationNumber,
@@ -283,6 +311,38 @@ export const SalesForm = ({ onSaleAdded }: SalesFormProps) => {
       </div>
       
       <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Sélecteur d'utilisateur pour les admins */}
+        {isAdmin && users.length > 0 && (
+          <div className="modern-card p-4 bg-gradient-to-r from-amber-500/10 to-orange-500/10 border-amber-500/30">
+            <div className="flex items-center gap-3 mb-3">
+              <Users className="h-5 w-5 text-amber-600" />
+              <Label className="text-sm lg:text-base font-bold text-foreground">
+                Enregistrer la vente pour
+              </Label>
+            </div>
+            <Select value={selectedUserId} onValueChange={setSelectedUserId}>
+              <SelectTrigger className="w-full friendly-input">
+                <SelectValue placeholder="Sélectionner un utilisateur" />
+              </SelectTrigger>
+              <SelectContent>
+                {users.filter(u => u.is_active).map((user) => (
+                  <SelectItem key={user.id} value={user.id}>
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium">{user.full_name}</span>
+                      {user.id === profile?.id && (
+                        <span className="text-xs text-muted-foreground">(Moi)</span>
+                      )}
+                      {user.role === 'admin' && (
+                        <span className="text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded">Admin</span>
+                      )}
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
           <div className="space-y-2">
             <Label htmlFor="clientName" className="text-sm lg:text-base font-bold text-foreground">👤 Nom du client <span className="text-destructive">*</span></Label>
