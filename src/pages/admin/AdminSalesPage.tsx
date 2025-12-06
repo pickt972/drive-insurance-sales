@@ -48,6 +48,8 @@ export function AdminSalesPage() {
   // Date range filter state
   const [startDate, setStartDate] = useState<Date | undefined>(startOfMonth(new Date()));
   const [endDate, setEndDate] = useState<Date | undefined>(endOfMonth(new Date()));
+  const [startDateOpen, setStartDateOpen] = useState(false);
+  const [endDateOpen, setEndDateOpen] = useState(false);
   
   // Employee filter state
   const [employees, setEmployees] = useState<{ id: string; full_name: string }[]>([]);
@@ -881,7 +883,7 @@ export function AdminSalesPage() {
             <div className="flex flex-wrap items-center gap-3">
               <div className="flex items-center gap-2">
                 <span className="text-sm text-muted-foreground">Du:</span>
-                <Popover>
+                <Popover open={startDateOpen} onOpenChange={setStartDateOpen}>
                   <PopoverTrigger asChild>
                     <Button
                       variant="outline"
@@ -898,7 +900,14 @@ export function AdminSalesPage() {
                     <Calendar
                       mode="single"
                       selected={startDate}
-                      onSelect={setStartDate}
+                      onSelect={(date) => {
+                        setStartDate(date);
+                        setStartDateOpen(false);
+                      }}
+                      onTodaySelect={(date) => {
+                        setStartDate(date);
+                        setStartDateOpen(false);
+                      }}
                       initialFocus
                       className="pointer-events-auto"
                     />
@@ -924,7 +933,7 @@ export function AdminSalesPage() {
               
               <div className="flex items-center gap-2">
                 <span className="text-sm text-muted-foreground">Au:</span>
-                <Popover>
+                <Popover open={endDateOpen} onOpenChange={setEndDateOpen}>
                   <PopoverTrigger asChild>
                     <Button
                       variant="outline"
@@ -941,7 +950,14 @@ export function AdminSalesPage() {
                     <Calendar
                       mode="single"
                       selected={endDate}
-                      onSelect={setEndDate}
+                      onSelect={(date) => {
+                        setEndDate(date);
+                        setEndDateOpen(false);
+                      }}
+                      onTodaySelect={(date) => {
+                        setEndDate(date);
+                        setEndDateOpen(false);
+                      }}
                       initialFocus
                       className="pointer-events-auto"
                     />
