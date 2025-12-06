@@ -29,11 +29,12 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { PlusCircle, DollarSign, CheckCircle, Clock, XCircle, Eye } from 'lucide-react';
+import { PlusCircle, DollarSign, CheckCircle, Clock, XCircle, Eye, Calculator, FileDown, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { exportBonusesPDF } from '@/utils/pdfExport';
 
 interface Bonus {
   id: string;
@@ -64,11 +65,22 @@ interface Profile {
   email: string;
 }
 
+interface BonusRule {
+  id: string;
+  name: string;
+  min_achievement_percent: number;
+  max_achievement_percent: number | null;
+  bonus_percent: number;
+  is_active: boolean;
+}
+
 export function EmployeeBonuses() {
   const { toast } = useToast();
   const [bonuses, setBonuses] = useState<Bonus[]>([]);
   const [profiles, setProfiles] = useState<Profile[]>([]);
+  const [bonusRules, setBonusRules] = useState<BonusRule[]>([]);
   const [loading, setLoading] = useState(false);
+  const [calculating, setCalculating] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedBonus, setSelectedBonus] = useState<Bonus | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -88,6 +100,7 @@ export function EmployeeBonuses() {
   useEffect(() => {
     fetchBonuses();
     fetchProfiles();
+    fetchBonusRules();
   }, []);
 
   const fetchBonuses = async () => {
@@ -126,6 +139,21 @@ export function EmployeeBonuses() {
     }
   };
 
+  const fetchBonusRules = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('bonus_rules')
+        .select('*')
+        .eq('is_active', true)
+        .order('min_achievement_percent', { ascending: true });
+
+      if (error) throw error;
+      setBonusRules(data || []);
+    } catch (error) {
+      console.error('Error fetching bonus rules:', error);
+    }
+  };
+
   const resetForm = () => {
     setFormData({
       user_id: '',
@@ -139,6 +167,99 @@ export function EmployeeBonuses() {
       bonus_amount: '',
       notes: '',
     });
+  };
+
+  // Calculate bonus automatically based on sales and objectives
+  const calculateBonus = async () => {
+    if (!formData.user_id || !formData.period_start || !formData.period_end) {
+      toast({
+        title: 'Information manquante',
+        description: 'Veuillez sélectionner un employé et une période',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setCalculating(true);
+
+    try {
+      // Fetch sales for the selected period
+      const { data: sales, error: salesError } = await supabase
+        .from('insurance_sales')
+        .select('amount, commission_amount')
+        .eq('user_id', formData.user_id)
+        .gte('sale_date', formData.period_start)
+        .lte('sale_date', formData.period_end);
+
+      if (salesError) throw salesError;
+
+      const totalSales = sales?.length || 0;
+      const totalAmount = sales?.reduce((sum, s) => sum + (s.amount || 0), 0) || 0;
+      const totalCommission = sales?.reduce((sum, s) => sum + (s.commission_amount || 0), 0) || 0;
+
+      // Fetch objective for the period
+      const { data: objectives, error: objError } = await supabase
+        .from('employee_objectives')
+        .select('target_amount, target_sales_count')
+        .eq('user_id', formData.user_id)
+        .eq('is_active', true)
+        .lte('period_start', formData.period_end)
+        .gte('period_end', formData.period_start)
+        .maybeSingle();
+
+      if (objError) throw objError;
+
+      // Calculate achievement percentage
+      let achievementPercent = 0;
+      if (objectives?.target_amount && objectives.target_amount > 0) {
+        achievementPercent = (totalAmount / objectives.target_amount) * 100;
+      } else if (objectives?.target_sales_count && objectives.target_sales_count > 0) {
+        achievementPercent = (totalSales / objectives.target_sales_count) * 100;
+      } else {
+        // No objective found, use 100% as default
+        achievementPercent = 100;
+      }
+
+      // Find applicable bonus rule
+      let bonusRate = 0;
+      let bonusAmount = 0;
+
+      for (const rule of bonusRules) {
+        const minOk = achievementPercent >= rule.min_achievement_percent;
+        const maxOk = rule.max_achievement_percent === null || achievementPercent < rule.max_achievement_percent;
+        
+        if (minOk && maxOk) {
+          bonusRate = rule.bonus_percent;
+          bonusAmount = totalCommission * (bonusRate / 100);
+          break;
+        }
+      }
+
+      // Update form with calculated values
+      setFormData(prev => ({
+        ...prev,
+        total_sales: totalSales.toString(),
+        total_amount: totalAmount.toFixed(2),
+        total_commission: totalCommission.toFixed(2),
+        achievement_percent: achievementPercent.toFixed(2),
+        bonus_rate: bonusRate.toString(),
+        bonus_amount: bonusAmount.toFixed(2),
+      }));
+
+      toast({
+        title: 'Calcul effectué',
+        description: `${totalSales} ventes, ${achievementPercent.toFixed(0)}% d'atteinte → ${bonusRate}% de bonus`,
+      });
+    } catch (error) {
+      console.error('Error calculating bonus:', error);
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de calculer la prime',
+        variant: 'destructive',
+      });
+    } finally {
+      setCalculating(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -221,6 +342,28 @@ export function EmployeeBonuses() {
     }
   };
 
+  const handleExportPDF = () => {
+    const exportData = filteredBonuses.map(bonus => ({
+      employeeName: bonus.profiles?.full_name || 'N/A',
+      periodStart: bonus.period_start,
+      periodEnd: bonus.period_end,
+      totalSales: bonus.total_sales,
+      totalAmount: bonus.total_amount,
+      totalCommission: bonus.total_commission,
+      achievementPercent: bonus.achievement_percent,
+      bonusRate: bonus.bonus_rate,
+      bonusAmount: bonus.bonus_amount,
+      status: bonus.status,
+    }));
+
+    exportBonusesPDF(exportData, 'Rapport des Primes');
+    
+    toast({
+      title: 'Export réussi',
+      description: 'Le rapport PDF a été téléchargé',
+    });
+  };
+
   const getStatusLabel = (status: string | null) => {
     switch (status) {
       case 'pending': return 'En attente';
@@ -296,7 +439,7 @@ export function EmployeeBonuses() {
       {/* Main Card */}
       <Card className="modern-card animate-gentle-fade-in">
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between flex-wrap gap-4">
             <div className="flex items-center gap-2">
               <div className="p-2 rounded-lg bg-gradient-to-br from-success/10 to-success/5">
                 <DollarSign className="h-5 w-5 text-success" />
@@ -308,7 +451,7 @@ export function EmployeeBonuses() {
                 </CardDescription>
               </div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger className="w-[150px]">
                   <SelectValue placeholder="Filtrer" />
@@ -321,6 +464,10 @@ export function EmployeeBonuses() {
                   <SelectItem value="rejected">Refusées</SelectItem>
                 </SelectContent>
               </Select>
+              <Button variant="outline" onClick={handleExportPDF} disabled={filteredBonuses.length === 0}>
+                <FileDown className="mr-2 h-4 w-4" />
+                Export PDF
+              </Button>
               <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                 <DialogTrigger asChild>
                   <Button onClick={() => resetForm()} className="modern-button">
@@ -378,6 +525,22 @@ export function EmployeeBonuses() {
                         </div>
                       </div>
 
+                      {/* Auto-calculate button */}
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        onClick={calculateBonus}
+                        disabled={calculating || !formData.user_id || !formData.period_start || !formData.period_end}
+                        className="w-full"
+                      >
+                        {calculating ? (
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        ) : (
+                          <Calculator className="mr-2 h-4 w-4" />
+                        )}
+                        Calculer automatiquement
+                      </Button>
+
                       <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
                           <Label>Nb ventes</Label>
@@ -432,6 +595,7 @@ export function EmployeeBonuses() {
                             value={formData.bonus_rate}
                             onChange={(e) => setFormData({ ...formData, bonus_rate: e.target.value })}
                             placeholder="0"
+                            className="bg-muted/50"
                           />
                         </div>
                         <div className="space-y-2">
@@ -443,9 +607,22 @@ export function EmployeeBonuses() {
                             onChange={(e) => setFormData({ ...formData, bonus_amount: e.target.value })}
                             placeholder="0.00"
                             required
+                            className="bg-success/10 border-success/30"
                           />
                         </div>
                       </div>
+
+                      {/* Preview of applied rule */}
+                      {formData.achievement_percent && formData.bonus_rate && (
+                        <div className="rounded-lg bg-muted/50 p-3 text-sm">
+                          <p className="font-medium text-foreground">
+                            Règle appliquée : {formData.bonus_rate}% sur commission
+                          </p>
+                          <p className="text-muted-foreground">
+                            {formData.total_commission} € × {formData.bonus_rate}% = {formData.bonus_amount} €
+                          </p>
+                        </div>
+                      )}
 
                       <div className="space-y-2">
                         <Label>Notes</Label>
