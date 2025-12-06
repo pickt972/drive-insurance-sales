@@ -430,6 +430,11 @@ export const SalesForm = ({ onSaleAdded }: SalesFormProps) => {
                       setCalendarOpen(false);
                     }
                   }}
+                  onTodaySelect={(date) => {
+                    setSaleDate(date);
+                    clearFieldError('saleDate');
+                    setCalendarOpen(false);
+                  }}
                   disabled={(date) => date > new Date()}
                   initialFocus
                   locale={fr}

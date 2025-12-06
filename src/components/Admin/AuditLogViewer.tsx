@@ -56,6 +56,8 @@ export function AuditLogViewer() {
   const [search, setSearch] = useState('');
   const [dateFrom, setDateFrom] = useState<Date | undefined>(undefined);
   const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
+  const [dateFromOpen, setDateFromOpen] = useState(false);
+  const [dateToOpen, setDateToOpen] = useState(false);
   const [selectedLog, setSelectedLog] = useState<AuditLog | null>(null);
   const [restoring, setRestoring] = useState(false);
   const [confirmRestore, setConfirmRestore] = useState(false);
@@ -233,7 +235,7 @@ export function AuditLogViewer() {
           <div className="flex flex-col md:flex-row gap-4 items-end">
             <div className="flex flex-col gap-1">
               <label className="text-sm text-muted-foreground">Date début</label>
-              <Popover>
+              <Popover open={dateFromOpen} onOpenChange={setDateFromOpen}>
                 <PopoverTrigger asChild>
                   <Button
                     variant="outline"
@@ -250,7 +252,14 @@ export function AuditLogViewer() {
                   <Calendar
                     mode="single"
                     selected={dateFrom}
-                    onSelect={setDateFrom}
+                    onSelect={(date) => {
+                      setDateFrom(date);
+                      setDateFromOpen(false);
+                    }}
+                    onTodaySelect={(date) => {
+                      setDateFrom(date);
+                      setDateFromOpen(false);
+                    }}
                     locale={fr}
                     initialFocus
                   />
@@ -260,7 +269,7 @@ export function AuditLogViewer() {
 
             <div className="flex flex-col gap-1">
               <label className="text-sm text-muted-foreground">Date fin</label>
-              <Popover>
+              <Popover open={dateToOpen} onOpenChange={setDateToOpen}>
                 <PopoverTrigger asChild>
                   <Button
                     variant="outline"
@@ -277,7 +286,14 @@ export function AuditLogViewer() {
                   <Calendar
                     mode="single"
                     selected={dateTo}
-                    onSelect={setDateTo}
+                    onSelect={(date) => {
+                      setDateTo(date);
+                      setDateToOpen(false);
+                    }}
+                    onTodaySelect={(date) => {
+                      setDateTo(date);
+                      setDateToOpen(false);
+                    }}
                     locale={fr}
                     initialFocus
                   />
