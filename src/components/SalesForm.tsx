@@ -77,10 +77,19 @@ export const SalesForm = ({ onSaleAdded }: SalesFormProps) => {
     setInsuranceTypesLocal(insuranceTypes);
   }, [insuranceTypes]);
 
-  // Récapitulatif des ventes du jour
+  // Récapitulatif des ventes du jour (filtré par utilisateur sélectionné pour les admins)
   const todaySummary = useMemo(() => {
     const today = format(new Date(), 'yyyy-MM-dd');
-    const todaySales = sales.filter(sale => sale.sale_date === today);
+    const targetUserId = isAdmin && selectedUserId ? selectedUserId : profile?.id;
+    const todaySales = sales.filter(sale => {
+      const isToday = sale.sale_date === today;
+      // Pour les admins avec un utilisateur sélectionné, filtrer par cet utilisateur
+      if (isAdmin && targetUserId) {
+        return isToday && sale.user_id === targetUserId;
+      }
+      // Pour les utilisateurs normaux, afficher leurs propres ventes
+      return isToday && sale.user_id === profile?.id;
+    });
     const totalCommission = todaySales.reduce((sum, sale) => sum + (sale.commission || 0), 0);
     const progress = Math.min((todaySales.length / dailyObjective) * 100, 100);
     return {
@@ -89,8 +98,9 @@ export const SalesForm = ({ onSaleAdded }: SalesFormProps) => {
       progress,
       objective: dailyObjective,
       isComplete: todaySales.length >= dailyObjective,
+      userName: selectedUser?.full_name || profile?.full_name || '',
     };
-  }, [sales, dailyObjective]);
+  }, [sales, dailyObjective, isAdmin, selectedUserId, profile?.id, selectedUser?.full_name]);
 
   // Notification quand l'objectif est atteint
   useEffect(() => {
@@ -250,7 +260,11 @@ export const SalesForm = ({ onSaleAdded }: SalesFormProps) => {
               )}
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Vos ventes aujourd'hui</p>
+              <p className="text-sm text-muted-foreground">
+                {isAdmin && selectedUserId && selectedUserId !== profile?.id 
+                  ? `Ventes de ${todaySummary.userName} aujourd'hui`
+                  : "Vos ventes aujourd'hui"}
+              </p>
               <p className="text-lg font-bold text-foreground">
                 {todaySummary.count} vente{todaySummary.count > 1 ? 's' : ''}
                 {todaySummary.isComplete && " 🏆"}
