@@ -25,7 +25,14 @@ export const saleSchema = z.object({
   
   saleDate: z
     .date()
-    .max(new Date(), 'La date de vente ne peut pas être dans le futur'),
+    .refine(
+      (date) => {
+        const today = new Date();
+        today.setHours(23, 59, 59, 999);
+        return date <= today;
+      },
+      { message: 'La date de vente ne peut pas être dans le futur' }
+    ),
   
   selectedInsurances: z
     .array(z.string())
