@@ -8,12 +8,29 @@ import { useSales } from '@/hooks/useSales';
 import { cn } from '@/lib/utils';
 
 export const MonthlySummary = () => {
-  const { sales } = useSales();
+  const { sales = [] } = useSales();
 
   const monthlyStats = useMemo(() => {
     const now = new Date();
     const monthStart = startOfMonth(now);
     const monthEnd = endOfMonth(now);
+
+    if (!sales || sales.length === 0) {
+      return {
+        monthStart,
+        monthEnd,
+        salesCount: 0,
+        totalCommission: 0,
+        avgCommissionPerSale: 0,
+        weeklyBreakdown: [],
+        progress: 0,
+        monthlyTarget: 100,
+        daysRemaining: monthEnd.getDate() - now.getDate(),
+        projectedTotal: 0,
+        dailyAverage: 0,
+      };
+    }
+
 
     const monthlySales = sales.filter(sale => {
       try {
@@ -78,7 +95,9 @@ export const MonthlySummary = () => {
     };
   }, [sales]);
 
-  const maxWeeklySales = Math.max(...monthlyStats.weeklyBreakdown.map(w => w.count), 1);
+  const maxWeeklySales = monthlyStats.weeklyBreakdown.length > 0 
+    ? Math.max(...monthlyStats.weeklyBreakdown.map(w => w.count), 1) 
+    : 1;
 
   return (
     <Card className="modern-card">
