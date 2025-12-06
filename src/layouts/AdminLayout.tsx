@@ -181,6 +181,22 @@ export default function AdminLayout() {
             <div className="flex-1 lg:flex-none" />
 
             <div className="flex items-center gap-4">
+              {/* Quick action: Nouvelle Vente */}
+              <Button 
+                onClick={() => navigate('/admin/new-sale')}
+                className="hidden sm:flex items-center gap-2 bg-primary hover:bg-primary/90"
+              >
+                <PlusCircle className="h-4 w-4" />
+                Nouvelle Vente
+              </Button>
+              <Button 
+                onClick={() => navigate('/admin/new-sale')}
+                size="icon"
+                className="sm:hidden bg-primary hover:bg-primary/90"
+              >
+                <PlusCircle className="h-5 w-5" />
+              </Button>
+
               {/* Notifications */}
               <Button variant="ghost" size="icon" className="relative">
                 <Bell className="h-5 w-5 text-gray-500" />
