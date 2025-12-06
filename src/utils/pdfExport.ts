@@ -254,3 +254,99 @@ export function exportPerformanceComparisonPDF(
 
   doc.save(`comparaison-performances-${format(new Date(), 'yyyy-MM-dd')}.pdf`);
 }
+
+interface BonusExport {
+  employeeName: string;
+  periodStart: string;
+  periodEnd: string;
+  totalSales: number | null;
+  totalAmount: number | null;
+  totalCommission: number | null;
+  achievementPercent: number | null;
+  bonusRate: number | null;
+  bonusAmount: number | null;
+  status: string | null;
+}
+
+export function exportBonusesPDF(bonuses: BonusExport[], title: string = 'Rapport des Primes') {
+  const doc = new jsPDF();
+
+  // Header
+  doc.setFontSize(20);
+  doc.setTextColor(34, 197, 94); // Green
+  doc.text('ALOELOCATION', 14, 20);
+  
+  doc.setFontSize(16);
+  doc.setTextColor(0, 0, 0);
+  doc.text(title, 14, 30);
+
+  doc.setFontSize(10);
+  doc.setTextColor(100, 100, 100);
+  doc.text(`Généré le ${format(new Date(), 'dd MMMM yyyy à HH:mm', { locale: fr })}`, 14, 38);
+
+  // Statistiques résumées
+  const totalBonusAmount = bonuses.reduce((sum, b) => sum + (b.bonusAmount || 0), 0);
+  const pendingCount = bonuses.filter(b => b.status === 'pending').length;
+  const approvedCount = bonuses.filter(b => b.status === 'approved').length;
+  const paidCount = bonuses.filter(b => b.status === 'paid').length;
+
+  doc.setFontSize(12);
+  doc.setTextColor(0, 0, 0);
+  doc.text(`Total des primes: ${totalBonusAmount.toFixed(2)} €`, 14, 50);
+  doc.text(`En attente: ${pendingCount} | Approuvées: ${approvedCount} | Payées: ${paidCount}`, 14, 58);
+
+  const getStatusLabel = (status: string | null) => {
+    switch (status) {
+      case 'pending': return 'En attente';
+      case 'approved': return 'Approuvée';
+      case 'paid': return 'Payée';
+      case 'rejected': return 'Refusée';
+      default: return '-';
+    }
+  };
+
+  // Table des primes
+  autoTable(doc, {
+    startY: 68,
+    head: [['Employé', 'Période', 'Ventes', 'CA', 'Commission', 'Atteinte', 'Prime', 'Statut']],
+    body: bonuses.map(bonus => [
+      bonus.employeeName,
+      `${format(new Date(bonus.periodStart), 'dd/MM/yy')} - ${format(new Date(bonus.periodEnd), 'dd/MM/yy')}`,
+      bonus.totalSales?.toString() || '-',
+      bonus.totalAmount ? `${bonus.totalAmount.toFixed(0)} €` : '-',
+      bonus.totalCommission ? `${bonus.totalCommission.toFixed(2)} €` : '-',
+      bonus.achievementPercent ? `${bonus.achievementPercent.toFixed(0)}%` : '-',
+      bonus.bonusAmount ? `${bonus.bonusAmount.toFixed(2)} €` : '-',
+      getStatusLabel(bonus.status),
+    ]),
+    theme: 'grid',
+    headStyles: { fillColor: [34, 197, 94], fontSize: 8 },
+    styles: { fontSize: 7 },
+    columnStyles: {
+      0: { cellWidth: 30 },
+      1: { cellWidth: 32 },
+      2: { cellWidth: 15, halign: 'center' },
+      3: { cellWidth: 22, halign: 'right' },
+      4: { cellWidth: 25, halign: 'right' },
+      5: { cellWidth: 18, halign: 'center' },
+      6: { cellWidth: 22, halign: 'right' },
+      7: { cellWidth: 22 },
+    },
+  });
+
+  // Footer avec pagination
+  const pageCount = (doc as any).internal.getNumberOfPages();
+  for (let i = 1; i <= pageCount; i++) {
+    doc.setPage(i);
+    doc.setFontSize(8);
+    doc.setTextColor(150);
+    doc.text(
+      `Page ${i} sur ${pageCount}`,
+      doc.internal.pageSize.getWidth() / 2,
+      doc.internal.pageSize.getHeight() - 10,
+      { align: 'center' }
+    );
+  }
+
+  doc.save(`rapport-primes-${format(new Date(), 'yyyy-MM-dd')}.pdf`);
+}
