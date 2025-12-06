@@ -3,7 +3,9 @@ import { useSales } from '@/hooks/useSales';
 import { useUsers } from '@/hooks/useUsers';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { TrendingUp, TrendingDown, DollarSign, Target, Users, BarChart3 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { TrendingUp, TrendingDown, DollarSign, Target, Users, BarChart3, FileDown } from 'lucide-react';
+import { exportPerformanceComparisonPDF } from '@/utils/pdfExport';
 import {
   LineChart,
   Line,
@@ -458,17 +460,29 @@ export function AdvancedAnalytics() {
                 <CardDescription>Analyse comparative entre utilisateurs</CardDescription>
               </div>
             </div>
-            <Select value={comparisonPeriod} onValueChange={(v) => setComparisonPeriod(v as PeriodFilter)}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Période" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="week">Cette semaine</SelectItem>
-                <SelectItem value="month">Ce mois</SelectItem>
-                <SelectItem value="3months">3 derniers mois</SelectItem>
-                <SelectItem value="year">Cette année</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => exportPerformanceComparisonPDF(userComparison, getPeriodLabel(comparisonPeriod))}
+                disabled={userComparison.length === 0}
+                className="gap-2"
+              >
+                <FileDown className="h-4 w-4" />
+                Export PDF
+              </Button>
+              <Select value={comparisonPeriod} onValueChange={(v) => setComparisonPeriod(v as PeriodFilter)}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Periode" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="week">Cette semaine</SelectItem>
+                  <SelectItem value="month">Ce mois</SelectItem>
+                  <SelectItem value="3months">3 derniers mois</SelectItem>
+                  <SelectItem value="year">Cette annee</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </CardHeader>
         <CardContent>
