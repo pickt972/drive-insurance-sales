@@ -42,6 +42,7 @@ export const SalesForm = ({ onSaleAdded }: SalesFormProps) => {
   const [selectedInsurances, setSelectedInsurances] = useState<string[]>([]);
   const [notes, setNotes] = useState("");
   const [saleDate, setSaleDate] = useState<Date>(new Date());
+  const [calendarOpen, setCalendarOpen] = useState(false);
   const [showCelebration, setShowCelebration] = useState(false);
   const [lastSaleAmount, setLastSaleAmount] = useState(0);
   const [insuranceTypesLocal, setInsuranceTypesLocal] = useState<InsuranceType[]>([]);
@@ -404,7 +405,7 @@ export const SalesForm = ({ onSaleAdded }: SalesFormProps) => {
 
           <div className="space-y-2">
             <Label className="text-sm lg:text-base font-bold text-foreground">📅 Date de vente</Label>
-            <Popover>
+            <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
               <PopoverTrigger asChild>
                 <Button
                   variant="outline"
@@ -426,6 +427,7 @@ export const SalesForm = ({ onSaleAdded }: SalesFormProps) => {
                     if (date) {
                       setSaleDate(date);
                       clearFieldError('saleDate');
+                      setCalendarOpen(false);
                     }
                   }}
                   disabled={(date) => date > new Date()}
