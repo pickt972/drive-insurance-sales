@@ -91,7 +91,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return null;
   }, []);
 
-  // Récupérer le rôle via RPC avec retry
+  // Récupérer le rôle via RPC avec retry - fail closed (no fallback to user_metadata)
   const fetchRole = useCallback(async (userId: string) => {
     devLog('[AUTH] fetchRole called for:', userId);
     
@@ -113,10 +113,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     }
 
-    // Fallback: vérifier user_metadata
-    devLog('[AUTH] 🔄 Using user_metadata fallback for role');
-    const { data: { user } } = await supabase.auth.getUser();
-    return user?.user_metadata?.role || 'user';
+    // Security: fail closed - default to least privileges instead of trusting user_metadata
+    devWarn('[AUTH] ⚠️ Could not fetch role from database after 3 attempts - defaulting to "user" (least privileges)');
+    return 'user';
   }, []);
 
   // Timeout de sécurité pour éviter le blocage infini

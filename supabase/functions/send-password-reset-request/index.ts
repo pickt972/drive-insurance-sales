@@ -14,6 +14,27 @@ interface PasswordResetRequest {
   message?: string;
 }
 
+// Rate limit: max 3 requests per username per hour
+const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000; // 1 hour
+const MAX_REQUESTS_PER_WINDOW = 3;
+
+// HTML escape to prevent XSS in email templates
+function escapeHtml(text: string): string {
+  const htmlEntities: Record<string, string> = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;',
+  };
+  return text.replace(/[&<>"']/g, (char) => htmlEntities[char] || char);
+}
+
+// Validate username format (alphanumeric and basic chars only)
+function isValidUsername(username: string): boolean {
+  return /^[a-zA-Z0-9._-]{1,50}$/.test(username);
+}
+
 const handler = async (req: Request): Promise<Response> => {
   console.log("Password reset request received");
   
@@ -26,18 +47,58 @@ const handler = async (req: Request): Promise<Response> => {
     const { username, message }: PasswordResetRequest = await req.json();
     console.log("Request for username:", username);
 
-    if (!username?.trim()) {
+    // Validate username
+    const trimmedUsername = username?.trim();
+    if (!trimmedUsername) {
       return new Response(
         JSON.stringify({ error: "Le nom d'utilisateur est requis" }),
         { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
 
-    // Get admin email from system_settings
+    // Validate username format
+    if (!isValidUsername(trimmedUsername)) {
+      return new Response(
+        JSON.stringify({ error: "Format de nom d'utilisateur invalide" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    // Sanitize and limit message
+    const sanitizedMessage = message ? escapeHtml(message.slice(0, 500).trim()) : '';
+
+    // Initialize Supabase client
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    // Rate limiting check using audit_logs
+    const oneHourAgo = new Date(Date.now() - RATE_LIMIT_WINDOW_MS).toISOString();
+    
+    const { data: recentRequests, error: rateError } = await supabase
+      .from("audit_logs")
+      .select("id")
+      .eq("action", "PASSWORD_RESET_REQUEST")
+      .eq("record_id", trimmedUsername.toLowerCase())
+      .gte("created_at", oneHourAgo);
+
+    if (!rateError && recentRequests && recentRequests.length >= MAX_REQUESTS_PER_WINDOW) {
+      console.log(`Rate limit exceeded for username: ${trimmedUsername}`);
+      return new Response(
+        JSON.stringify({ error: "Trop de demandes. Veuillez réessayer dans une heure." }),
+        { status: 429, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    // Log this request for rate limiting (before sending email)
+    await supabase.from("audit_logs").insert({
+      action: "PASSWORD_RESET_REQUEST",
+      record_id: trimmedUsername.toLowerCase(),
+      table_name: "password_reset",
+      new_values: { username: trimmedUsername, has_message: !!sanitizedMessage },
+    });
+
+    // Get admin email from system_settings
     const { data: settingData, error: settingError } = await supabase
       .from("system_settings")
       .select("value")
@@ -62,7 +123,7 @@ const handler = async (req: Request): Promise<Response> => {
       .eq("key", "app_name")
       .single();
 
-    const appName = appNameData?.value || "Gestion des Ventes";
+    const appName = escapeHtml(String(appNameData?.value || "Gestion des Ventes"));
 
     // Get sender email from system_settings (for verified domain)
     const { data: senderEmailData } = await supabase
@@ -75,11 +136,14 @@ const handler = async (req: Request): Promise<Response> => {
     const senderEmail = senderEmailData?.value || "onboarding@resend.dev";
     console.log("Using sender email:", senderEmail);
 
+    // Escape username for HTML
+    const safeUsername = escapeHtml(trimmedUsername);
+
     // Send email to admin
     const emailResponse = await resend.emails.send({
       from: `${appName} <${senderEmail}>`,
       to: [adminEmail],
-      subject: `🔐 Demande de réinitialisation de mot de passe - ${username}`,
+      subject: `🔐 Demande de réinitialisation de mot de passe - ${safeUsername}`,
       html: `
         <!DOCTYPE html>
         <html>
@@ -104,10 +168,10 @@ const handler = async (req: Request): Promise<Response> => {
               <p>Bonjour,</p>
               <p>Un utilisateur a demandé la réinitialisation de son mot de passe :</p>
               <div class="highlight">
-                <p><strong>Utilisateur :</strong> <span class="username">${username}</span></p>
-                <p><strong>Email :</strong> ${username}@aloelocation.internal</p>
+                <p><strong>Utilisateur :</strong> <span class="username">${safeUsername}</span></p>
+                <p><strong>Email :</strong> ${safeUsername}@aloelocation.internal</p>
                 <p><strong>Date :</strong> ${new Date().toLocaleString('fr-FR', { timeZone: 'America/Martinique' })}</p>
-                ${message ? `<p><strong>Message :</strong> ${message}</p>` : ''}
+                ${sanitizedMessage ? `<p><strong>Message :</strong> ${sanitizedMessage}</p>` : ''}
               </div>
               <p>Veuillez vous connecter à l'interface d'administration pour réinitialiser le mot de passe de cet utilisateur.</p>
               <p>Cordialement,<br><strong>${appName}</strong></p>
@@ -130,7 +194,7 @@ const handler = async (req: Request): Promise<Response> => {
   } catch (error: any) {
     console.error("Error in send-password-reset-request:", error);
     return new Response(
-      JSON.stringify({ error: error.message || "Erreur lors de l'envoi" }),
+      JSON.stringify({ error: "Erreur lors de l'envoi de la demande" }),
       { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
   }
