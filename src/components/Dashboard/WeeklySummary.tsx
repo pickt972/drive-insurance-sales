@@ -20,13 +20,21 @@ export const WeeklySummary = () => {
     const prevWeekEnd = subWeeks(weekEnd, 1);
 
     const weeklySales = sales.filter(sale => {
-      const saleDate = parseISO(sale.sale_date);
-      return isWithinInterval(saleDate, { start: weekStart, end: weekEnd });
+      try {
+        const saleDate = parseISO(sale.sale_date);
+        return isWithinInterval(saleDate, { start: weekStart, end: weekEnd });
+      } catch {
+        return false;
+      }
     });
 
     const prevWeeklySales = sales.filter(sale => {
-      const saleDate = parseISO(sale.sale_date);
-      return isWithinInterval(saleDate, { start: prevWeekStart, end: prevWeekEnd });
+      try {
+        const saleDate = parseISO(sale.sale_date);
+        return isWithinInterval(saleDate, { start: prevWeekStart, end: prevWeekEnd });
+      } catch {
+        return false;
+      }
     });
 
     const totalCommission = weeklySales.reduce((sum, sale) => sum + (sale.commission || 0), 0);

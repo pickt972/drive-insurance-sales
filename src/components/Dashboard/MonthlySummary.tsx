@@ -16,8 +16,12 @@ export const MonthlySummary = () => {
     const monthEnd = endOfMonth(now);
 
     const monthlySales = sales.filter(sale => {
-      const saleDate = parseISO(sale.sale_date);
-      return isWithinInterval(saleDate, { start: monthStart, end: monthEnd });
+      try {
+        const saleDate = parseISO(sale.sale_date);
+        return isWithinInterval(saleDate, { start: monthStart, end: monthEnd });
+      } catch {
+        return false;
+      }
     });
 
     const totalCommission = monthlySales.reduce((sum, sale) => sum + (sale.commission || 0), 0);
@@ -29,11 +33,15 @@ export const MonthlySummary = () => {
     const weeklyBreakdown = weeks.map((weekStart, index) => {
       const weekEnd = endOfWeek(weekStart, { weekStartsOn: 1 });
       const weekSales = monthlySales.filter(s => {
-        const saleDate = parseISO(s.sale_date);
-        return isWithinInterval(saleDate, { 
-          start: weekStart < monthStart ? monthStart : weekStart, 
-          end: weekEnd > monthEnd ? monthEnd : weekEnd 
-        });
+        try {
+          const saleDate = parseISO(s.sale_date);
+          return isWithinInterval(saleDate, { 
+            start: weekStart < monthStart ? monthStart : weekStart, 
+            end: weekEnd > monthEnd ? monthEnd : weekEnd 
+          });
+        } catch {
+          return false;
+        }
       });
       return {
         week: `S${index + 1}`,
