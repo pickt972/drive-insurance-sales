@@ -95,40 +95,162 @@ export function exportEmployeeStatsPDF(stats: EmployeeStat[], title: string = 'C
 
   doc.setFontSize(10);
   doc.setTextColor(100, 100, 100);
-  doc.text(`Généré le ${format(new Date(), 'dd MMMM yyyy à HH:mm', { locale: fr })}`, 14, 38);
+  doc.text(`Genere le ${format(new Date(), 'dd MMMM yyyy a HH:mm', { locale: fr })}`, 14, 38);
 
   // Podium
   if (stats.length >= 3) {
     doc.setFontSize(14);
-    doc.text('🥇 ' + stats[0].name, 14, 50);
+    doc.text('1er ' + stats[0].name, 14, 50);
     doc.setFontSize(10);
-    doc.text(`${stats[0].totalAmount.toFixed(2)} € - ${stats[0].salesCount} ventes`, 20, 56);
+    doc.text(`${stats[0].totalAmount.toFixed(2)} EUR - ${stats[0].salesCount} ventes`, 20, 56);
 
     doc.setFontSize(12);
-    doc.text('🥈 ' + stats[1].name, 14, 65);
+    doc.text('2e ' + stats[1].name, 14, 65);
     doc.setFontSize(10);
-    doc.text(`${stats[1].totalAmount.toFixed(2)} € - ${stats[1].salesCount} ventes`, 20, 71);
+    doc.text(`${stats[1].totalAmount.toFixed(2)} EUR - ${stats[1].salesCount} ventes`, 20, 71);
 
     doc.setFontSize(12);
-    doc.text('🥉 ' + stats[2].name, 14, 80);
+    doc.text('3e ' + stats[2].name, 14, 80);
     doc.setFontSize(10);
-    doc.text(`${stats[2].totalAmount.toFixed(2)} € - ${stats[2].salesCount} ventes`, 20, 86);
+    doc.text(`${stats[2].totalAmount.toFixed(2)} EUR - ${stats[2].salesCount} ventes`, 20, 86);
   }
 
-  // Table complète
+  // Table complete
   autoTable(doc, {
     startY: 95,
-    head: [['Rang', 'Employé', 'Ventes', 'Montant Total', 'Commission']],
+    head: [['Rang', 'Employe', 'Ventes', 'Montant Total', 'Commission']],
     body: stats.map((emp, index) => [
       `${index + 1}`,
       emp.name,
       emp.salesCount.toString(),
-      `${emp.totalAmount.toFixed(2)} €`,
-      `${emp.totalCommission.toFixed(2)} €`,
+      `${emp.totalAmount.toFixed(2)} EUR`,
+      `${emp.totalCommission.toFixed(2)} EUR`,
     ]),
     theme: 'grid',
     headStyles: { fillColor: [220, 38, 38] },
   });
 
   doc.save(`classement-vendeurs-${format(new Date(), 'yyyy-MM-dd')}.pdf`);
+}
+
+interface UserPerformance {
+  id: string;
+  name: string;
+  ventes: number;
+  commission: number;
+  count: number;
+}
+
+export function exportPerformanceComparisonPDF(
+  users: UserPerformance[], 
+  periodLabel: string,
+  title: string = 'Comparaison des performances'
+) {
+  const doc = new jsPDF();
+
+  // Header
+  doc.setFontSize(20);
+  doc.setTextColor(147, 51, 234); // Purple
+  doc.text('ALOELOCATION', 14, 20);
+  
+  doc.setFontSize(16);
+  doc.setTextColor(0, 0, 0);
+  doc.text(title, 14, 30);
+
+  doc.setFontSize(12);
+  doc.setTextColor(100, 100, 100);
+  doc.text(`Periode: ${periodLabel}`, 14, 38);
+
+  doc.setFontSize(10);
+  doc.text(`Genere le ${format(new Date(), 'dd MMMM yyyy a HH:mm', { locale: fr })}`, 14, 45);
+
+  // Statistiques globales
+  const totalVentes = users.reduce((sum, u) => sum + u.ventes, 0);
+  const totalCommission = users.reduce((sum, u) => sum + u.commission, 0);
+  const totalCount = users.reduce((sum, u) => sum + u.count, 0);
+
+  doc.setFontSize(11);
+  doc.setTextColor(0, 0, 0);
+  doc.text(`Total CA: ${totalVentes.toFixed(2)} EUR`, 14, 55);
+  doc.text(`Total Commission: ${totalCommission.toFixed(2)} EUR`, 80, 55);
+  doc.text(`Total Ventes: ${totalCount}`, 150, 55);
+
+  // Podium Top 3
+  doc.setFontSize(14);
+  doc.setTextColor(147, 51, 234);
+  doc.text('Podium', 14, 68);
+
+  if (users.length >= 1) {
+    doc.setFontSize(12);
+    doc.setTextColor(255, 215, 0); // Gold
+    doc.text('1er', 14, 78);
+    doc.setTextColor(0, 0, 0);
+    doc.text(`${users[0].name}`, 28, 78);
+    doc.setFontSize(10);
+    doc.setTextColor(100, 100, 100);
+    doc.text(`${users[0].commission.toFixed(2)} EUR commission - ${users[0].count} ventes`, 28, 84);
+  }
+
+  if (users.length >= 2) {
+    doc.setFontSize(11);
+    doc.setTextColor(192, 192, 192); // Silver
+    doc.text('2e', 14, 93);
+    doc.setTextColor(0, 0, 0);
+    doc.text(`${users[1].name}`, 28, 93);
+    doc.setFontSize(10);
+    doc.setTextColor(100, 100, 100);
+    doc.text(`${users[1].commission.toFixed(2)} EUR commission - ${users[1].count} ventes`, 28, 99);
+  }
+
+  if (users.length >= 3) {
+    doc.setFontSize(11);
+    doc.setTextColor(205, 127, 50); // Bronze
+    doc.text('3e', 14, 108);
+    doc.setTextColor(0, 0, 0);
+    doc.text(`${users[2].name}`, 28, 108);
+    doc.setFontSize(10);
+    doc.setTextColor(100, 100, 100);
+    doc.text(`${users[2].commission.toFixed(2)} EUR commission - ${users[2].count} ventes`, 28, 114);
+  }
+
+  // Table complete
+  autoTable(doc, {
+    startY: 125,
+    head: [['Rang', 'Utilisateur', 'Nb Ventes', 'CA', 'Commission', 'Moy/Vente']],
+    body: users.map((user, index) => [
+      `${index + 1}`,
+      user.name,
+      user.count.toString(),
+      `${user.ventes.toFixed(2)} EUR`,
+      `${user.commission.toFixed(2)} EUR`,
+      user.count > 0 ? `${(user.commission / user.count).toFixed(2)} EUR` : '0.00 EUR',
+    ]),
+    theme: 'grid',
+    headStyles: { fillColor: [147, 51, 234] },
+    styles: { fontSize: 9 },
+    columnStyles: {
+      0: { cellWidth: 15 },
+      1: { cellWidth: 45 },
+      2: { cellWidth: 25, halign: 'center' },
+      3: { cellWidth: 30, halign: 'right' },
+      4: { cellWidth: 30, halign: 'right' },
+      5: { cellWidth: 30, halign: 'right' },
+    },
+  });
+
+  // Footer avec pagination
+  const pageCount = (doc as any).internal.getNumberOfPages();
+  for (let i = 1; i <= pageCount; i++) {
+    doc.setPage(i);
+    doc.setFontSize(8);
+    doc.setTextColor(150);
+    doc.text(
+      `Page ${i} sur ${pageCount}`,
+      doc.internal.pageSize.getWidth() / 2,
+      doc.internal.pageSize.getHeight() - 10,
+      { align: 'center' }
+    );
+  }
+
+  doc.save(`comparaison-performances-${format(new Date(), 'yyyy-MM-dd')}.pdf`);
 }
