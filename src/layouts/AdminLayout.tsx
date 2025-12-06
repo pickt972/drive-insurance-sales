@@ -51,20 +51,23 @@ const navigation = [
 export default function AdminLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [todaySalesCount, setTodaySalesCount] = useState(0);
+  const [todaySalesAmount, setTodaySalesAmount] = useState(0);
   const { profile, signOut } = useAuth();
   const { settings: appSettings } = useAppSettings();
   const navigate = useNavigate();
 
-  // Fetch today's sales count
+  // Fetch today's sales stats
   useEffect(() => {
     const fetchTodaySales = async () => {
       const today = new Date().toISOString().split('T')[0];
-      const { count } = await supabase
+      const { data, count } = await supabase
         .from('insurance_sales')
-        .select('*', { count: 'exact', head: true })
+        .select('amount', { count: 'exact' })
         .eq('sale_date', today);
       
       setTodaySalesCount(count || 0);
+      const total = data?.reduce((sum, sale) => sum + Number(sale.amount || 0), 0) || 0;
+      setTodaySalesAmount(total);
     };
 
     fetchTodaySales();
@@ -201,11 +204,13 @@ export default function AdminLayout() {
             </button>
 
             {/* Today's sales counter */}
-            <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-primary/10 rounded-lg">
+            <div className="hidden md:flex items-center gap-3 px-4 py-1.5 bg-primary/10 rounded-lg">
               <TrendingUp className="h-4 w-4 text-primary" />
-              <span className="text-sm font-medium text-primary">
-                {todaySalesCount} vente{todaySalesCount !== 1 ? 's' : ''} aujourd'hui
-              </span>
+              <div className="flex items-center gap-3 text-sm font-medium text-primary">
+                <span>{todaySalesCount} vente{todaySalesCount !== 1 ? 's' : ''}</span>
+                <span className="w-px h-4 bg-primary/30" />
+                <span>{todaySalesAmount.toLocaleString('fr-FR')} €</span>
+              </div>
             </div>
 
             <div className="flex-1 lg:flex-none" />
