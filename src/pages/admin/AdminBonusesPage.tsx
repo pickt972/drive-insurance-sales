@@ -1,13 +1,13 @@
-import { BonusManagement } from '@/components/Admin/BonusManagement';
+import { EmployeeBonuses } from '@/components/Admin/EmployeeBonuses';
 
 export function AdminBonusesPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-3xl font-bold text-gray-900">Primes & Bonus</h2>
-        <p className="text-gray-600">Configuration des règles de primes et bonus</p>
+        <h2 className="text-3xl font-bold text-foreground">Primes & Bonus</h2>
+        <p className="text-muted-foreground">Suivi et gestion des primes versées aux employés</p>
       </div>
-      <BonusManagement />
+      <EmployeeBonuses />
     </div>
   );
 }
