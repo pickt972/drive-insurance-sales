@@ -10,6 +10,7 @@ import { AdminUsersPage } from '@/pages/admin/AdminUsersPage';
 import { AdminInsuranceTypesPage } from '@/pages/admin/AdminInsuranceTypesPage';
 import { AdminObjectivesPage } from '@/pages/admin/AdminObjectivesPage';
 import { AdminBonusesPage } from '@/pages/admin/AdminBonusesPage';
+import { AdminBonusRulesPage } from '@/pages/admin/AdminBonusRulesPage';
 import { AdminReportsPage } from '@/pages/admin/AdminReportsPage';
 import { AdminAuditLogsPage } from '@/pages/admin/AdminAuditLogsPage';
 import { AdminSettingsPage } from '@/pages/admin/AdminSettingsPage';
@@ -44,7 +45,7 @@ const App = () => {
               <Route path="insurance-types" element={<AdminInsuranceTypesPage />} />
               <Route path="objectives" element={<AdminObjectivesPage />} />
               <Route path="bonuses" element={<AdminBonusesPage />} />
-              <Route path="bonus-rules" element={<AdminBonusesPage />} />
+              <Route path="bonus-rules" element={<AdminBonusRulesPage />} />
               <Route path="reports" element={<AdminReportsPage />} />
               <Route path="audit-logs" element={<AdminAuditLogsPage />} />
               <Route path="settings" element={<AdminSettingsPage />} />
