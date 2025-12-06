@@ -8,9 +8,34 @@ import { useSales } from '@/hooks/useSales';
 import { cn } from '@/lib/utils';
 
 export const WeeklySummary = () => {
-  const { sales } = useSales();
+  const { sales = [] } = useSales();
 
   const weeklyStats = useMemo(() => {
+    if (!sales || sales.length === 0) {
+      const now = new Date();
+      return {
+        weekStart: startOfWeek(now, { weekStartsOn: 1 }),
+        weekEnd: endOfWeek(now, { weekStartsOn: 1 }),
+        salesCount: 0,
+        prevSalesCount: 0,
+        totalCommission: 0,
+        prevTotalCommission: 0,
+        avgCommissionPerSale: 0,
+        dailyBreakdown: Array(7).fill(null).map((_, i) => ({
+          day: format(new Date(startOfWeek(now, { weekStartsOn: 1 }).getTime() + i * 86400000), 'EEE', { locale: fr }),
+          count: 0,
+          commission: 0,
+        })),
+        progress: 0,
+        weeklyTarget: 25,
+        bestDay: { day: '', count: 0, commission: 0 },
+        salesDiff: 0,
+        salesDiffPercent: 0,
+        commissionDiff: 0,
+        commissionDiffPercent: 0,
+      };
+    }
+
     const now = new Date();
     const weekStart = startOfWeek(now, { weekStartsOn: 1 });
     const weekEnd = endOfWeek(now, { weekStartsOn: 1 });
