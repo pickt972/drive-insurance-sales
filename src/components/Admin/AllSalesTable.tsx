@@ -14,7 +14,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Search, Download, FileText, FileSpreadsheet } from 'lucide-react';
+import { Search, Download, FileText, FileSpreadsheet, CalendarDays } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { exportSalesPDF } from '@/utils/pdfExport';
