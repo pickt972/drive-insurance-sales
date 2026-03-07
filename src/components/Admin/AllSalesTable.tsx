@@ -39,6 +39,24 @@ export function AllSalesTable() {
   const filteredSales = useMemo(() => {
     let filtered = [...sales];
 
+    // Filtre par période
+    if (filterPeriod !== 'all') {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const todayStr = format(today, 'yyyy-MM-dd');
+
+      if (filterPeriod === 'today') {
+        filtered = filtered.filter(sale => sale.sale_date === todayStr);
+      } else if (filterPeriod === 'week') {
+        const weekAgo = new Date(today);
+        weekAgo.setDate(weekAgo.getDate() - 7);
+        filtered = filtered.filter(sale => new Date(sale.sale_date) >= weekAgo);
+      } else if (filterPeriod === 'month') {
+        const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+        filtered = filtered.filter(sale => new Date(sale.sale_date) >= monthStart);
+      }
+    }
+
     if (search) {
       const searchLower = search.toLowerCase();
       filtered = filtered.filter(sale =>
@@ -57,7 +75,7 @@ export function AllSalesTable() {
     }
 
     return filtered;
-  }, [sales, search, filterEmployee, filterType]);
+  }, [sales, search, filterEmployee, filterType, filterPeriod]);
 
   // Export CSV
   const handleExportCSV = () => {
