@@ -156,44 +156,68 @@ export function AllSalesTable() {
       </CardHeader>
       <CardContent>
         {/* Filtres */}
-        <div className="flex flex-col md:flex-row gap-4 mb-6">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Rechercher..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-10"
-            />
+        <div className="flex flex-col gap-4 mb-6">
+          {/* Filtres rapides par période */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <CalendarDays className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm text-muted-foreground mr-1">Période :</span>
+            {[
+              { value: 'today', label: "Aujourd'hui" },
+              { value: 'week', label: 'Cette semaine' },
+              { value: 'month', label: 'Ce mois' },
+              { value: 'all', label: 'Tout' },
+            ].map(p => (
+              <Button
+                key={p.value}
+                variant={filterPeriod === p.value ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setFilterPeriod(p.value)}
+                className="h-8"
+              >
+                {p.label}
+              </Button>
+            ))}
           </div>
 
-          <Select value={filterEmployee} onValueChange={setFilterEmployee}>
-            <SelectTrigger className="w-[200px]">
-              <SelectValue placeholder="Employé" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Tous les employés</SelectItem>
-              {employees.map(emp => (
-                <SelectItem key={emp} value={emp}>
-                  {emp}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Rechercher..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-10"
+              />
+            </div>
 
-          <Select value={filterType} onValueChange={setFilterType}>
-            <SelectTrigger className="w-[200px]">
-              <SelectValue placeholder="Type" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Tous les types</SelectItem>
-              {insuranceTypes.map(type => (
-                <SelectItem key={type.id} value={type.name}>
-                  {type.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            <Select value={filterEmployee} onValueChange={setFilterEmployee}>
+              <SelectTrigger className="w-[200px]">
+                <SelectValue placeholder="Employé" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tous les employés</SelectItem>
+                {employees.map(emp => (
+                  <SelectItem key={emp} value={emp}>
+                    {emp}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select value={filterType} onValueChange={setFilterType}>
+              <SelectTrigger className="w-[200px]">
+                <SelectValue placeholder="Type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tous les types</SelectItem>
+                {insuranceTypes.map(type => (
+                  <SelectItem key={type.id} value={type.name}>
+                    {type.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         {/* Tableau */}
