@@ -27,6 +27,7 @@ export function AllSalesTable() {
   const [search, setSearch] = useState('');
   const [filterEmployee, setFilterEmployee] = useState('all');
   const [filterType, setFilterType] = useState('all');
+  const [filterPeriod, setFilterPeriod] = useState('all');
 
   // Liste des employés uniques
   const employees = useMemo(() => {
