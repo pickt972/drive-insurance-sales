@@ -157,10 +157,33 @@ export function UserObjectiveProgress() {
     }
   };
 
-  const loading = objectivesLoading || salesLoading;
+  const MILESTONES = [25, 50, 75, 100, 125, 150];
 
-  if (loading) {
-    return (
+  // Detect milestone crossings
+  useEffect(() => {
+    if (loading || objectivesWithProgress.length === 0) return;
+
+    objectivesWithProgress.forEach(obj => {
+      MILESTONES.forEach(milestone => {
+        const key = `${obj.id}-${milestone}`;
+        if (obj.progressPercent >= milestone && !previousMilestonesRef.current.has(key)) {
+          // Check if this is a NEW crossing (not already stored)
+          const storedKey = `milestone-${key}`;
+          if (!sessionStorage.getItem(storedKey)) {
+            sessionStorage.setItem(storedKey, 'true');
+            setMilestoneData({
+              name: obj.description || `Objectif ${obj.period_type}`,
+              percent: milestone,
+            });
+            setMilestoneOpen(true);
+          }
+          previousMilestonesRef.current.add(key);
+        }
+      });
+    });
+  }, [objectivesWithProgress, loading]);
+
+  const loading = objectivesLoading || salesLoading;
       <Card className="modern-card">
         <CardContent className="py-8 text-center text-muted-foreground">
           Chargement des objectifs...
