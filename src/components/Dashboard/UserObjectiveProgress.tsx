@@ -199,6 +199,14 @@ export function UserObjectiveProgress() {
   }
 
   return (
+    <>
+    <MilestoneCelebration
+      isOpen={milestoneOpen}
+      onClose={() => setMilestoneOpen(false)}
+      milestoneName={milestoneData.name}
+      milestonePercent={milestoneData.percent}
+      employeeName={profile?.full_name?.split(' ')[0]}
+    />
     <Card className="modern-card overflow-hidden">
       <CardHeader className="bg-gradient-to-r from-primary/10 via-transparent to-info/10">
         <div className="flex items-center gap-3">
