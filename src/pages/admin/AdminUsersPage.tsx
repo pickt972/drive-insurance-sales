@@ -646,6 +646,7 @@ export function AdminUsersPage() {
                   <TableRow>
                     <TableHead style={{ width: '50px', minWidth: '50px' }}></TableHead>
                     <TableHead>Nom complet</TableHead>
+                    <TableHead>Identifiant</TableHead>
                     <TableHead>Email</TableHead>
                     <TableHead>Téléphone</TableHead>
                     <TableHead>Rôle</TableHead>
