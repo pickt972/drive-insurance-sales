@@ -157,6 +157,8 @@ export function UserObjectiveProgress() {
     }
   };
 
+  const loading = objectivesLoading || salesLoading;
+
   const MILESTONES = [25, 50, 75, 100, 125, 150];
 
   // Detect milestone crossings
@@ -167,7 +169,6 @@ export function UserObjectiveProgress() {
       MILESTONES.forEach(milestone => {
         const key = `${obj.id}-${milestone}`;
         if (obj.progressPercent >= milestone && !previousMilestonesRef.current.has(key)) {
-          // Check if this is a NEW crossing (not already stored)
           const storedKey = `milestone-${key}`;
           if (!sessionStorage.getItem(storedKey)) {
             sessionStorage.setItem(storedKey, 'true');
@@ -183,7 +184,8 @@ export function UserObjectiveProgress() {
     });
   }, [objectivesWithProgress, loading]);
 
-  const loading = objectivesLoading || salesLoading;
+  if (loading) {
+    return (
       <Card className="modern-card">
         <CardContent className="py-8 text-center text-muted-foreground">
           Chargement des objectifs...
@@ -193,7 +195,7 @@ export function UserObjectiveProgress() {
   }
 
   if (objectivesWithProgress.length === 0) {
-    return null; // Don't show card if no objectives
+    return null;
   }
 
   return (
