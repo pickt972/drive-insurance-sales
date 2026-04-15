@@ -674,7 +674,25 @@ export function AdminUsersPage() {
                       {filteredUsers.map((user) => (
                         <SortableUserRow key={user.id} user={user}>
                           <TableCell className="font-medium">{user.full_name}</TableCell>
-                          <TableCell className="text-sm text-gray-600">{user.email}</TableCell>
+                          <TableCell>
+                            <Badge variant="outline" className="font-mono text-xs">
+                              {getIdentifier(user.email)}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-sm text-muted-foreground">
+                            <div className="flex items-center gap-1">
+                              <span className="truncate max-w-[180px]">{user.email}</span>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6 shrink-0"
+                                onClick={() => openEditEmailDialog(user)}
+                                title="Modifier l'email"
+                              >
+                                <Mail className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          </TableCell>
                           <TableCell className="text-sm text-gray-600">{user.phone || '-'}</TableCell>
                           <TableCell>
                             <Select
