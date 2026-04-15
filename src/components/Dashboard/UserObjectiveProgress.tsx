@@ -173,7 +173,7 @@ export function UserObjectiveProgress() {
           if (!sessionStorage.getItem(storedKey)) {
             sessionStorage.setItem(storedKey, 'true');
             setMilestoneData({
-              name: obj.description || `Objectif ${obj.period_type}`,
+              name: obj.description || `Objectif ${obj.objective_type}`,
               percent: milestone,
             });
             setMilestoneOpen(true);
