@@ -137,6 +137,9 @@ export function AdminUsersPage() {
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
   const [saving, setSaving] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [editEmailDialogOpen, setEditEmailDialogOpen] = useState(false);
+  const [emailEditUser, setEmailEditUser] = useState<User | null>(null);
+  const [newEmailValue, setNewEmailValue] = useState('');
   const [formData, setFormData] = useState<EditFormData>({
     full_name: '',
     email: '',
