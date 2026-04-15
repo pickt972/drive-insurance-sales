@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useObjectives, ObjectiveMode } from '@/hooks/useObjectives';
 import { useSales } from '@/hooks/useSales';
@@ -9,6 +9,7 @@ import { Progress } from '@/components/ui/progress';
 import { Target, Euro, Hash, ListChecks, Award, TrendingUp, Flame } from 'lucide-react';
 import { format, isWithinInterval, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { MilestoneCelebration } from '@/components/ui/milestone-celebration';
 
 export function UserObjectiveProgress() {
   const { user } = useAuth();
