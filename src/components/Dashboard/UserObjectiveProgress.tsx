@@ -316,5 +316,6 @@ export function UserObjectiveProgress() {
         )}
       </CardContent>
     </Card>
+    </>
   );
 }
