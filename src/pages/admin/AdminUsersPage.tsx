@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { UserPlus, Search, CheckCircle, XCircle, Edit, MoreHorizontal, Eye, EyeOff, KeyRound, GripVertical, Filter, Trash2 } from 'lucide-react';
+import { UserPlus, Search, CheckCircle, XCircle, Edit, MoreHorizontal, Eye, EyeOff, KeyRound, GripVertical, Filter, Trash2, Mail } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
@@ -137,6 +137,9 @@ export function AdminUsersPage() {
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
   const [saving, setSaving] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [editEmailDialogOpen, setEditEmailDialogOpen] = useState(false);
+  const [emailEditUser, setEmailEditUser] = useState<User | null>(null);
+  const [newEmailValue, setNewEmailValue] = useState('');
   const [formData, setFormData] = useState<EditFormData>({
     full_name: '',
     email: '',
@@ -510,6 +513,37 @@ export function AdminUsersPage() {
     }
   };
 
+  const openEditEmailDialog = (user: User) => {
+    setEmailEditUser(user);
+    setNewEmailValue(user.email);
+    setEditEmailDialogOpen(true);
+  };
+
+  const saveEmail = async () => {
+    if (!emailEditUser || !newEmailValue.trim()) return;
+    setSaving(true);
+    try {
+      const response = await supabase.functions.invoke('update-user-email', {
+        body: { userId: emailEditUser.id, newEmail: newEmailValue.trim() },
+      });
+      if (response.error) throw new Error(response.error.message || 'Erreur');
+      const data = response.data as any;
+      if (data?.error) throw new Error(data.error);
+
+      toast({ title: 'Succès', description: `Email mis à jour: ${newEmailValue.trim()}` });
+      setEditEmailDialogOpen(false);
+      setEmailEditUser(null);
+      loadUsers();
+    } catch (error: any) {
+      console.error('Error updating email:', error);
+      toast({ title: 'Erreur', description: error.message || 'Impossible de modifier l\'email', variant: 'destructive' });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const getIdentifier = (email: string) => email.split('@')[0];
+
   const filteredUsers = users.filter(user => {
     const matchesSearch = searchTerm === '' ||
       user.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -612,6 +646,7 @@ export function AdminUsersPage() {
                   <TableRow>
                     <TableHead style={{ width: '50px', minWidth: '50px' }}></TableHead>
                     <TableHead>Nom complet</TableHead>
+                    <TableHead>Identifiant</TableHead>
                     <TableHead>Email</TableHead>
                     <TableHead>Téléphone</TableHead>
                     <TableHead>Rôle</TableHead>
@@ -624,7 +659,7 @@ export function AdminUsersPage() {
                 <TableBody>
                   {loading ? (
                     <TableRow>
-                      <TableCell colSpan={9} className="text-center py-8">
+                       <TableCell colSpan={10} className="text-center py-8">
                         Chargement...
                       </TableCell>
                     </TableRow>
@@ -639,7 +674,25 @@ export function AdminUsersPage() {
                       {filteredUsers.map((user) => (
                         <SortableUserRow key={user.id} user={user}>
                           <TableCell className="font-medium">{user.full_name}</TableCell>
-                          <TableCell className="text-sm text-gray-600">{user.email}</TableCell>
+                          <TableCell>
+                            <Badge variant="outline" className="font-mono text-xs">
+                              {getIdentifier(user.email)}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-sm text-muted-foreground">
+                            <div className="flex items-center gap-1">
+                              <span className="truncate max-w-[180px]">{user.email}</span>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6 shrink-0"
+                                onClick={() => openEditEmailDialog(user)}
+                                title="Modifier l'email"
+                              >
+                                <Mail className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          </TableCell>
                           <TableCell className="text-sm text-gray-600">{user.phone || '-'}</TableCell>
                           <TableCell>
                             <Select
@@ -854,14 +907,19 @@ export function AdminUsersPage() {
             </div>
             <div className="grid gap-2">
               <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                value={formData.email}
-                disabled
-                className="bg-gray-100"
-              />
-              <p className="text-xs text-gray-500">L'email ne peut pas être modifié</p>
+              <div className="flex gap-2">
+                <Input
+                  id="email"
+                  type="email"
+                  value={formData.email}
+                  disabled
+                  className="bg-muted flex-1"
+                />
+                <Button variant="outline" size="sm" onClick={() => { setEditDialogOpen(false); if (editingUser) openEditEmailDialog(editingUser); }}>
+                  <Mail className="h-4 w-4 mr-1" />
+                  Modifier
+                </Button>
+              </div>
             </div>
             <div className="grid gap-2">
               <Label htmlFor="phone">Téléphone</Label>
@@ -974,6 +1032,43 @@ export function AdminUsersPage() {
             </Button>
             <Button onClick={resetPassword} disabled={saving || !validatePassword(newPassword).isValid}>
               {saving ? 'Réinitialisation...' : 'Réinitialiser'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Email Dialog */}
+      <Dialog open={editEmailDialogOpen} onOpenChange={setEditEmailDialogOpen}>
+        <DialogContent className="sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Mail className="h-5 w-5" />
+              Modifier l'email
+            </DialogTitle>
+            <DialogDescription>
+              Modifier l'adresse email de <strong>{emailEditUser?.full_name}</strong>
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Nouvel email</Label>
+              <Input
+                type="email"
+                value={newEmailValue}
+                onChange={(e) => setNewEmailValue(e.target.value)}
+                placeholder="nouveau@email.com"
+              />
+              <p className="text-xs text-muted-foreground">
+                ⚠️ L'identifiant de connexion sera mis à jour automatiquement.
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditEmailDialogOpen(false)}>
+              Annuler
+            </Button>
+            <Button onClick={saveEmail} disabled={saving || !newEmailValue.trim()}>
+              {saving ? 'Enregistrement...' : 'Enregistrer'}
             </Button>
           </DialogFooter>
         </DialogContent>
