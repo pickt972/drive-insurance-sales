@@ -1036,6 +1036,43 @@ export function AdminUsersPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Edit Email Dialog */}
+      <Dialog open={editEmailDialogOpen} onOpenChange={setEditEmailDialogOpen}>
+        <DialogContent className="sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Mail className="h-5 w-5" />
+              Modifier l'email
+            </DialogTitle>
+            <DialogDescription>
+              Modifier l'adresse email de <strong>{emailEditUser?.full_name}</strong>
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Nouvel email</Label>
+              <Input
+                type="email"
+                value={newEmailValue}
+                onChange={(e) => setNewEmailValue(e.target.value)}
+                placeholder="nouveau@email.com"
+              />
+              <p className="text-xs text-muted-foreground">
+                ⚠️ L'identifiant de connexion sera mis à jour automatiquement.
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditEmailDialogOpen(false)}>
+              Annuler
+            </Button>
+            <Button onClick={saveEmail} disabled={saving || !newEmailValue.trim()}>
+              {saving ? 'Enregistrement...' : 'Enregistrer'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
