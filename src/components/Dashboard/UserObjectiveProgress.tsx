@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useObjectives, ObjectiveMode } from '@/hooks/useObjectives';
 import { useSales } from '@/hooks/useSales';
@@ -9,12 +9,17 @@ import { Progress } from '@/components/ui/progress';
 import { Target, Euro, Hash, ListChecks, Award, TrendingUp, Flame } from 'lucide-react';
 import { format, isWithinInterval, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { MilestoneCelebration } from '@/components/ui/milestone-celebration';
 
 export function UserObjectiveProgress() {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { objectives, loading: objectivesLoading } = useObjectives();
   const { sales, loading: salesLoading } = useSales();
   const { insuranceTypes } = useInsuranceTypes();
+
+  const [milestoneOpen, setMilestoneOpen] = useState(false);
+  const [milestoneData, setMilestoneData] = useState<{ name: string; percent: number }>({ name: '', percent: 0 });
+  const previousMilestonesRef = useRef<Set<string>>(new Set());
 
   // Filter objectives for current user
   const userObjectives = useMemo(() => {
@@ -154,6 +159,31 @@ export function UserObjectiveProgress() {
 
   const loading = objectivesLoading || salesLoading;
 
+  const MILESTONES = [25, 50, 75, 100, 125, 150];
+
+  // Detect milestone crossings
+  useEffect(() => {
+    if (loading || objectivesWithProgress.length === 0) return;
+
+    objectivesWithProgress.forEach(obj => {
+      MILESTONES.forEach(milestone => {
+        const key = `${obj.id}-${milestone}`;
+        if (obj.progressPercent >= milestone && !previousMilestonesRef.current.has(key)) {
+          const storedKey = `milestone-${key}`;
+          if (!sessionStorage.getItem(storedKey)) {
+            sessionStorage.setItem(storedKey, 'true');
+            setMilestoneData({
+              name: obj.description || `Objectif ${obj.objective_type}`,
+              percent: milestone,
+            });
+            setMilestoneOpen(true);
+          }
+          previousMilestonesRef.current.add(key);
+        }
+      });
+    });
+  }, [objectivesWithProgress, loading]);
+
   if (loading) {
     return (
       <Card className="modern-card">
@@ -165,10 +195,18 @@ export function UserObjectiveProgress() {
   }
 
   if (objectivesWithProgress.length === 0) {
-    return null; // Don't show card if no objectives
+    return null;
   }
 
   return (
+    <>
+    <MilestoneCelebration
+      isOpen={milestoneOpen}
+      onClose={() => setMilestoneOpen(false)}
+      milestoneName={milestoneData.name}
+      milestonePercent={milestoneData.percent}
+      employeeName={profile?.full_name?.split(' ')[0]}
+    />
     <Card className="modern-card overflow-hidden">
       <CardHeader className="bg-gradient-to-r from-primary/10 via-transparent to-info/10">
         <div className="flex items-center gap-3">
@@ -278,5 +316,6 @@ export function UserObjectiveProgress() {
         )}
       </CardContent>
     </Card>
+    </>
   );
 }
