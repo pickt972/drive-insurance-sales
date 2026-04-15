@@ -34,7 +34,7 @@ export class VersioningSystem {
   private readonly METADATA_KEY = 'backup_metadata';
   private readonly CURRENT_VERSION_KEY = 'current_version';
   
-  private autoBackupTimer: NodeJS.Timeout | null = null;
+  private autoBackupTimer: ReturnType<typeof setTimeout> | null = null;
 
   private constructor() {
     this.initializeVersioning();
