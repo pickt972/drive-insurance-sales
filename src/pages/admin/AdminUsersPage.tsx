@@ -907,14 +907,19 @@ export function AdminUsersPage() {
             </div>
             <div className="grid gap-2">
               <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                value={formData.email}
-                disabled
-                className="bg-gray-100"
-              />
-              <p className="text-xs text-gray-500">L'email ne peut pas être modifié</p>
+              <div className="flex gap-2">
+                <Input
+                  id="email"
+                  type="email"
+                  value={formData.email}
+                  disabled
+                  className="bg-muted flex-1"
+                />
+                <Button variant="outline" size="sm" onClick={() => { setEditDialogOpen(false); if (editingUser) openEditEmailDialog(editingUser); }}>
+                  <Mail className="h-4 w-4 mr-1" />
+                  Modifier
+                </Button>
+              </div>
             </div>
             <div className="grid gap-2">
               <Label htmlFor="phone">Téléphone</Label>
