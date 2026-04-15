@@ -513,6 +513,37 @@ export function AdminUsersPage() {
     }
   };
 
+  const openEditEmailDialog = (user: User) => {
+    setEmailEditUser(user);
+    setNewEmailValue(user.email);
+    setEditEmailDialogOpen(true);
+  };
+
+  const saveEmail = async () => {
+    if (!emailEditUser || !newEmailValue.trim()) return;
+    setSaving(true);
+    try {
+      const response = await supabase.functions.invoke('update-user-email', {
+        body: { userId: emailEditUser.id, newEmail: newEmailValue.trim() },
+      });
+      if (response.error) throw new Error(response.error.message || 'Erreur');
+      const data = response.data as any;
+      if (data?.error) throw new Error(data.error);
+
+      toast({ title: 'Succès', description: `Email mis à jour: ${newEmailValue.trim()}` });
+      setEditEmailDialogOpen(false);
+      setEmailEditUser(null);
+      loadUsers();
+    } catch (error: any) {
+      console.error('Error updating email:', error);
+      toast({ title: 'Erreur', description: error.message || 'Impossible de modifier l\'email', variant: 'destructive' });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const getIdentifier = (email: string) => email.split('@')[0];
+
   const filteredUsers = users.filter(user => {
     const matchesSearch = searchTerm === '' ||
       user.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
