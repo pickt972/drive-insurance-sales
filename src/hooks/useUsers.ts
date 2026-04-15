@@ -224,6 +224,40 @@ export function useUsers() {
     }
   };
 
+  const updateUserEmail = async (userId: string, newEmail: string) => {
+    if (!isAdmin) throw new Error('Accès refusé');
+
+    try {
+      const response = await supabase.functions.invoke('update-user-email', {
+        body: { userId, newEmail },
+      });
+
+      if (response.error) {
+        throw new Error(response.error.message || 'Erreur lors de la mise à jour');
+      }
+
+      const data = response.data as any;
+      if (data?.error) {
+        throw new Error(data.error);
+      }
+
+      toast({
+        title: '✅ Email mis à jour',
+        description: newEmail,
+      });
+
+      await fetchUsers();
+    } catch (error: any) {
+      console.error('Error updating email:', error);
+      toast({
+        title: '❌ Erreur',
+        description: error.message || 'Impossible de modifier l\'email',
+        variant: 'destructive',
+      });
+      throw error;
+    }
+  };
+
   return {
     users,
     loading,
@@ -234,5 +268,6 @@ export function useUsers() {
     removeUser,
     deleteUserPermanently,
     updatePassword,
+    updateUserEmail,
   };
 }
