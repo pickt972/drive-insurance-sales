@@ -12,10 +12,14 @@ import { fr } from 'date-fns/locale';
 import { MilestoneCelebration } from '@/components/ui/milestone-celebration';
 
 export function UserObjectiveProgress() {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { objectives, loading: objectivesLoading } = useObjectives();
   const { sales, loading: salesLoading } = useSales();
   const { insuranceTypes } = useInsuranceTypes();
+
+  const [milestoneOpen, setMilestoneOpen] = useState(false);
+  const [milestoneData, setMilestoneData] = useState<{ name: string; percent: number }>({ name: '', percent: 0 });
+  const previousMilestonesRef = useRef<Set<string>>(new Set());
 
   // Filter objectives for current user
   const userObjectives = useMemo(() => {
