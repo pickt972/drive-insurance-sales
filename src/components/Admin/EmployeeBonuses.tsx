@@ -146,7 +146,6 @@ export function EmployeeBonuses() {
       const { data, error } = await supabase
         .from('bonus_rules')
         .select('*')
-        .eq('is_active', true)
         .order('min_achievement_percent', { ascending: true });
 
       if (error) throw error;
