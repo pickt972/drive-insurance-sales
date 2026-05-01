@@ -65,13 +65,59 @@ interface Profile {
   email: string;
 }
 
+interface Tier {
+  threshold: number;
+  bonus: number;
+}
+
+type BaseType = 'sales_amount' | 'sales_count' | 'commission';
+type CalculationMode = 'highest' | 'cumulative';
+type BonusType = 'fixed' | 'percent';
+
 interface BonusRule {
   id: string;
   name: string;
-  min_achievement_percent: number;
+  description?: string | null;
+  // Legacy fields (still in DB)
+  min_achievement_percent: number | null;
   max_achievement_percent: number | null;
-  bonus_percent: number;
+  bonus_percent: number | null;
+  // New tier-based system
+  tiers: Tier[];
+  base: BaseType;
+  calculation_mode: CalculationMode;
+  bonus_type: BonusType;
   is_active: boolean;
+}
+
+const BASE_LABEL: Record<BaseType, string> = {
+  sales_amount: 'CA (€)',
+  sales_count: 'Nb ventes',
+  commission: 'Commission (€)',
+};
+
+// Compute bonus from tiers based on a measured value (CA, count, or commission)
+function computeTierBonus(
+  value: number,
+  tiers: Tier[],
+  mode: CalculationMode,
+  bonusType: BonusType,
+  baseValueForPercent: number,
+): { bonus: number; tierHit: Tier | null } {
+  const sorted = [...tiers].sort((a, b) => a.threshold - b.threshold);
+  const reached = sorted.filter(t => value >= t.threshold);
+  if (reached.length === 0) return { bonus: 0, tierHit: null };
+
+  const toAmount = (raw: number) =>
+    bonusType === 'percent' ? (baseValueForPercent * raw) / 100 : raw;
+
+  if (mode === 'cumulative') {
+    const total = reached.reduce((sum, t) => sum + toAmount(t.bonus), 0);
+    return { bonus: total, tierHit: reached[reached.length - 1] };
+  }
+  // highest
+  const top = reached[reached.length - 1];
+  return { bonus: toAmount(top.bonus), tierHit: top };
 }
 
 type PeriodType = 'monthly' | 'quarterly' | 'yearly' | 'other';
@@ -104,6 +150,7 @@ export function EmployeeBonuses() {
   const [selectedBonus, setSelectedBonus] = useState<Bonus | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [periodFilter, setPeriodFilter] = useState<string>('all');
+  const [selectedMonth, setSelectedMonth] = useState<string>('all');
   const [ruleStatusFilter, setRuleStatusFilter] = useState<string>('active');
   const [formData, setFormData] = useState({
     user_id: '',
@@ -162,13 +209,20 @@ export function EmployeeBonuses() {
 
   const fetchBonusRules = async () => {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('bonus_rules')
         .select('*')
-        .order('min_achievement_percent', { ascending: true });
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setBonusRules(data || []);
+      const normalized: BonusRule[] = (data || []).map((r: any) => ({
+        ...r,
+        tiers: Array.isArray(r.tiers) ? r.tiers : [],
+        base: r.base || 'sales_amount',
+        calculation_mode: r.calculation_mode || 'highest',
+        bonus_type: r.bonus_type || 'fixed',
+      }));
+      setBonusRules(normalized);
     } catch (error) {
       console.error('Error fetching bonus rules:', error);
     }
@@ -240,18 +294,41 @@ export function EmployeeBonuses() {
         achievementPercent = 100;
       }
 
-      // Find applicable bonus rule
+      // Find applicable bonus rule (new tier-based system + legacy fallback)
       let bonusRate = 0;
       let bonusAmount = 0;
+      const appliedRules: string[] = [];
 
       for (const rule of bonusRules.filter(r => r.is_active)) {
-        const minOk = achievementPercent >= rule.min_achievement_percent;
-        const maxOk = rule.max_achievement_percent === null || achievementPercent < rule.max_achievement_percent;
-        
-        if (minOk && maxOk) {
-          bonusRate = rule.bonus_percent;
-          bonusAmount = totalCommission * (bonusRate / 100);
-          break;
+        // New tier-based system
+        if (rule.tiers && rule.tiers.length > 0) {
+          const measured =
+            rule.base === 'sales_count' ? totalSales :
+            rule.base === 'commission' ? totalCommission :
+            totalAmount;
+          const baseForPct =
+            rule.base === 'sales_count' ? totalCommission : measured;
+          const { bonus, tierHit } = computeTierBonus(
+            measured,
+            rule.tiers,
+            rule.calculation_mode,
+            rule.bonus_type,
+            baseForPct,
+          );
+          if (tierHit) {
+            bonusAmount += bonus;
+            appliedRules.push(`${rule.name} (+${bonus.toFixed(2)} €)`);
+          }
+        } else if (rule.min_achievement_percent !== null && rule.bonus_percent !== null) {
+          // Legacy %-of-objective rule
+          const minOk = achievementPercent >= rule.min_achievement_percent;
+          const maxOk = rule.max_achievement_percent === null || achievementPercent < rule.max_achievement_percent;
+          if (minOk && maxOk) {
+            bonusRate = rule.bonus_percent;
+            const legacy = totalCommission * (bonusRate / 100);
+            bonusAmount += legacy;
+            appliedRules.push(`${rule.name} (${bonusRate}% → ${legacy.toFixed(2)} €)`);
+          }
         }
       }
 
@@ -264,11 +341,14 @@ export function EmployeeBonuses() {
         achievement_percent: achievementPercent.toFixed(2),
         bonus_rate: bonusRate.toString(),
         bonus_amount: bonusAmount.toFixed(2),
+        notes: appliedRules.length
+          ? `Règles appliquées: ${appliedRules.join(' • ')}`
+          : prev.notes,
       }));
 
       toast({
         title: 'Calcul effectué',
-        description: `${totalSales} ventes, ${achievementPercent.toFixed(0)}% d'atteinte → ${bonusRate}% de bonus`,
+        description: `${totalSales} ventes • ${totalAmount.toFixed(2)} € CA → Prime totale: ${bonusAmount.toFixed(2)} €`,
       });
     } catch (error) {
       console.error('Error calculating bonus:', error);
@@ -424,6 +504,38 @@ export function EmployeeBonuses() {
   const totalApproved = bonuses.filter(b => b.status === 'approved').reduce((sum, b) => sum + (b.bonus_amount || 0), 0);
   const totalPaid = bonuses.filter(b => b.status === 'paid').reduce((sum, b) => sum + (b.bonus_amount || 0), 0);
 
+  // === Récapitulatif mensuel par employé ===
+  // Build a list of available YYYY-MM keys derived from bonus period_start
+  const monthKeys = Array.from(
+    new Set(filteredBonuses.map(b => b.period_start.slice(0, 7)))
+  ).sort((a, b) => b.localeCompare(a));
+
+  const monthlyByEmployee = (() => {
+    const map = new Map<string, { name: string; total: number; count: number; ca: number }>();
+    filteredBonuses.forEach(b => {
+      if (selectedMonth !== 'all' && b.period_start.slice(0, 7) !== selectedMonth) return;
+      const key = b.user_id;
+      const cur = map.get(key) || {
+        name: b.profiles?.full_name || 'N/A',
+        total: 0,
+        count: 0,
+        ca: 0,
+      };
+      cur.total += b.bonus_amount || 0;
+      cur.ca += b.total_amount || 0;
+      cur.count += 1;
+      map.set(key, cur);
+    });
+    return Array.from(map.values()).sort((a, b) => b.total - a.total);
+  })();
+
+  const monthlyGrandTotal = monthlyByEmployee.reduce((s, r) => s + r.total, 0);
+
+  const formatMonthLabel = (key: string) => {
+    const [y, m] = key.split('-');
+    return format(new Date(parseInt(y), parseInt(m) - 1, 1), 'MMMM yyyy', { locale: fr });
+  };
+
   return (
     <div className="space-y-6">
       {/* Stats Cards */}
@@ -463,6 +575,76 @@ export function EmployeeBonuses() {
         </Card>
       </div>
 
+      {/* Récapitulatif mensuel par employé */}
+      <Card className="modern-card">
+        <CardHeader>
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <div>
+              <CardTitle className="text-base">Récapitulatif des primes par employé</CardTitle>
+              <CardDescription>
+                Total : <span className="font-semibold text-success">{monthlyGrandTotal.toFixed(2)} €</span>
+                {selectedMonth !== 'all' && ` · ${formatMonthLabel(selectedMonth)}`}
+              </CardDescription>
+            </div>
+            <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+              <SelectTrigger className="w-[200px]">
+                <SelectValue placeholder="Mois" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tous les mois</SelectItem>
+                {monthKeys.map(k => (
+                  <SelectItem key={k} value={k}>{formatMonthLabel(k)}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {monthlyByEmployee.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-4">
+              Aucune prime sur cette période
+            </p>
+          ) : (
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Employé</TableHead>
+                    <TableHead className="text-right">Primes</TableHead>
+                    <TableHead className="text-right">CA total</TableHead>
+                    <TableHead className="text-right">Total prime</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {monthlyByEmployee.map((row, i) => (
+                    <TableRow key={i}>
+                      <TableCell className="font-medium">{row.name}</TableCell>
+                      <TableCell className="text-right">{row.count}</TableCell>
+                      <TableCell className="text-right">{row.ca.toFixed(2)} €</TableCell>
+                      <TableCell className="text-right font-bold text-success">
+                        {row.total.toFixed(2)} €
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  <TableRow className="bg-muted/50 font-semibold">
+                    <TableCell>Total</TableCell>
+                    <TableCell className="text-right">
+                      {monthlyByEmployee.reduce((s, r) => s + r.count, 0)}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {monthlyByEmployee.reduce((s, r) => s + r.ca, 0).toFixed(2)} €
+                    </TableCell>
+                    <TableCell className="text-right text-success">
+                      {monthlyGrandTotal.toFixed(2)} €
+                    </TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Bonus Rules summary with active/inactive filter */}
       <Card className="modern-card">
         <CardHeader>
@@ -489,17 +671,39 @@ export function EmployeeBonuses() {
           {filteredRules.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-4">Aucune règle à afficher</p>
           ) : (
-            <div className="flex flex-wrap gap-2">
-              {filteredRules.map(rule => (
-                <Badge
-                  key={rule.id}
-                  variant={rule.is_active ? 'default' : 'outline'}
-                  className="gap-1 py-1.5 px-3"
-                >
-                  <span className={rule.is_active ? '' : 'opacity-60'}>{rule.name}</span>
-                  {!rule.is_active && <span className="text-[10px]">(inactif)</span>}
-                </Badge>
-              ))}
+            <div className="space-y-3">
+              {filteredRules.map(rule => {
+                const sortedTiers = [...(rule.tiers || [])].sort((a, b) => a.threshold - b.threshold);
+                const unit = rule.base === 'sales_count' ? '' : ' €';
+                const bUnit = rule.bonus_type === 'percent' ? ' %' : ' €';
+                return (
+                  <div
+                    key={rule.id}
+                    className={`rounded-lg border p-3 ${rule.is_active ? 'bg-card' : 'bg-muted/30 opacity-70'}`}
+                  >
+                    <div className="flex items-center justify-between flex-wrap gap-2 mb-2">
+                      <div className="flex items-center gap-2">
+                        <Badge variant={rule.is_active ? 'default' : 'outline'}>{rule.name}</Badge>
+                        <span className="text-xs text-muted-foreground">
+                          Base: {BASE_LABEL[rule.base]} · Mode: {rule.calculation_mode === 'cumulative' ? 'Cumulatif' : 'Plus haut palier'}
+                        </span>
+                      </div>
+                      {!rule.is_active && <span className="text-[10px] text-muted-foreground">(inactif)</span>}
+                    </div>
+                    {sortedTiers.length === 0 ? (
+                      <p className="text-xs text-muted-foreground italic">Aucun palier configuré</p>
+                    ) : (
+                      <div className="flex flex-wrap gap-2">
+                        {sortedTiers.map((t, i) => (
+                          <Badge key={i} variant="secondary" className="font-mono text-xs">
+                            ≥ {t.threshold}{unit} → +{t.bonus}{bUnit}
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           )}
         </CardContent>
