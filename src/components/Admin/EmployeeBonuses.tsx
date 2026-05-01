@@ -463,6 +463,48 @@ export function EmployeeBonuses() {
         </Card>
       </div>
 
+      {/* Bonus Rules summary with active/inactive filter */}
+      <Card className="modern-card">
+        <CardHeader>
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <div>
+              <CardTitle className="text-base">Règles de prime appliquées</CardTitle>
+              <CardDescription>
+                {bonusRules.filter(r => r.is_active).length} active(s) · {bonusRules.filter(r => !r.is_active).length} inactive(s)
+              </CardDescription>
+            </div>
+            <Select value={ruleStatusFilter} onValueChange={setRuleStatusFilter}>
+              <SelectTrigger className="w-[160px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Toutes</SelectItem>
+                <SelectItem value="active">Actives uniquement</SelectItem>
+                <SelectItem value="inactive">Inactives uniquement</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {filteredRules.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-4">Aucune règle à afficher</p>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              {filteredRules.map(rule => (
+                <Badge
+                  key={rule.id}
+                  variant={rule.is_active ? 'default' : 'outline'}
+                  className="gap-1 py-1.5 px-3"
+                >
+                  <span className={rule.is_active ? '' : 'opacity-60'}>{rule.name}</span>
+                  {!rule.is_active && <span className="text-[10px]">(inactif)</span>}
+                </Badge>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Main Card */}
       <Card className="modern-card animate-gentle-fade-in">
         <CardHeader>
