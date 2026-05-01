@@ -27,6 +27,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  SelectSeparator,
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { PlusCircle, DollarSign, CheckCircle, Clock, XCircle, Eye, Calculator, FileDown, Loader2 } from 'lucide-react';
