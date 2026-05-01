@@ -347,7 +347,7 @@ export function EmployeeBonuses() {
 
       toast({
         title: 'Calcul effectué',
-        description: `${totalSales} ventes, ${achievementPercent.toFixed(0)}% d'atteinte → ${bonusRate}% de bonus`,
+        description: `${totalSales} ventes • ${totalAmount.toFixed(2)} € CA → Prime totale: ${bonusAmount.toFixed(2)} €`,
       });
     } catch (error) {
       console.error('Error calculating bonus:', error);
