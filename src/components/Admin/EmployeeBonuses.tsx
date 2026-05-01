@@ -208,13 +208,20 @@ export function EmployeeBonuses() {
 
   const fetchBonusRules = async () => {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('bonus_rules')
         .select('*')
-        .order('min_achievement_percent', { ascending: true });
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setBonusRules(data || []);
+      const normalized: BonusRule[] = (data || []).map((r: any) => ({
+        ...r,
+        tiers: Array.isArray(r.tiers) ? r.tiers : [],
+        base: r.base || 'sales_amount',
+        calculation_mode: r.calculation_mode || 'highest',
+        bonus_type: r.bonus_type || 'fixed',
+      }));
+      setBonusRules(normalized);
     } catch (error) {
       console.error('Error fetching bonus rules:', error);
     }
