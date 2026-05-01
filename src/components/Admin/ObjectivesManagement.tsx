@@ -275,7 +275,7 @@ export function ObjectivesManagement() {
               Définir et suivre les objectifs de vente par montant, nombre ou type d'assurance
             </CardDescription>
           </div>
-          <Dialog open={open} onOpenChange={setOpen}>
+          <Dialog open={open} onOpenChange={handleDialogChange}>
             <DialogTrigger asChild>
               <Button>
                 <PlusCircle className="mr-2 h-4 w-4" />
@@ -284,9 +284,9 @@ export function ObjectivesManagement() {
             </DialogTrigger>
             <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
               <DialogHeader>
-                <DialogTitle>Créer un objectif</DialogTitle>
+                <DialogTitle>{editingId ? 'Modifier l\'objectif' : 'Créer un objectif'}</DialogTitle>
                 <DialogDescription>
-                  Définir un objectif de vente pour un employé
+                  {editingId ? 'Modifier l\'objectif existant' : 'Définir un objectif de vente pour un employé'}
                 </DialogDescription>
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
