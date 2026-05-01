@@ -74,6 +74,25 @@ interface BonusRule {
   is_active: boolean;
 }
 
+type PeriodType = 'monthly' | 'quarterly' | 'yearly' | 'other';
+
+const detectPeriodType = (start: string, end: string): PeriodType => {
+  const s = new Date(start);
+  const e = new Date(end);
+  const days = Math.round((e.getTime() - s.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+  if (days >= 28 && days <= 31) return 'monthly';
+  if (days >= 89 && days <= 92) return 'quarterly';
+  if (days >= 360 && days <= 366) return 'yearly';
+  return 'other';
+};
+
+const PERIOD_LABEL: Record<PeriodType, string> = {
+  monthly: 'Mensuel',
+  quarterly: 'Trimestriel',
+  yearly: 'Annuel',
+  other: 'Autre',
+};
+
 export function EmployeeBonuses() {
   const { toast } = useToast();
   const [bonuses, setBonuses] = useState<Bonus[]>([]);
@@ -84,6 +103,8 @@ export function EmployeeBonuses() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedBonus, setSelectedBonus] = useState<Bonus | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [periodFilter, setPeriodFilter] = useState<string>('all');
+  const [ruleStatusFilter, setRuleStatusFilter] = useState<string>('active');
   const [formData, setFormData] = useState({
     user_id: '',
     period_start: '',
@@ -144,7 +165,6 @@ export function EmployeeBonuses() {
       const { data, error } = await supabase
         .from('bonus_rules')
         .select('*')
-        .eq('is_active', true)
         .order('min_achievement_percent', { ascending: true });
 
       if (error) throw error;
@@ -224,7 +244,7 @@ export function EmployeeBonuses() {
       let bonusRate = 0;
       let bonusAmount = 0;
 
-      for (const rule of bonusRules) {
+      for (const rule of bonusRules.filter(r => r.is_active)) {
         const minOk = achievementPercent >= rule.min_achievement_percent;
         const maxOk = rule.max_achievement_percent === null || achievementPercent < rule.max_achievement_percent;
         
@@ -389,9 +409,16 @@ export function EmployeeBonuses() {
     }
   };
 
-  const filteredBonuses = statusFilter === 'all' 
-    ? bonuses 
-    : bonuses.filter(b => b.status === statusFilter);
+  const filteredBonuses = bonuses.filter(b => {
+    if (statusFilter !== 'all' && b.status !== statusFilter) return false;
+    if (periodFilter !== 'all' && detectPeriodType(b.period_start, b.period_end) !== periodFilter) return false;
+    return true;
+  });
+
+  const filteredRules = bonusRules.filter(r => {
+    if (ruleStatusFilter === 'all') return true;
+    return ruleStatusFilter === 'active' ? r.is_active : !r.is_active;
+  });
 
   const totalPending = bonuses.filter(b => b.status === 'pending').reduce((sum, b) => sum + (b.bonus_amount || 0), 0);
   const totalApproved = bonuses.filter(b => b.status === 'approved').reduce((sum, b) => sum + (b.bonus_amount || 0), 0);
@@ -436,6 +463,48 @@ export function EmployeeBonuses() {
         </Card>
       </div>
 
+      {/* Bonus Rules summary with active/inactive filter */}
+      <Card className="modern-card">
+        <CardHeader>
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <div>
+              <CardTitle className="text-base">Règles de prime appliquées</CardTitle>
+              <CardDescription>
+                {bonusRules.filter(r => r.is_active).length} active(s) · {bonusRules.filter(r => !r.is_active).length} inactive(s)
+              </CardDescription>
+            </div>
+            <Select value={ruleStatusFilter} onValueChange={setRuleStatusFilter}>
+              <SelectTrigger className="w-[160px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Toutes</SelectItem>
+                <SelectItem value="active">Actives uniquement</SelectItem>
+                <SelectItem value="inactive">Inactives uniquement</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {filteredRules.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-4">Aucune règle à afficher</p>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              {filteredRules.map(rule => (
+                <Badge
+                  key={rule.id}
+                  variant={rule.is_active ? 'default' : 'outline'}
+                  className="gap-1 py-1.5 px-3"
+                >
+                  <span className={rule.is_active ? '' : 'opacity-60'}>{rule.name}</span>
+                  {!rule.is_active && <span className="text-[10px]">(inactif)</span>}
+                </Badge>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Main Card */}
       <Card className="modern-card animate-gentle-fade-in">
         <CardHeader>
@@ -454,14 +523,26 @@ export function EmployeeBonuses() {
             <div className="flex items-center gap-2 flex-wrap">
               <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger className="w-[150px]">
-                  <SelectValue placeholder="Filtrer" />
+                  <SelectValue placeholder="Statut" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Tous</SelectItem>
+                  <SelectItem value="all">Tous statuts</SelectItem>
                   <SelectItem value="pending">En attente</SelectItem>
                   <SelectItem value="approved">Approuvées</SelectItem>
                   <SelectItem value="paid">Payées</SelectItem>
                   <SelectItem value="rejected">Refusées</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={periodFilter} onValueChange={setPeriodFilter}>
+                <SelectTrigger className="w-[160px]">
+                  <SelectValue placeholder="Période" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Toutes périodes</SelectItem>
+                  <SelectItem value="monthly">Mensuel</SelectItem>
+                  <SelectItem value="quarterly">Trimestriel</SelectItem>
+                  <SelectItem value="yearly">Annuel</SelectItem>
+                  <SelectItem value="other">Autre</SelectItem>
                 </SelectContent>
               </Select>
               <Button variant="outline" onClick={handleExportPDF} disabled={filteredBonuses.length === 0}>
@@ -679,7 +760,12 @@ export function EmployeeBonuses() {
                         {bonus.profiles?.full_name || 'N/A'}
                       </TableCell>
                       <TableCell className="text-sm">
-                        {format(new Date(bonus.period_start), 'dd/MM/yy', { locale: fr })} - {format(new Date(bonus.period_end), 'dd/MM/yy', { locale: fr })}
+                        <div className="flex flex-col gap-1">
+                          <span>{format(new Date(bonus.period_start), 'dd/MM/yy', { locale: fr })} - {format(new Date(bonus.period_end), 'dd/MM/yy', { locale: fr })}</span>
+                          <Badge variant="secondary" className="w-fit text-[10px] py-0 px-1.5">
+                            {PERIOD_LABEL[detectPeriodType(bonus.period_start, bonus.period_end)]}
+                          </Badge>
+                        </div>
                       </TableCell>
                       <TableCell className="text-right font-semibold text-success">
                         {bonus.bonus_amount?.toFixed(2) || '0.00'} €
