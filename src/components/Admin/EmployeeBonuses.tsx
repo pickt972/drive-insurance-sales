@@ -578,6 +578,76 @@ export function EmployeeBonuses() {
         </Card>
       </div>
 
+      {/* Récapitulatif mensuel par employé */}
+      <Card className="modern-card">
+        <CardHeader>
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <div>
+              <CardTitle className="text-base">Récapitulatif des primes par employé</CardTitle>
+              <CardDescription>
+                Total : <span className="font-semibold text-success">{monthlyGrandTotal.toFixed(2)} €</span>
+                {selectedMonth !== 'all' && ` · ${formatMonthLabel(selectedMonth)}`}
+              </CardDescription>
+            </div>
+            <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+              <SelectTrigger className="w-[200px]">
+                <SelectValue placeholder="Mois" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tous les mois</SelectItem>
+                {monthKeys.map(k => (
+                  <SelectItem key={k} value={k}>{formatMonthLabel(k)}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {monthlyByEmployee.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-4">
+              Aucune prime sur cette période
+            </p>
+          ) : (
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Employé</TableHead>
+                    <TableHead className="text-right">Primes</TableHead>
+                    <TableHead className="text-right">CA total</TableHead>
+                    <TableHead className="text-right">Total prime</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {monthlyByEmployee.map((row, i) => (
+                    <TableRow key={i}>
+                      <TableCell className="font-medium">{row.name}</TableCell>
+                      <TableCell className="text-right">{row.count}</TableCell>
+                      <TableCell className="text-right">{row.ca.toFixed(2)} €</TableCell>
+                      <TableCell className="text-right font-bold text-success">
+                        {row.total.toFixed(2)} €
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  <TableRow className="bg-muted/50 font-semibold">
+                    <TableCell>Total</TableCell>
+                    <TableCell className="text-right">
+                      {monthlyByEmployee.reduce((s, r) => s + r.count, 0)}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {monthlyByEmployee.reduce((s, r) => s + r.ca, 0).toFixed(2)} €
+                    </TableCell>
+                    <TableCell className="text-right text-success">
+                      {monthlyGrandTotal.toFixed(2)} €
+                    </TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Bonus Rules summary with active/inactive filter */}
       <Card className="modern-card">
         <CardHeader>
