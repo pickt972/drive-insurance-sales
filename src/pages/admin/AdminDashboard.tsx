@@ -90,6 +90,7 @@ export default function AdminDashboard() {
   const getDateRange = () => {
     const now = new Date();
     let startDate: Date;
+    let endDate: Date = new Date();
 
     switch (period) {
       case 'week':
@@ -97,6 +98,10 @@ export default function AdminDashboard() {
         break;
       case 'month':
         startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+        break;
+      case 'last_month':
+        startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        endDate = new Date(now.getFullYear(), now.getMonth(), 0);
         break;
       case 'quarter':
         const quarter = Math.floor(now.getMonth() / 3);
@@ -109,7 +114,7 @@ export default function AdminDashboard() {
         startDate = new Date(now.getFullYear(), now.getMonth(), 1);
     }
 
-    return { start: startDate.toISOString().split('T')[0], end: new Date().toISOString().split('T')[0] };
+    return { start: startDate.toISOString().split('T')[0], end: endDate.toISOString().split('T')[0] };
   };
 
   const fetchDashboardData = async () => {
@@ -242,6 +247,7 @@ export default function AdminDashboard() {
           <SelectContent>
             <SelectItem value="week">Cette semaine</SelectItem>
             <SelectItem value="month">Ce mois</SelectItem>
+            <SelectItem value="last_month">Mois dernier</SelectItem>
             <SelectItem value="quarter">Ce trimestre</SelectItem>
             <SelectItem value="year">Cette année</SelectItem>
           </SelectContent>
