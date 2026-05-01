@@ -33,7 +33,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { PlusCircle, Target, Euro, Hash, ListChecks, Trash2, TrendingUp, Award } from 'lucide-react';
+import { PlusCircle, Target, Euro, Hash, ListChecks, Trash2, TrendingUp, Award, Edit } from 'lucide-react';
 import { format, isWithinInterval, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
