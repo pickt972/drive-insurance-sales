@@ -27,6 +27,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  SelectSeparator,
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { PlusCircle, DollarSign, CheckCircle, Clock, XCircle, Eye, Calculator, FileDown, Loader2 } from 'lucide-react';
@@ -536,6 +537,12 @@ export function EmployeeBonuses() {
     return format(new Date(parseInt(y), parseInt(m) - 1, 1), 'MMMM yyyy', { locale: fr });
   };
 
+  const toMonthKey = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+  const now = new Date();
+  const currentMonthKey = toMonthKey(now);
+  const lastMonthKey = toMonthKey(new Date(now.getFullYear(), now.getMonth() - 1, 1));
+  const otherMonthKeys = monthKeys.filter(k => k !== currentMonthKey && k !== lastMonthKey);
+
   return (
     <div className="space-y-6">
       {/* Stats Cards */}
@@ -592,7 +599,10 @@ export function EmployeeBonuses() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Tous les mois</SelectItem>
-                {monthKeys.map(k => (
+                <SelectItem value={currentMonthKey}>Mois en cours ({formatMonthLabel(currentMonthKey)})</SelectItem>
+                <SelectItem value={lastMonthKey}>Mois dernier ({formatMonthLabel(lastMonthKey)})</SelectItem>
+                {otherMonthKeys.length > 0 && <SelectSeparator />}
+                {otherMonthKeys.map(k => (
                   <SelectItem key={k} value={k}>{formatMonthLabel(k)}</SelectItem>
                 ))}
               </SelectContent>
