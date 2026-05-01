@@ -74,6 +74,25 @@ interface BonusRule {
   is_active: boolean;
 }
 
+type PeriodType = 'monthly' | 'quarterly' | 'yearly' | 'other';
+
+const detectPeriodType = (start: string, end: string): PeriodType => {
+  const s = new Date(start);
+  const e = new Date(end);
+  const days = Math.round((e.getTime() - s.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+  if (days >= 28 && days <= 31) return 'monthly';
+  if (days >= 89 && days <= 92) return 'quarterly';
+  if (days >= 360 && days <= 366) return 'yearly';
+  return 'other';
+};
+
+const PERIOD_LABEL: Record<PeriodType, string> = {
+  monthly: 'Mensuel',
+  quarterly: 'Trimestriel',
+  yearly: 'Annuel',
+  other: 'Autre',
+};
+
 export function EmployeeBonuses() {
   const { toast } = useToast();
   const [bonuses, setBonuses] = useState<Bonus[]>([]);
