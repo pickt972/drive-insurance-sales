@@ -376,7 +376,8 @@ export function BonusManagement() {
                                   type="number"
                                   step="0.01"
                                   min="0"
-                                  value={tier.threshold}
+                                  value={tier.threshold === 0 ? '' : tier.threshold}
+                                  onFocus={(e) => e.target.select()}
                                   onChange={(e) => updateTier(idx, 'threshold', e.target.value)}
                                   required
                                 />
@@ -392,7 +393,8 @@ export function BonusManagement() {
                                   type="number"
                                   step="0.01"
                                   min="0"
-                                  value={tier.bonus}
+                                  value={tier.bonus === 0 ? '' : tier.bonus}
+                                  onFocus={(e) => e.target.select()}
                                   onChange={(e) => updateTier(idx, 'bonus', e.target.value)}
                                   required
                                 />
