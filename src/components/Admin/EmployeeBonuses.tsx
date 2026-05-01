@@ -409,9 +409,16 @@ export function EmployeeBonuses() {
     }
   };
 
-  const filteredBonuses = statusFilter === 'all' 
-    ? bonuses 
-    : bonuses.filter(b => b.status === statusFilter);
+  const filteredBonuses = bonuses.filter(b => {
+    if (statusFilter !== 'all' && b.status !== statusFilter) return false;
+    if (periodFilter !== 'all' && detectPeriodType(b.period_start, b.period_end) !== periodFilter) return false;
+    return true;
+  });
+
+  const filteredRules = bonusRules.filter(r => {
+    if (ruleStatusFilter === 'all') return true;
+    return ruleStatusFilter === 'active' ? r.is_active : !r.is_active;
+  });
 
   const totalPending = bonuses.filter(b => b.status === 'pending').reduce((sum, b) => sum + (b.bonus_amount || 0), 0);
   const totalApproved = bonuses.filter(b => b.status === 'approved').reduce((sum, b) => sum + (b.bonus_amount || 0), 0);
