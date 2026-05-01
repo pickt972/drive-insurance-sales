@@ -151,8 +151,10 @@ export function BonusManagement() {
   };
 
   const updateTier = (idx: number, field: 'threshold' | 'bonus', value: string) => {
-    const num = parseFloat(value) || 0;
-    setTiers(tiers.map((t, i) => (i === idx ? { ...t, [field]: num } : t)));
+    // Autorise champ vide et supprime les zéros initiaux
+    const cleaned = value.replace(/^0+(?=\d)/, '');
+    const num = cleaned === '' ? 0 : parseFloat(cleaned);
+    setTiers(tiers.map((t, i) => (i === idx ? { ...t, [field]: isNaN(num) ? 0 : num } : t)));
   };
 
   // Calcul de la simulation
