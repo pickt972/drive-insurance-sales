@@ -448,7 +448,7 @@ export function ObjectivesManagement() {
                 </div>
 
                 <Button type="submit" className="w-full">
-                  Créer l'objectif
+                  {editingId ? 'Enregistrer les modifications' : 'Créer l\'objectif'}
                 </Button>
               </form>
             </DialogContent>
