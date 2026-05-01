@@ -643,14 +643,28 @@ export function ObjectivesManagement() {
                           {Math.round(obj.progressPercent)}%
                         </Badge>
                       </div>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                        onClick={() => removeObjective(obj.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      <div className="flex flex-col gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="hover:bg-primary/10 hover:text-primary"
+                          onClick={() => handleEdit(obj)}
+                          title="Modifier"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                          onClick={() => {
+                            if (confirm('Supprimer cet objectif ?')) removeObjective(obj.id);
+                          }}
+                          title="Supprimer"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 ))}
