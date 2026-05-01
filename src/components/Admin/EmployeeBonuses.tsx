@@ -760,7 +760,12 @@ export function EmployeeBonuses() {
                         {bonus.profiles?.full_name || 'N/A'}
                       </TableCell>
                       <TableCell className="text-sm">
-                        {format(new Date(bonus.period_start), 'dd/MM/yy', { locale: fr })} - {format(new Date(bonus.period_end), 'dd/MM/yy', { locale: fr })}
+                        <div className="flex flex-col gap-1">
+                          <span>{format(new Date(bonus.period_start), 'dd/MM/yy', { locale: fr })} - {format(new Date(bonus.period_end), 'dd/MM/yy', { locale: fr })}</span>
+                          <Badge variant="secondary" className="w-fit text-[10px] py-0 px-1.5">
+                            {PERIOD_LABEL[detectPeriodType(bonus.period_start, bonus.period_end)]}
+                          </Badge>
+                        </div>
                       </TableCell>
                       <TableCell className="text-right font-semibold text-success">
                         {bonus.bonus_amount?.toFixed(2) || '0.00'} €
