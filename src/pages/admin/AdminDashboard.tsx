@@ -247,6 +247,7 @@ export default function AdminDashboard() {
           <SelectContent>
             <SelectItem value="week">Cette semaine</SelectItem>
             <SelectItem value="month">Ce mois</SelectItem>
+            <SelectItem value="last_month">Mois dernier</SelectItem>
             <SelectItem value="quarter">Ce trimestre</SelectItem>
             <SelectItem value="year">Cette année</SelectItem>
           </SelectContent>
