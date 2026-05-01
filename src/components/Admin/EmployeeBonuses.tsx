@@ -568,17 +568,39 @@ export function EmployeeBonuses() {
           {filteredRules.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-4">Aucune règle à afficher</p>
           ) : (
-            <div className="flex flex-wrap gap-2">
-              {filteredRules.map(rule => (
-                <Badge
-                  key={rule.id}
-                  variant={rule.is_active ? 'default' : 'outline'}
-                  className="gap-1 py-1.5 px-3"
-                >
-                  <span className={rule.is_active ? '' : 'opacity-60'}>{rule.name}</span>
-                  {!rule.is_active && <span className="text-[10px]">(inactif)</span>}
-                </Badge>
-              ))}
+            <div className="space-y-3">
+              {filteredRules.map(rule => {
+                const sortedTiers = [...(rule.tiers || [])].sort((a, b) => a.threshold - b.threshold);
+                const unit = rule.base === 'sales_count' ? '' : ' €';
+                const bUnit = rule.bonus_type === 'percent' ? ' %' : ' €';
+                return (
+                  <div
+                    key={rule.id}
+                    className={`rounded-lg border p-3 ${rule.is_active ? 'bg-card' : 'bg-muted/30 opacity-70'}`}
+                  >
+                    <div className="flex items-center justify-between flex-wrap gap-2 mb-2">
+                      <div className="flex items-center gap-2">
+                        <Badge variant={rule.is_active ? 'default' : 'outline'}>{rule.name}</Badge>
+                        <span className="text-xs text-muted-foreground">
+                          Base: {BASE_LABEL[rule.base]} · Mode: {rule.calculation_mode === 'cumulative' ? 'Cumulatif' : 'Plus haut palier'}
+                        </span>
+                      </div>
+                      {!rule.is_active && <span className="text-[10px] text-muted-foreground">(inactif)</span>}
+                    </div>
+                    {sortedTiers.length === 0 ? (
+                      <p className="text-xs text-muted-foreground italic">Aucun palier configuré</p>
+                    ) : (
+                      <div className="flex flex-wrap gap-2">
+                        {sortedTiers.map((t, i) => (
+                          <Badge key={i} variant="secondary" className="font-mono text-xs">
+                            ≥ {t.threshold}{unit} → +{t.bonus}{bUnit}
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           )}
         </CardContent>
