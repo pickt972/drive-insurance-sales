@@ -151,8 +151,10 @@ export function BonusManagement() {
   };
 
   const updateTier = (idx: number, field: 'threshold' | 'bonus', value: string) => {
-    const num = parseFloat(value) || 0;
-    setTiers(tiers.map((t, i) => (i === idx ? { ...t, [field]: num } : t)));
+    // Autorise champ vide et supprime les zéros initiaux
+    const cleaned = value.replace(/^0+(?=\d)/, '');
+    const num = cleaned === '' ? 0 : parseFloat(cleaned);
+    setTiers(tiers.map((t, i) => (i === idx ? { ...t, [field]: isNaN(num) ? 0 : num } : t)));
   };
 
   // Calcul de la simulation
@@ -374,7 +376,8 @@ export function BonusManagement() {
                                   type="number"
                                   step="0.01"
                                   min="0"
-                                  value={tier.threshold}
+                                  value={tier.threshold === 0 ? '' : tier.threshold}
+                                  onFocus={(e) => e.target.select()}
                                   onChange={(e) => updateTier(idx, 'threshold', e.target.value)}
                                   required
                                 />
@@ -390,7 +393,8 @@ export function BonusManagement() {
                                   type="number"
                                   step="0.01"
                                   min="0"
-                                  value={tier.bonus}
+                                  value={tier.bonus === 0 ? '' : tier.bonus}
+                                  onFocus={(e) => e.target.select()}
                                   onChange={(e) => updateTier(idx, 'bonus', e.target.value)}
                                   required
                                 />
