@@ -33,17 +33,18 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { PlusCircle, Target, Euro, Hash, ListChecks, Trash2, TrendingUp, Award } from 'lucide-react';
+import { PlusCircle, Target, Euro, Hash, ListChecks, Trash2, TrendingUp, Award, Edit } from 'lucide-react';
 import { format, isWithinInterval, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
 export function ObjectivesManagement() {
-  const { objectives, addObjective, removeObjective, loading } = useObjectives();
+  const { objectives, addObjective, updateObjective, removeObjective, loading } = useObjectives();
   const { users } = useUsers();
   const { insuranceTypes } = useInsuranceTypes();
   const { sales } = useSales();
 
   const [open, setOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     user_id: '',
     objective_type: 'monthly',
@@ -152,7 +153,7 @@ export function ObjectivesManagement() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    await addObjective({
+    const payload = {
       user_id: formData.user_id,
       objective_type: formData.objective_type,
       objective_mode: formData.objective_mode,
@@ -162,13 +163,20 @@ export function ObjectivesManagement() {
       period_start: formData.period_start,
       period_end: formData.period_end,
       description: formData.description,
-    });
+    };
+
+    if (editingId) {
+      await updateObjective(editingId, payload);
+    } else {
+      await addObjective(payload);
+    }
 
     setOpen(false);
     resetForm();
   };
 
   const resetForm = () => {
+    setEditingId(null);
     setFormData({
       user_id: '',
       objective_type: 'monthly',
@@ -180,6 +188,27 @@ export function ObjectivesManagement() {
       period_end: '',
       description: '',
     });
+  };
+
+  const handleEdit = (obj: any) => {
+    setEditingId(obj.id);
+    setFormData({
+      user_id: obj.user_id || '',
+      objective_type: obj.objective_type || 'monthly',
+      objective_mode: obj.objective_mode || 'amount',
+      target_amount: obj.target_amount?.toString() || '',
+      target_sales_count: obj.target_sales_count?.toString() || '',
+      target_by_insurance_type: obj.target_by_insurance_type || {},
+      period_start: obj.period_start || '',
+      period_end: obj.period_end || '',
+      description: obj.description || '',
+    });
+    setOpen(true);
+  };
+
+  const handleDialogChange = (isOpen: boolean) => {
+    setOpen(isOpen);
+    if (!isOpen) resetForm();
   };
 
   const handleInsuranceTypeTargetChange = (typeId: string, value: string) => {
@@ -246,7 +275,7 @@ export function ObjectivesManagement() {
               Définir et suivre les objectifs de vente par montant, nombre ou type d'assurance
             </CardDescription>
           </div>
-          <Dialog open={open} onOpenChange={setOpen}>
+          <Dialog open={open} onOpenChange={handleDialogChange}>
             <DialogTrigger asChild>
               <Button>
                 <PlusCircle className="mr-2 h-4 w-4" />
@@ -255,9 +284,9 @@ export function ObjectivesManagement() {
             </DialogTrigger>
             <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
               <DialogHeader>
-                <DialogTitle>Créer un objectif</DialogTitle>
+                <DialogTitle>{editingId ? 'Modifier l\'objectif' : 'Créer un objectif'}</DialogTitle>
                 <DialogDescription>
-                  Définir un objectif de vente pour un employé
+                  {editingId ? 'Modifier l\'objectif existant' : 'Définir un objectif de vente pour un employé'}
                 </DialogDescription>
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
@@ -419,7 +448,7 @@ export function ObjectivesManagement() {
                 </div>
 
                 <Button type="submit" className="w-full">
-                  Créer l'objectif
+                  {editingId ? 'Enregistrer les modifications' : 'Créer l\'objectif'}
                 </Button>
               </form>
             </DialogContent>
@@ -614,14 +643,28 @@ export function ObjectivesManagement() {
                           {Math.round(obj.progressPercent)}%
                         </Badge>
                       </div>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                        onClick={() => removeObjective(obj.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      <div className="flex flex-col gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="hover:bg-primary/10 hover:text-primary"
+                          onClick={() => handleEdit(obj)}
+                          title="Modifier"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                          onClick={() => {
+                            if (confirm('Supprimer cet objectif ?')) removeObjective(obj.id);
+                          }}
+                          title="Supprimer"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 ))}

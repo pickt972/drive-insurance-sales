@@ -66,31 +66,49 @@ export type Database = {
       }
       bonus_rules: {
         Row: {
-          bonus_percent: number
+          base: string
+          bonus_percent: number | null
+          bonus_type: string
+          calculation_mode: string
           created_at: string | null
+          description: string | null
           id: string
           is_active: boolean | null
           max_achievement_percent: number | null
-          min_achievement_percent: number
+          min_achievement_percent: number | null
           name: string
+          tiers: Json
+          updated_at: string | null
         }
         Insert: {
-          bonus_percent: number
+          base?: string
+          bonus_percent?: number | null
+          bonus_type?: string
+          calculation_mode?: string
           created_at?: string | null
+          description?: string | null
           id?: string
           is_active?: boolean | null
           max_achievement_percent?: number | null
-          min_achievement_percent: number
+          min_achievement_percent?: number | null
           name: string
+          tiers?: Json
+          updated_at?: string | null
         }
         Update: {
-          bonus_percent?: number
+          base?: string
+          bonus_percent?: number | null
+          bonus_type?: string
+          calculation_mode?: string
           created_at?: string | null
+          description?: string | null
           id?: string
           is_active?: boolean | null
           max_achievement_percent?: number | null
-          min_achievement_percent?: number
+          min_achievement_percent?: number | null
           name?: string
+          tiers?: Json
+          updated_at?: string | null
         }
         Relationships: []
       }
