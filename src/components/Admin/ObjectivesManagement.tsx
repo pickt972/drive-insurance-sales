@@ -153,7 +153,7 @@ export function ObjectivesManagement() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    await addObjective({
+    const payload = {
       user_id: formData.user_id,
       objective_type: formData.objective_type,
       objective_mode: formData.objective_mode,
@@ -163,13 +163,20 @@ export function ObjectivesManagement() {
       period_start: formData.period_start,
       period_end: formData.period_end,
       description: formData.description,
-    });
+    };
+
+    if (editingId) {
+      await updateObjective(editingId, payload);
+    } else {
+      await addObjective(payload);
+    }
 
     setOpen(false);
     resetForm();
   };
 
   const resetForm = () => {
+    setEditingId(null);
     setFormData({
       user_id: '',
       objective_type: 'monthly',
@@ -181,6 +188,27 @@ export function ObjectivesManagement() {
       period_end: '',
       description: '',
     });
+  };
+
+  const handleEdit = (obj: any) => {
+    setEditingId(obj.id);
+    setFormData({
+      user_id: obj.user_id || '',
+      objective_type: obj.objective_type || 'monthly',
+      objective_mode: obj.objective_mode || 'amount',
+      target_amount: obj.target_amount?.toString() || '',
+      target_sales_count: obj.target_sales_count?.toString() || '',
+      target_by_insurance_type: obj.target_by_insurance_type || {},
+      period_start: obj.period_start || '',
+      period_end: obj.period_end || '',
+      description: obj.description || '',
+    });
+    setOpen(true);
+  };
+
+  const handleDialogChange = (isOpen: boolean) => {
+    setOpen(isOpen);
+    if (!isOpen) resetForm();
   };
 
   const handleInsuranceTypeTargetChange = (typeId: string, value: string) => {
