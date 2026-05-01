@@ -503,6 +503,42 @@ export function EmployeeBonuses() {
   const totalApproved = bonuses.filter(b => b.status === 'approved').reduce((sum, b) => sum + (b.bonus_amount || 0), 0);
   const totalPaid = bonuses.filter(b => b.status === 'paid').reduce((sum, b) => sum + (b.bonus_amount || 0), 0);
 
+  // === Récapitulatif mensuel par employé ===
+  // Build a list of available YYYY-MM keys derived from bonus period_start
+  const monthKeys = Array.from(
+    new Set(filteredBonuses.map(b => b.period_start.slice(0, 7)))
+  ).sort((a, b) => b.localeCompare(a));
+
+  const [selectedMonth, setSelectedMonthState] = useState<string>('all');
+  // Keep state name local without triggering re-render loop
+  const setSelectedMonth = setSelectedMonthState;
+
+  const monthlyByEmployee = (() => {
+    const map = new Map<string, { name: string; total: number; count: number; ca: number }>();
+    filteredBonuses.forEach(b => {
+      if (selectedMonth !== 'all' && b.period_start.slice(0, 7) !== selectedMonth) return;
+      const key = b.user_id;
+      const cur = map.get(key) || {
+        name: b.profiles?.full_name || 'N/A',
+        total: 0,
+        count: 0,
+        ca: 0,
+      };
+      cur.total += b.bonus_amount || 0;
+      cur.ca += b.total_amount || 0;
+      cur.count += 1;
+      map.set(key, cur);
+    });
+    return Array.from(map.values()).sort((a, b) => b.total - a.total);
+  })();
+
+  const monthlyGrandTotal = monthlyByEmployee.reduce((s, r) => s + r.total, 0);
+
+  const formatMonthLabel = (key: string) => {
+    const [y, m] = key.split('-');
+    return format(new Date(parseInt(y), parseInt(m) - 1, 1), 'MMMM yyyy', { locale: fr });
+  };
+
   return (
     <div className="space-y-6">
       {/* Stats Cards */}
