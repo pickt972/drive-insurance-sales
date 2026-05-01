@@ -481,14 +481,26 @@ export function EmployeeBonuses() {
             <div className="flex items-center gap-2 flex-wrap">
               <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger className="w-[150px]">
-                  <SelectValue placeholder="Filtrer" />
+                  <SelectValue placeholder="Statut" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Tous</SelectItem>
+                  <SelectItem value="all">Tous statuts</SelectItem>
                   <SelectItem value="pending">En attente</SelectItem>
                   <SelectItem value="approved">Approuvées</SelectItem>
                   <SelectItem value="paid">Payées</SelectItem>
                   <SelectItem value="rejected">Refusées</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={periodFilter} onValueChange={setPeriodFilter}>
+                <SelectTrigger className="w-[160px]">
+                  <SelectValue placeholder="Période" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Toutes périodes</SelectItem>
+                  <SelectItem value="monthly">Mensuel</SelectItem>
+                  <SelectItem value="quarterly">Trimestriel</SelectItem>
+                  <SelectItem value="yearly">Annuel</SelectItem>
+                  <SelectItem value="other">Autre</SelectItem>
                 </SelectContent>
               </Select>
               <Button variant="outline" onClick={handleExportPDF} disabled={filteredBonuses.length === 0}>
