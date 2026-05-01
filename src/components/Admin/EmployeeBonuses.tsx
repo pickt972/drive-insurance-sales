@@ -293,18 +293,41 @@ export function EmployeeBonuses() {
         achievementPercent = 100;
       }
 
-      // Find applicable bonus rule
+      // Find applicable bonus rule (new tier-based system + legacy fallback)
       let bonusRate = 0;
       let bonusAmount = 0;
+      const appliedRules: string[] = [];
 
       for (const rule of bonusRules.filter(r => r.is_active)) {
-        const minOk = achievementPercent >= rule.min_achievement_percent;
-        const maxOk = rule.max_achievement_percent === null || achievementPercent < rule.max_achievement_percent;
-        
-        if (minOk && maxOk) {
-          bonusRate = rule.bonus_percent;
-          bonusAmount = totalCommission * (bonusRate / 100);
-          break;
+        // New tier-based system
+        if (rule.tiers && rule.tiers.length > 0) {
+          const measured =
+            rule.base === 'sales_count' ? totalSales :
+            rule.base === 'commission' ? totalCommission :
+            totalAmount;
+          const baseForPct =
+            rule.base === 'sales_count' ? totalCommission : measured;
+          const { bonus, tierHit } = computeTierBonus(
+            measured,
+            rule.tiers,
+            rule.calculation_mode,
+            rule.bonus_type,
+            baseForPct,
+          );
+          if (tierHit) {
+            bonusAmount += bonus;
+            appliedRules.push(`${rule.name} (+${bonus.toFixed(2)} €)`);
+          }
+        } else if (rule.min_achievement_percent !== null && rule.bonus_percent !== null) {
+          // Legacy %-of-objective rule
+          const minOk = achievementPercent >= rule.min_achievement_percent;
+          const maxOk = rule.max_achievement_percent === null || achievementPercent < rule.max_achievement_percent;
+          if (minOk && maxOk) {
+            bonusRate = rule.bonus_percent;
+            const legacy = totalCommission * (bonusRate / 100);
+            bonusAmount += legacy;
+            appliedRules.push(`${rule.name} (${bonusRate}% → ${legacy.toFixed(2)} €)`);
+          }
         }
       }
 
@@ -317,6 +340,9 @@ export function EmployeeBonuses() {
         achievement_percent: achievementPercent.toFixed(2),
         bonus_rate: bonusRate.toString(),
         bonus_amount: bonusAmount.toFixed(2),
+        notes: appliedRules.length
+          ? `Règles appliquées: ${appliedRules.join(' • ')}`
+          : prev.notes,
       }));
 
       toast({
