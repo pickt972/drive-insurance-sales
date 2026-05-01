@@ -225,7 +225,7 @@ export function EmployeeBonuses() {
       let bonusRate = 0;
       let bonusAmount = 0;
 
-      for (const rule of bonusRules) {
+      for (const rule of bonusRules.filter(r => r.is_active)) {
         const minOk = achievementPercent >= rule.min_achievement_percent;
         const maxOk = rule.max_achievement_percent === null || achievementPercent < rule.max_achievement_percent;
         
