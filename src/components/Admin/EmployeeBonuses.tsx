@@ -150,6 +150,7 @@ export function EmployeeBonuses() {
   const [selectedBonus, setSelectedBonus] = useState<Bonus | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [periodFilter, setPeriodFilter] = useState<string>('all');
+  const [selectedMonth, setSelectedMonth] = useState<string>('all');
   const [ruleStatusFilter, setRuleStatusFilter] = useState<string>('active');
   const [formData, setFormData] = useState({
     user_id: '',
