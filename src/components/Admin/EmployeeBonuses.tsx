@@ -65,13 +65,59 @@ interface Profile {
   email: string;
 }
 
+interface Tier {
+  threshold: number;
+  bonus: number;
+}
+
+type BaseType = 'sales_amount' | 'sales_count' | 'commission';
+type CalculationMode = 'highest' | 'cumulative';
+type BonusType = 'fixed' | 'percent';
+
 interface BonusRule {
   id: string;
   name: string;
-  min_achievement_percent: number;
+  description?: string | null;
+  // Legacy fields (still in DB)
+  min_achievement_percent: number | null;
   max_achievement_percent: number | null;
-  bonus_percent: number;
+  bonus_percent: number | null;
+  // New tier-based system
+  tiers: Tier[];
+  base: BaseType;
+  calculation_mode: CalculationMode;
+  bonus_type: BonusType;
   is_active: boolean;
+}
+
+const BASE_LABEL: Record<BaseType, string> = {
+  sales_amount: 'CA (€)',
+  sales_count: 'Nb ventes',
+  commission: 'Commission (€)',
+};
+
+// Compute bonus from tiers based on a measured value (CA, count, or commission)
+function computeTierBonus(
+  value: number,
+  tiers: Tier[],
+  mode: CalculationMode,
+  bonusType: BonusType,
+  baseValueForPercent: number,
+): { bonus: number; tierHit: Tier | null } {
+  const sorted = [...tiers].sort((a, b) => a.threshold - b.threshold);
+  const reached = sorted.filter(t => value >= t.threshold);
+  if (reached.length === 0) return { bonus: 0, tierHit: null };
+
+  const toAmount = (raw: number) =>
+    bonusType === 'percent' ? (baseValueForPercent * raw) / 100 : raw;
+
+  if (mode === 'cumulative') {
+    const total = reached.reduce((sum, t) => sum + toAmount(t.bonus), 0);
+    return { bonus: total, tierHit: reached[reached.length - 1] };
+  }
+  // highest
+  const top = reached[reached.length - 1];
+  return { bonus: toAmount(top.bonus), tierHit: top };
 }
 
 type PeriodType = 'monthly' | 'quarterly' | 'yearly' | 'other';
