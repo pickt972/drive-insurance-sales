@@ -38,12 +38,13 @@ import { format, isWithinInterval, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
 export function ObjectivesManagement() {
-  const { objectives, addObjective, removeObjective, loading } = useObjectives();
+  const { objectives, addObjective, updateObjective, removeObjective, loading } = useObjectives();
   const { users } = useUsers();
   const { insuranceTypes } = useInsuranceTypes();
   const { sales } = useSales();
 
   const [open, setOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     user_id: '',
     objective_type: 'monthly',
