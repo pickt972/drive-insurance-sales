@@ -598,7 +598,10 @@ export function EmployeeBonuses() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Tous les mois</SelectItem>
-                {monthKeys.map(k => (
+                <SelectItem value={currentMonthKey}>Mois en cours ({formatMonthLabel(currentMonthKey)})</SelectItem>
+                <SelectItem value={lastMonthKey}>Mois dernier ({formatMonthLabel(lastMonthKey)})</SelectItem>
+                {otherMonthKeys.length > 0 && <SelectSeparator />}
+                {otherMonthKeys.map(k => (
                   <SelectItem key={k} value={k}>{formatMonthLabel(k)}</SelectItem>
                 ))}
               </SelectContent>
