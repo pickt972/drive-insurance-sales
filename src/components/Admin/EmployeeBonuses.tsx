@@ -509,10 +509,6 @@ export function EmployeeBonuses() {
     new Set(filteredBonuses.map(b => b.period_start.slice(0, 7)))
   ).sort((a, b) => b.localeCompare(a));
 
-  const [selectedMonth, setSelectedMonthState] = useState<string>('all');
-  // Keep state name local without triggering re-render loop
-  const setSelectedMonth = setSelectedMonthState;
-
   const monthlyByEmployee = (() => {
     const map = new Map<string, { name: string; total: number; count: number; ca: number }>();
     filteredBonuses.forEach(b => {
