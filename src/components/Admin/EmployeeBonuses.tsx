@@ -784,6 +784,84 @@ export function EmployeeBonuses() {
         </CardContent>
       </Card>
 
+      {/* Primes ESTIMÉES depuis les règles + ventes (non encore enregistrées) */}
+      <Card className="modern-card border-warning/30">
+        <CardHeader>
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <div>
+              <CardTitle className="text-base flex items-center gap-2">
+                <Calculator className="h-4 w-4 text-warning" />
+                Primes estimées (auto)
+              </CardTitle>
+              <CardDescription>
+                Calculées en direct depuis les règles actives et les ventes ·{' '}
+                <span className="font-semibold text-warning">{estimatedTotal.toFixed(2)} €</span>
+                {' · '}
+                {formatMonthLabel(selectedMonth !== 'all' ? selectedMonth : currentMonthKey)}
+              </CardDescription>
+            </div>
+            <Button variant="outline" size="sm" onClick={computeEstimatedBonuses} disabled={estimating}>
+              {estimating ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Recalculer'}
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {estimatedRows.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-4">
+              Aucune prime estimée. Vérifiez que des règles sont actives et que des ventes existent sur la période.
+            </p>
+          ) : (
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Employé</TableHead>
+                    <TableHead className="text-right">Ventes</TableHead>
+                    <TableHead className="text-right">CA</TableHead>
+                    <TableHead className="text-right">Prime estimée</TableHead>
+                    <TableHead>Règles</TableHead>
+                    <TableHead className="text-right">Action</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {estimatedRows.map(row => (
+                    <TableRow key={row.user_id}>
+                      <TableCell className="font-medium">{row.name}</TableCell>
+                      <TableCell className="text-right">{row.salesCount}</TableCell>
+                      <TableCell className="text-right">{row.totalAmount.toFixed(2)} €</TableCell>
+                      <TableCell className="text-right font-bold text-warning">
+                        {row.bonus.toFixed(2)} €
+                      </TableCell>
+                      <TableCell className="text-xs text-muted-foreground max-w-xs">
+                        {row.rules.join(' • ')}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {row.alreadyRecorded ? (
+                          <Badge variant="outline" className="text-xs">déjà enregistrée</Badge>
+                        ) : (
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            onClick={() => saveEstimatedBonus(row)}
+                            disabled={savingEstimateId === row.user_id}
+                          >
+                            {savingEstimateId === row.user_id ? (
+                              <Loader2 className="h-3 w-3 animate-spin" />
+                            ) : (
+                              'Enregistrer'
+                            )}
+                          </Button>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Bonus Rules summary with active/inactive filter */}
       <Card className="modern-card">
         <CardHeader>
