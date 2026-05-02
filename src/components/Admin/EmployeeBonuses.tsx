@@ -532,6 +532,135 @@ export function EmployeeBonuses() {
 
   const monthlyGrandTotal = monthlyByEmployee.reduce((s, r) => s + r.total, 0);
 
+  // === Primes ESTIMÉES en live à partir des ventes + règles actives ===
+  const [estimatedRows, setEstimatedRows] = useState<Array<{
+    user_id: string;
+    name: string;
+    salesCount: number;
+    totalAmount: number;
+    totalCommission: number;
+    bonus: number;
+    rules: string[];
+    period_start: string;
+    period_end: string;
+    alreadyRecorded: boolean;
+  }>>([]);
+  const [estimating, setEstimating] = useState(false);
+  const [savingEstimateId, setSavingEstimateId] = useState<string | null>(null);
+
+  const computeEstimatedBonuses = async () => {
+    setEstimating(true);
+    try {
+      // Determine the period to estimate (selected month, or current month if "all")
+      const monthKey = selectedMonth !== 'all' ? selectedMonth : currentMonthKey;
+      const [yy, mm] = monthKey.split('-').map(n => parseInt(n));
+      const start = new Date(yy, mm - 1, 1);
+      const end = new Date(yy, mm, 0);
+      const startStr = start.toISOString().split('T')[0];
+      const endStr = end.toISOString().split('T')[0];
+
+      const { data: sales, error: salesErr } = await (supabase as any)
+        .from('insurance_sales')
+        .select('user_id, amount, commission_amount, profiles!insurance_sales_user_id_fkey(full_name)')
+        .gte('sale_date', startStr)
+        .lte('sale_date', endStr);
+      if (salesErr) throw salesErr;
+
+      const byUser = new Map<string, { name: string; salesCount: number; totalAmount: number; totalCommission: number }>();
+      (sales || []).forEach((s: any) => {
+        const uid = s.user_id || 'unknown';
+        const cur = byUser.get(uid) || { name: s.profiles?.full_name || 'Inconnu', salesCount: 0, totalAmount: 0, totalCommission: 0 };
+        cur.salesCount += 1;
+        cur.totalAmount += Number(s.amount || 0);
+        cur.totalCommission += Number(s.commission_amount || 0);
+        byUser.set(uid, cur);
+      });
+
+      const activeRules = bonusRules.filter(r => r.is_active && r.tiers && r.tiers.length > 0);
+      const rows: typeof estimatedRows = [];
+      byUser.forEach((emp, user_id) => {
+        let bonus = 0;
+        const rules: string[] = [];
+        for (const rule of activeRules) {
+          const measured =
+            rule.base === 'sales_count' ? emp.salesCount :
+            rule.base === 'commission' ? emp.totalCommission :
+            emp.totalAmount;
+          const baseForPct = rule.base === 'sales_count' ? emp.totalCommission : measured;
+          const { bonus: b, tierHit } = computeTierBonus(measured, rule.tiers, rule.calculation_mode, rule.bonus_type, baseForPct);
+          if (tierHit && b > 0) {
+            bonus += b;
+            rules.push(`${rule.name}: ≥${tierHit.threshold} → +${b.toFixed(2)} €`);
+          }
+        }
+        const alreadyRecorded = bonuses.some(b =>
+          b.user_id === user_id && b.period_start === startStr && b.period_end === endStr,
+        );
+        if (bonus > 0) {
+          rows.push({
+            user_id,
+            name: emp.name,
+            salesCount: emp.salesCount,
+            totalAmount: emp.totalAmount,
+            totalCommission: emp.totalCommission,
+            bonus,
+            rules,
+            period_start: startStr,
+            period_end: endStr,
+            alreadyRecorded,
+          });
+        }
+      });
+      rows.sort((a, b) => b.bonus - a.bonus);
+      setEstimatedRows(rows);
+      toast({
+        title: 'Estimation terminée',
+        description: `${rows.length} employé(s) avec prime estimée pour ${formatMonthLabel(monthKey)}`,
+      });
+    } catch (e) {
+      console.error('Estimation error:', e);
+      toast({ title: 'Erreur', description: "Impossible d'estimer les primes", variant: 'destructive' });
+    } finally {
+      setEstimating(false);
+    }
+  };
+
+  const saveEstimatedBonus = async (row: typeof estimatedRows[number]) => {
+    setSavingEstimateId(row.user_id);
+    try {
+      const { error } = await supabase.from('bonuses').insert([{
+        user_id: row.user_id,
+        period_start: row.period_start,
+        period_end: row.period_end,
+        total_sales: row.salesCount,
+        total_amount: row.totalAmount,
+        total_commission: row.totalCommission,
+        bonus_amount: row.bonus,
+        status: 'pending',
+        notes: `Auto (règles): ${row.rules.join(' • ')}`,
+      }]);
+      if (error) throw error;
+      toast({ title: 'Prime enregistrée', description: `${row.name}: ${row.bonus.toFixed(2)} €` });
+      await fetchBonuses();
+      await computeEstimatedBonuses();
+    } catch (e) {
+      console.error(e);
+      toast({ title: 'Erreur', description: "Impossible d'enregistrer la prime", variant: 'destructive' });
+    } finally {
+      setSavingEstimateId(null);
+    }
+  };
+
+  // Auto-estimate when rules / month / bonuses load
+  useEffect(() => {
+    if (bonusRules.length > 0) {
+      computeEstimatedBonuses();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bonusRules, selectedMonth, bonuses.length]);
+
+  const estimatedTotal = estimatedRows.reduce((s, r) => s + r.bonus, 0);
+
   const formatMonthLabel = (key: string) => {
     const [y, m] = key.split('-');
     return format(new Date(parseInt(y), parseInt(m) - 1, 1), 'MMMM yyyy', { locale: fr });
@@ -648,6 +777,84 @@ export function EmployeeBonuses() {
                       {monthlyGrandTotal.toFixed(2)} €
                     </TableCell>
                   </TableRow>
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Primes ESTIMÉES depuis les règles + ventes (non encore enregistrées) */}
+      <Card className="modern-card border-warning/30">
+        <CardHeader>
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <div>
+              <CardTitle className="text-base flex items-center gap-2">
+                <Calculator className="h-4 w-4 text-warning" />
+                Primes estimées (auto)
+              </CardTitle>
+              <CardDescription>
+                Calculées en direct depuis les règles actives et les ventes ·{' '}
+                <span className="font-semibold text-warning">{estimatedTotal.toFixed(2)} €</span>
+                {' · '}
+                {formatMonthLabel(selectedMonth !== 'all' ? selectedMonth : currentMonthKey)}
+              </CardDescription>
+            </div>
+            <Button variant="outline" size="sm" onClick={computeEstimatedBonuses} disabled={estimating}>
+              {estimating ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Recalculer'}
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {estimatedRows.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-4">
+              Aucune prime estimée. Vérifiez que des règles sont actives et que des ventes existent sur la période.
+            </p>
+          ) : (
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Employé</TableHead>
+                    <TableHead className="text-right">Ventes</TableHead>
+                    <TableHead className="text-right">CA</TableHead>
+                    <TableHead className="text-right">Prime estimée</TableHead>
+                    <TableHead>Règles</TableHead>
+                    <TableHead className="text-right">Action</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {estimatedRows.map(row => (
+                    <TableRow key={row.user_id}>
+                      <TableCell className="font-medium">{row.name}</TableCell>
+                      <TableCell className="text-right">{row.salesCount}</TableCell>
+                      <TableCell className="text-right">{row.totalAmount.toFixed(2)} €</TableCell>
+                      <TableCell className="text-right font-bold text-warning">
+                        {row.bonus.toFixed(2)} €
+                      </TableCell>
+                      <TableCell className="text-xs text-muted-foreground max-w-xs">
+                        {row.rules.join(' • ')}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {row.alreadyRecorded ? (
+                          <Badge variant="outline" className="text-xs">déjà enregistrée</Badge>
+                        ) : (
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            onClick={() => saveEstimatedBonus(row)}
+                            disabled={savingEstimateId === row.user_id}
+                          >
+                            {savingEstimateId === row.user_id ? (
+                              <Loader2 className="h-3 w-3 animate-spin" />
+                            ) : (
+                              'Enregistrer'
+                            )}
+                          </Button>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
                 </TableBody>
               </Table>
             </div>
