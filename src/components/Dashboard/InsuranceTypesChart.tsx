@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useSales } from '@/hooks/useSales';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { PieChart, Pie, Cell, Legend, Tooltip } from 'recharts';
+import { PieChart, Pie, Cell, Legend, Tooltip, ResponsiveContainer } from 'recharts';
 import { startOfMonth, endOfMonth } from 'date-fns';
 
 const COLORS = ['#2563eb', '#16a34a', '#eab308', '#dc2626', '#9333ea'];
@@ -78,26 +78,26 @@ export function InsuranceTypesChart() {
       </CardHeader>
       <CardContent>
         <div style={{ width: '100%', height: 300 }}>
-          <PieChart width={400} height={300} style={{ width: '100%', maxWidth: '100%' }}>
-            <Pie
-              data={chartData}
-              cx="50%"
-              cy="50%"
-              labelLine={false}
-              label={({ name, percent }: any) => `${name} (${(percent * 100).toFixed(0)}%)`}
-              outerRadius={80}
-              fill="#8884d8"
-              dataKey="value"
-            >
-              {chartData.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-              ))}
-            </Pie>
-            <Tooltip 
-              formatter={(value: number) => `${value} ventes`}
-            />
-            <Legend />
-          </PieChart>
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart>
+              <Pie
+                data={chartData}
+                cx="50%"
+                cy="50%"
+                labelLine={false}
+                label={({ name, percent }: any) => `${name} (${(percent * 100).toFixed(0)}%)`}
+                outerRadius={80}
+                fill="#8884d8"
+                dataKey="value"
+              >
+                {chartData.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                ))}
+              </Pie>
+              <Tooltip formatter={(value: number) => `${value} ventes`} />
+              <Legend />
+            </PieChart>
+          </ResponsiveContainer>
         </div>
       </CardContent>
     </Card>

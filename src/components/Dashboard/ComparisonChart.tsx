@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useSales } from '@/hooks/useSales';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { format, subMonths, startOfMonth, endOfMonth } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
@@ -64,28 +64,30 @@ export function ComparisonChart() {
       </CardHeader>
       <CardContent>
         <div style={{ width: '100%', height: 300 }}>
-          <LineChart width={500} height={300} data={chartData} style={{ width: '100%', maxWidth: '100%' }}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="month" />
-            <YAxis />
-            <Tooltip formatter={(value: number) => `${value.toFixed(2)} €`} />
-            <Legend />
-            <Line 
-              type="monotone" 
-              dataKey="current" 
-              stroke="#2563eb" 
-              strokeWidth={2}
-              name="2025"
-            />
-            <Line 
-              type="monotone" 
-              dataKey="lastYear" 
-              stroke="#9ca3af" 
-              strokeWidth={2}
-              strokeDasharray="5 5"
-              name="2024"
-            />
-          </LineChart>
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={chartData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="month" />
+              <YAxis />
+              <Tooltip formatter={(value: number) => `${value.toFixed(2)} €`} />
+              <Legend />
+              <Line
+                type="monotone"
+                dataKey="current"
+                stroke="#2563eb"
+                strokeWidth={2}
+                name="2025"
+              />
+              <Line
+                type="monotone"
+                dataKey="lastYear"
+                stroke="#9ca3af"
+                strokeWidth={2}
+                strokeDasharray="5 5"
+                name="2024"
+              />
+            </LineChart>
+          </ResponsiveContainer>
         </div>
       </CardContent>
     </Card>
