@@ -73,7 +73,7 @@ export function UserBonusProgress() {
       const sortedTiers = [...rule.tiers].sort((a, b) => a.threshold - b.threshold);
       const measured =
         rule.base === 'sales_count' ? totals.count :
-        rule.base === 'commission' ? totals.commission :
+        rule.base === 'commission' ? totals.totalCommission :
         totals.totalAmount;
       const baseForPct =
         rule.base === 'sales_count' ? totals.totalCommission : measured;
