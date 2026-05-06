@@ -54,6 +54,13 @@ export function AllSalesTable() {
       } else if (filterPeriod === 'month') {
         const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
         filtered = filtered.filter(sale => new Date(sale.sale_date) >= monthStart);
+      } else if (filterPeriod === 'last_month') {
+        const lastMonthStart = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+        const lastMonthEnd = new Date(today.getFullYear(), today.getMonth(), 0, 23, 59, 59);
+        filtered = filtered.filter(sale => {
+          const d = new Date(sale.sale_date);
+          return d >= lastMonthStart && d <= lastMonthEnd;
+        });
       }
     }
 
@@ -165,6 +172,7 @@ export function AllSalesTable() {
               { value: 'today', label: "Aujourd'hui" },
               { value: 'week', label: 'Cette semaine' },
               { value: 'month', label: 'Ce mois' },
+              { value: 'last_month', label: 'Mois précédent' },
               { value: 'all', label: 'Tout' },
             ].map(p => (
               <Button

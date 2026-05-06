@@ -6,6 +6,7 @@ import { InsuranceTypesChart } from '@/components/Dashboard/InsuranceTypesChart'
 import { ComparisonChart } from '@/components/Dashboard/ComparisonChart';
 import { UserObjectiveProgress } from '@/components/Dashboard/UserObjectiveProgress';
 import { DailyLeaderboard } from '@/components/Dashboard/DailyLeaderboard';
+import { UserBonusProgress } from '@/components/Dashboard/UserBonusProgress';
 import { Button } from '@/components/ui/button';
 import { PlusCircle } from 'lucide-react';
 import { useState, useCallback } from 'react';
@@ -69,6 +70,11 @@ export const Dashboard = () => {
       <div className="grid gap-6 lg:grid-cols-2 animate-elegant-slide" style={{ animationDelay: '0.15s' }}>
         <UserObjectiveProgress />
         <DailyLeaderboard key={refreshKey} />
+      </div>
+
+      {/* Suivi des primes & bonus en temps réel */}
+      <div className="animate-elegant-slide" style={{ animationDelay: '0.18s' }}>
+        <UserBonusProgress key={refreshKey} />
       </div>
 
       {/* Graphique principal avec animation */}

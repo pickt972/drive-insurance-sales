@@ -105,11 +105,19 @@ function computeTierBonus(
 
 export function AdminReportsPage() {
   const [period, setPeriod] = useState('current');
+  const [selectedEmployee, setSelectedEmployee] = useState<string>('all');
   const [stats, setStats] = useState<ReportStats | null>(null);
   const [employeeReports, setEmployeeReports] = useState<EmployeeReport[]>([]);
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const { toast } = useToast();
+
+  const filteredReports = useMemo(
+    () => selectedEmployee === 'all'
+      ? employeeReports
+      : employeeReports.filter(r => r.userId === selectedEmployee),
+    [employeeReports, selectedEmployee]
+  );
 
   useEffect(() => {
     fetchReportData();
@@ -268,7 +276,7 @@ export function AdminReportsPage() {
         'Total à verser (€)',
         'Règles appliquées',
       ];
-      const rows = employeeReports.map(r => {
+      const rows = filteredReports.map(r => {
         const effectiveBonus = Math.max(r.recordedBonus, r.estimatedBonus);
         return [
           r.name,
@@ -311,7 +319,7 @@ export function AdminReportsPage() {
           <h2 className="text-3xl font-bold text-foreground">Rapports détaillés</h2>
           <p className="text-muted-foreground">Suivi par employé : ventes, commissions, primes & total à verser</p>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 flex-wrap">
           <Select value={period} onValueChange={setPeriod}>
             <SelectTrigger className="w-[200px]">
               <Calendar className="mr-2 h-4 w-4" />
@@ -321,6 +329,18 @@ export function AdminReportsPage() {
               <SelectItem value="current">Mois en cours</SelectItem>
               <SelectItem value="last">Mois dernier</SelectItem>
               <SelectItem value="last3">3 derniers mois</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={selectedEmployee} onValueChange={setSelectedEmployee}>
+            <SelectTrigger className="w-[220px]">
+              <Users className="mr-2 h-4 w-4" />
+              <SelectValue placeholder="Employé" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tous les employés</SelectItem>
+              {employeeReports.map(emp => (
+                <SelectItem key={emp.userId} value={emp.userId}>{emp.name}</SelectItem>
+              ))}
             </SelectContent>
           </Select>
           <Button onClick={exportToCSV} className="bg-success hover:bg-success/90 text-success-foreground">
@@ -432,7 +452,7 @@ export function AdminReportsPage() {
         <CardContent>
           {loading ? (
             <div className="text-center py-8 text-muted-foreground">Chargement...</div>
-          ) : employeeReports.length === 0 ? (
+          ) : filteredReports.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">Aucune vente sur la période</div>
           ) : (
             <div className="overflow-x-auto">
@@ -449,7 +469,7 @@ export function AdminReportsPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {employeeReports.map(emp => {
+                  {filteredReports.map(emp => {
                     const effectiveBonus = Math.max(emp.recordedBonus, emp.estimatedBonus);
                     const isOpen = !!expanded[emp.userId];
                     return (
