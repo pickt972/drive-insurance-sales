@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useSales } from '@/hooks/useSales';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { PieChart, Pie, Cell, Legend, Tooltip } from 'recharts';
+import { PieChart, Pie, Cell, Legend, Tooltip, ResponsiveContainer } from 'recharts';
 import { startOfMonth, endOfMonth } from 'date-fns';
 
 const COLORS = ['#2563eb', '#16a34a', '#eab308', '#dc2626', '#9333ea'];
