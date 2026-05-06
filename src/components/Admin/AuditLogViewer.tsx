@@ -73,10 +73,20 @@ export function AuditLogViewer() {
         .from('audit_logs')
         .select('*')
         .order('created_at', { ascending: false })
-        .limit(100);
+        .limit(500);
 
       if (error) throw error;
-      setLogs(data || []);
+
+      const userIds = Array.from(new Set((data || []).map((l: any) => l.user_id).filter(Boolean)));
+      let roleMap: Record<string, string> = {};
+      if (userIds.length > 0) {
+        const { data: profs } = await (supabase as any)
+          .from('profiles')
+          .select('id, role')
+          .in('id', userIds);
+        roleMap = Object.fromEntries((profs || []).map((p: any) => [p.id, p.role]));
+      }
+      setLogs((data || []).map((l: any) => ({ ...l, user_role: roleMap[l.user_id] || '—' })));
     } catch (error: any) {
       toast({
         title: 'Erreur',
