@@ -63,8 +63,8 @@ export function ComparisonChart() {
         <CardDescription>Année en cours vs année précédente</CardDescription>
       </CardHeader>
       <CardContent>
-        <div style={{ width: '100%', height: 300 }}>
-          <ResponsiveContainer width="100%" height="100%">
+        <div className="h-[300px] w-full min-w-0">
+          <ResponsiveContainer width="100%" height="100%" debounce={50}>
             <LineChart data={chartData}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="month" />
