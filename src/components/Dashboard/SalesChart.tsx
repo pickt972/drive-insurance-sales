@@ -62,22 +62,24 @@ export function SalesChart() {
       </CardHeader>
       <CardContent>
         <div style={{ width: '100%', height: 300 }}>
-          <LineChart width={500} height={300} data={chartData} style={{ width: '100%', maxWidth: '100%' }}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="month" />
-            <YAxis />
-            <Tooltip 
-              formatter={(value: number) => [`${value.toFixed(2)} €`, 'Total']}
-              labelFormatter={(label) => `Mois : ${label}`}
-            />
-            <Line 
-              type="monotone" 
-              dataKey="total" 
-              stroke="#2563eb" 
-              strokeWidth={2}
-              dot={{ fill: '#2563eb' }}
-            />
-          </LineChart>
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={chartData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="month" />
+              <YAxis />
+              <Tooltip
+                formatter={(value: number) => [`${value.toFixed(2)} €`, 'Total']}
+                labelFormatter={(label) => `Mois : ${label}`}
+              />
+              <Line
+                type="monotone"
+                dataKey="total"
+                stroke="#2563eb"
+                strokeWidth={2}
+                dot={{ fill: '#2563eb' }}
+              />
+            </LineChart>
+          </ResponsiveContainer>
         </div>
       </CardContent>
     </Card>
