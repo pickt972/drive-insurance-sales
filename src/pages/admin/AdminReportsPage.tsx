@@ -276,7 +276,7 @@ export function AdminReportsPage() {
         'Total à verser (€)',
         'Règles appliquées',
       ];
-      const rows = employeeReports.map(r => {
+      const rows = filteredReports.map(r => {
         const effectiveBonus = Math.max(r.recordedBonus, r.estimatedBonus);
         return [
           r.name,
