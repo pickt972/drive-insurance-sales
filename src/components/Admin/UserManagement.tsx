@@ -85,14 +85,6 @@ export function UserManagement() {
       setSavingEmail(false);
     }
   };
-
-  const getIdentifier = (email: string) => {
-    if (email.endsWith('@aloelocation.internal')) {
-      return email.split('@')[0];
-    }
-    return email.split('@')[0];
-  };
-
   return (
     <>
       <Card className="modern-card animate-gentle-fade-in">
@@ -117,8 +109,7 @@ export function UserManagement() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Nom</TableHead>
-                  <TableHead>Identifiant</TableHead>
-                  <TableHead>Email</TableHead>
+                  <TableHead>Email (Identifiant)</TableHead>
                   <TableHead>Rôle</TableHead>
                   <TableHead>Date création</TableHead>
                   <TableHead>Statut</TableHead>
@@ -128,7 +119,7 @@ export function UserManagement() {
               <TableBody>
                 {users.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                       Aucun utilisateur
                     </TableCell>
                   </TableRow>
@@ -138,14 +129,9 @@ export function UserManagement() {
                       <TableCell className="font-medium">
                         {user.full_name}
                       </TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className="font-mono text-xs">
-                          {getIdentifier(user.email)}
-                        </Badge>
-                      </TableCell>
                       <TableCell className="text-muted-foreground">
                         <div className="flex items-center gap-1">
-                          <span className="truncate max-w-[180px]">{user.email}</span>
+                          <span className="truncate max-w-[220px]">{user.email}</span>
                           <Button
                             variant="ghost"
                             size="icon"
