@@ -137,14 +137,9 @@ export function UserManagement() {
                       <TableCell className="font-medium">
                         {user.full_name}
                       </TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className="font-mono text-xs">
-                          {getIdentifier(user.email)}
-                        </Badge>
-                      </TableCell>
                       <TableCell className="text-muted-foreground">
                         <div className="flex items-center gap-1">
-                          <span className="truncate max-w-[180px]">{user.email}</span>
+                          <span className="truncate max-w-[220px]">{user.email}</span>
                           <Button
                             variant="ghost"
                             size="icon"
