@@ -85,14 +85,6 @@ export function UserManagement() {
       setSavingEmail(false);
     }
   };
-
-  const getIdentifier = (email: string) => {
-    if (email.endsWith('@aloelocation.internal')) {
-      return email.split('@')[0];
-    }
-    return email.split('@')[0];
-  };
-
   return (
     <>
       <Card className="modern-card animate-gentle-fade-in">
