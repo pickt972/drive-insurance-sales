@@ -117,8 +117,7 @@ export function UserManagement() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Nom</TableHead>
-                  <TableHead>Identifiant</TableHead>
-                  <TableHead>Email</TableHead>
+                  <TableHead>Email (Identifiant)</TableHead>
                   <TableHead>Rôle</TableHead>
                   <TableHead>Date création</TableHead>
                   <TableHead>Statut</TableHead>
