@@ -73,6 +73,56 @@ export function AdminDuplicatesPage() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
+  // Audit log
+  const [auditEvents, setAuditEvents] = useState<AuditEvent[]>([]);
+  const [auditLoading, setAuditLoading] = useState(false);
+  const [expandedEvent, setExpandedEvent] = useState<string | null>(null);
+
+  const fetchAuditLog = async () => {
+    setAuditLoading(true);
+    try {
+      const { data, error } = await supabaseAny
+        .from('audit_logs')
+        .select('*')
+        .eq('table_name', 'insurance_sales')
+        .in('action', ['DELETE', 'INSERT'])
+        .order('created_at', { ascending: false })
+        .limit(500);
+      if (error) throw error;
+
+      // Group consecutive rows: same user_id + action + within 5s window
+      const events: AuditEvent[] = [];
+      (data || []).forEach((row: any) => {
+        const last = events[events.length - 1];
+        const ts = +new Date(row.created_at);
+        if (
+          last &&
+          last.action === row.action &&
+          last.user_id === row.user_id &&
+          Math.abs(+new Date(last.created_at) - ts) <= 5000
+        ) {
+          last.items.push(row);
+          last.count = last.items.length;
+        } else {
+          events.push({
+            id: row.id,
+            action: row.action,
+            user_id: row.user_id,
+            user_email: row.user_email,
+            created_at: row.created_at,
+            count: 1,
+            items: [row],
+          });
+        }
+      });
+      setAuditEvents(events.slice(0, 50));
+    } catch (e: any) {
+      console.error(e);
+    } finally {
+      setAuditLoading(false);
+    }
+  };
+
   const fetchDuplicates = async () => {
     setLoading(true);
     try {
