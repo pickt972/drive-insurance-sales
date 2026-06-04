@@ -1,13 +1,16 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { AlertTriangle, RefreshCw, Trash2, Copy } from 'lucide-react';
-import { format } from 'date-fns';
+import { AlertTriangle, RefreshCw, Trash2, Copy, Search, X } from 'lucide-react';
+import { format, parseISO, isWithinInterval } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -32,6 +35,7 @@ interface SaleRow {
   amount: number;
   sale_date: string;
   created_at: string;
+  raw: any;
 }
 
 interface DuplicateGroup {
@@ -43,17 +47,23 @@ interface DuplicateGroup {
 }
 
 export function AdminDuplicatesPage() {
-  const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [groups, setGroups] = useState<DuplicateGroup[]>([]);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+
+  // Filters
+  const [search, setSearch] = useState('');
+  const [userFilter, setUserFilter] = useState<string>('all');
+  const [typeFilter, setTypeFilter] = useState<string>('all');
+  const [dateFrom, setDateFrom] = useState<string>('');
+  const [dateTo, setDateTo] = useState<string>('');
 
   const fetchDuplicates = async () => {
     setLoading(true);
     try {
       const { data, error } = await supabaseAny
         .from('insurance_sales')
-        .select('id, contract_number, insurance_type_id, user_id, client_name, amount, sale_date, created_at, insurance_types(name), profiles:user_id(full_name)')
+        .select('*, insurance_types(name), profiles:user_id(full_name)')
         .not('contract_number', 'is', null)
         .not('insurance_type_id', 'is', null)
         .order('created_at', { ascending: true });
@@ -63,24 +73,26 @@ export function AdminDuplicatesPage() {
       const map = new Map<string, SaleRow[]>();
       (data || []).forEach((s: any) => {
         const key = `${s.contract_number}__${s.insurance_type_id}`;
+        const { insurance_types, profiles, ...raw } = s;
         const row: SaleRow = {
           id: s.id,
           contract_number: s.contract_number,
           insurance_type_id: s.insurance_type_id,
-          insurance_type_name: s.insurance_types?.name || 'N/A',
+          insurance_type_name: insurance_types?.name || 'N/A',
           user_id: s.user_id,
-          user_name: s.profiles?.full_name || 'N/A',
+          user_name: profiles?.full_name || 'N/A',
           client_name: s.client_name,
           amount: s.amount,
           sale_date: s.sale_date,
           created_at: s.created_at,
+          raw,
         };
         if (!map.has(key)) map.set(key, []);
         map.get(key)!.push(row);
       });
 
       const dups: DuplicateGroup[] = [];
-      map.forEach((arr, key) => {
+      map.forEach((arr) => {
         if (arr.length > 1) {
           dups.push({
             contract_number: arr[0].contract_number,
@@ -96,7 +108,7 @@ export function AdminDuplicatesPage() {
       setGroups(dups);
     } catch (e: any) {
       console.error(e);
-      toast({ title: 'Erreur', description: e.message, variant: 'destructive' });
+      toast.error('Erreur', { description: e.message });
     } finally {
       setLoading(false);
     }
@@ -106,20 +118,108 @@ export function AdminDuplicatesPage() {
     fetchDuplicates();
   }, []);
 
+  // Build filter options
+  const userOptions = useMemo(() => {
+    const seen = new Map<string, string>();
+    groups.forEach((g) => g.sales.forEach((s) => seen.set(s.user_id, s.user_name || 'N/A')));
+    return Array.from(seen.entries()).sort((a, b) => a[1].localeCompare(b[1]));
+  }, [groups]);
+
+  const typeOptions = useMemo(() => {
+    const seen = new Map<string, string>();
+    groups.forEach((g) => seen.set(g.insurance_type_id, g.insurance_type_name));
+    return Array.from(seen.entries()).sort((a, b) => a[1].localeCompare(b[1]));
+  }, [groups]);
+
+  const filteredGroups = useMemo(() => {
+    const term = search.trim().toLowerCase();
+    const from = dateFrom ? parseISO(dateFrom) : null;
+    const to = dateTo ? parseISO(dateTo) : null;
+
+    return groups
+      .map((g) => {
+        if (typeFilter !== 'all' && g.insurance_type_id !== typeFilter) return null;
+
+        const matchesGroup = !term
+          || g.contract_number.toLowerCase().includes(term)
+          || g.insurance_type_name.toLowerCase().includes(term);
+
+        const filteredSales = g.sales.filter((s) => {
+          if (userFilter !== 'all' && s.user_id !== userFilter) return false;
+          if (from || to) {
+            const d = parseISO(s.sale_date);
+            if (from && to) {
+              if (!isWithinInterval(d, { start: from, end: to })) return false;
+            } else if (from && d < from) return false;
+            else if (to && d > to) return false;
+          }
+          if (term && !matchesGroup) {
+            const inSale = (s.client_name || '').toLowerCase().includes(term)
+              || (s.user_name || '').toLowerCase().includes(term);
+            if (!inSale) return false;
+          }
+          return true;
+        });
+
+        if (filteredSales.length < 2) return null;
+        return { ...g, sales: filteredSales, count: filteredSales.length };
+      })
+      .filter(Boolean) as DuplicateGroup[];
+  }, [groups, search, userFilter, typeFilter, dateFrom, dateTo]);
+
+  const clearFilters = () => {
+    setSearch('');
+    setUserFilter('all');
+    setTypeFilter('all');
+    setDateFrom('');
+    setDateTo('');
+  };
+
+  const hasFilters = search || userFilter !== 'all' || typeFilter !== 'all' || dateFrom || dateTo;
+
   const handleDelete = async () => {
     if (!deleteId) return;
+    // Find the sale to back it up
+    let backup: any = null;
+    for (const g of groups) {
+      const found = g.sales.find((s) => s.id === deleteId);
+      if (found) { backup = found.raw; break; }
+    }
+    const idToDelete = deleteId;
+    setDeleteId(null);
+
     try {
-      const { error } = await supabaseAny.from('insurance_sales').delete().eq('id', deleteId);
+      const { error } = await supabaseAny.from('insurance_sales').delete().eq('id', idToDelete);
       if (error) throw error;
-      toast({ title: '✅ Vente supprimée' });
-      setDeleteId(null);
+
+      toast.success('Doublon supprimé', {
+        description: `Vente n° ${backup?.contract_number || ''} supprimée.`,
+        action: backup
+          ? {
+              label: 'Annuler',
+              onClick: async () => {
+                try {
+                  const { error: restoreErr } = await supabaseAny.rpc('restore_insurance_sale', {
+                    sale_data: backup,
+                  });
+                  if (restoreErr) throw restoreErr;
+                  toast.success('Vente restaurée');
+                  await fetchDuplicates();
+                } catch (err: any) {
+                  toast.error('Restauration impossible', { description: err.message });
+                }
+              },
+            }
+          : undefined,
+        duration: 8000,
+      });
       await fetchDuplicates();
     } catch (e: any) {
-      toast({ title: 'Erreur', description: e.message, variant: 'destructive' });
+      toast.error('Erreur', { description: e.message });
     }
   };
 
-  const totalDuplicates = groups.reduce((sum, g) => sum + (g.count - 1), 0);
+  const totalDuplicates = filteredGroups.reduce((sum, g) => sum + (g.count - 1), 0);
 
   return (
     <div className="space-y-6">
@@ -141,11 +241,72 @@ export function AdminDuplicatesPage() {
         </Button>
       </div>
 
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base flex items-center gap-2">
+            <Search className="h-4 w-4" /> Recherche et filtres
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
+            <div className="lg:col-span-2">
+              <Label className="text-xs">Recherche</Label>
+              <Input
+                placeholder="N° dossier, client, employé…"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
+            <div>
+              <Label className="text-xs">Employé</Label>
+              <Select value={userFilter} onValueChange={setUserFilter}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tous</SelectItem>
+                  {userOptions.map(([id, name]) => (
+                    <SelectItem key={id} value={id}>{name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label className="text-xs">Type d'assurance</Label>
+              <Select value={typeFilter} onValueChange={setTypeFilter}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tous</SelectItem>
+                  {typeOptions.map(([id, name]) => (
+                    <SelectItem key={id} value={id}>{name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex gap-2">
+              <div className="flex-1">
+                <Label className="text-xs">Du</Label>
+                <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} />
+              </div>
+              <div className="flex-1">
+                <Label className="text-xs">Au</Label>
+                <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} />
+              </div>
+            </div>
+          </div>
+          {hasFilters && (
+            <div className="mt-3 flex justify-end">
+              <Button variant="ghost" size="sm" onClick={clearFilters}>
+                <X className="h-3 w-3 mr-1" /> Réinitialiser les filtres
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
           <CardHeader className="pb-2">
             <CardDescription>Groupes en doublon</CardDescription>
-            <CardTitle className="text-3xl">{groups.length}</CardTitle>
+            <CardTitle className="text-3xl">{filteredGroups.length}</CardTitle>
           </CardHeader>
         </Card>
         <Card>
@@ -158,7 +319,7 @@ export function AdminDuplicatesPage() {
           <CardHeader className="pb-2">
             <CardDescription>Statut</CardDescription>
             <CardTitle className="text-lg">
-              {groups.length === 0 ? (
+              {filteredGroups.length === 0 ? (
                 <span className="text-green-600">✅ Aucun doublon</span>
               ) : (
                 <span className="text-orange-600 flex items-center gap-2">
@@ -170,15 +331,15 @@ export function AdminDuplicatesPage() {
         </Card>
       </div>
 
-      {groups.length === 0 && !loading && (
+      {filteredGroups.length === 0 && !loading && (
         <Card>
           <CardContent className="py-12 text-center text-muted-foreground">
-            Aucun doublon détecté dans la base de données.
+            {hasFilters ? 'Aucun doublon ne correspond aux filtres.' : 'Aucun doublon détecté dans la base de données.'}
           </CardContent>
         </Card>
       )}
 
-      {groups.map((group) => (
+      {filteredGroups.map((group) => (
         <Card key={`${group.contract_number}-${group.insurance_type_id}`}>
           <CardHeader>
             <div className="flex items-center justify-between">
@@ -241,7 +402,7 @@ export function AdminDuplicatesPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Supprimer ce doublon ?</AlertDialogTitle>
             <AlertDialogDescription>
-              Cette vente sera définitivement supprimée. Cette action est irréversible.
+              La vente sera supprimée. Vous pourrez l'annuler immédiatement via la notification.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
