@@ -49,6 +49,7 @@ const App = () => {
               <Route path="bonus-rules" element={<AdminBonusRulesPage />} />
               <Route path="reports" element={<AdminReportsPage />} />
               <Route path="audit-logs" element={<AdminAuditLogsPage />} />
+              <Route path="duplicates" element={<AdminDuplicatesPage />} />
               <Route path="settings" element={<AdminSettingsPage />} />
               <Route path="arguments" element={<AdminArgumentsPage />} />
               <Route path="faq" element={<AdminFAQPage />} />
