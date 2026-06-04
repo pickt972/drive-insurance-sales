@@ -619,6 +619,94 @@ export function AdminDuplicatesPage() {
         );
       })}
 
+      {/* Journal d'audit */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <History className="h-4 w-4" /> Journal d'audit
+            </CardTitle>
+            <CardDescription>
+              Historique des suppressions groupées et restaurations effectuées depuis cette page
+            </CardDescription>
+          </div>
+          <Button variant="outline" size="sm" onClick={fetchAuditLog} disabled={auditLoading}>
+            <RefreshCw className={`mr-2 h-4 w-4 ${auditLoading ? 'animate-spin' : ''}`} />
+            Actualiser
+          </Button>
+        </CardHeader>
+        <CardContent>
+          {auditEvents.length === 0 ? (
+            <div className="py-6 text-center text-sm text-muted-foreground">
+              Aucune opération enregistrée pour le moment.
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {auditEvents.map((ev) => {
+                const isDelete = ev.action === 'DELETE';
+                const isOpen = expandedEvent === ev.id;
+                return (
+                  <Collapsible
+                    key={ev.id}
+                    open={isOpen}
+                    onOpenChange={(o) => setExpandedEvent(o ? ev.id : null)}
+                  >
+                    <div className="border rounded-lg">
+                      <CollapsibleTrigger className="w-full flex items-center justify-between gap-3 p-3 hover:bg-muted/40 transition">
+                        <div className="flex items-center gap-3 text-left">
+                          <Badge variant={isDelete ? 'destructive' : 'default'} className={isDelete ? '' : 'bg-green-600 hover:bg-green-700'}>
+                            {isDelete ? <Trash2 className="h-3 w-3 mr-1" /> : <Undo2 className="h-3 w-3 mr-1" />}
+                            {isDelete
+                              ? `Suppression${ev.count > 1 ? ' groupée' : ''}`
+                              : 'Restauration'}
+                          </Badge>
+                          <div>
+                            <div className="text-sm font-medium">
+                              {ev.count} vente{ev.count > 1 ? 's' : ''}
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              {ev.user_email || 'Système'} • {format(new Date(ev.created_at), 'dd/MM/yyyy HH:mm:ss', { locale: fr })}
+                            </div>
+                          </div>
+                        </div>
+                        <ChevronDown className={`h-4 w-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+                      </CollapsibleTrigger>
+                      <CollapsibleContent>
+                        <div className="px-3 pb-3 border-t">
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead>N° dossier</TableHead>
+                                <TableHead>Client</TableHead>
+                                <TableHead>Date vente</TableHead>
+                                <TableHead className="text-right">Montant</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {ev.items.map((it: any) => {
+                                const v = (isDelete ? it.old_values : it.new_values) || {};
+                                return (
+                                  <TableRow key={it.id}>
+                                    <TableCell className="font-mono text-xs">{v.contract_number || '-'}</TableCell>
+                                    <TableCell>{v.client_name || '-'}</TableCell>
+                                    <TableCell>{v.sale_date ? format(new Date(v.sale_date), 'dd/MM/yyyy', { locale: fr }) : '-'}</TableCell>
+                                    <TableCell className="text-right">{v.amount ? `${Number(v.amount).toFixed(2)} €` : '-'}</TableCell>
+                                  </TableRow>
+                                );
+                              })}
+                            </TableBody>
+                          </Table>
+                        </div>
+                      </CollapsibleContent>
+                    </div>
+                  </Collapsible>
+                );
+              })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Pagination */}
       {filteredGroups.length > pageSize && (
         <div className="flex items-center justify-between flex-wrap gap-2 pt-2">
