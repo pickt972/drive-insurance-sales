@@ -334,6 +334,7 @@ export function AdminDuplicatesPage() {
         duration: 10000,
       });
       await fetchDuplicates();
+      await fetchAuditLog();
     } catch (e: any) {
       toast.error('Erreur', { description: e.message });
     }
