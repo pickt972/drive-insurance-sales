@@ -189,7 +189,7 @@ export function AdminDuplicatesPage() {
     }
   };
 
-  useEffect(() => { fetchDuplicates(); }, []);
+  useEffect(() => { fetchDuplicates(); fetchAuditLog(); }, []);
 
   const userOptions = useMemo(() => {
     const seen = new Map<string, string>();
