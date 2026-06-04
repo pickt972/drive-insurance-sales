@@ -51,6 +51,16 @@ interface DuplicateGroup {
 type SortKey = 'date' | 'employee' | 'contract' | 'type';
 type SortDir = 'asc' | 'desc';
 
+interface AuditEvent {
+  id: string;
+  action: 'INSERT' | 'DELETE' | string;
+  user_id: string | null;
+  user_email: string | null;
+  created_at: string;
+  count: number;
+  items: any[];
+}
+
 const PAGE_SIZE_OPTIONS = [5, 10, 20, 50];
 
 export function AdminDuplicatesPage() {
