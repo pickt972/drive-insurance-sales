@@ -84,15 +84,15 @@ export default function LoginPage() {
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="identifier">Identifiant</Label>
+              <Label htmlFor="identifier">E-mail</Label>
               <Input
                 id="identifier"
                 type="text"
-                placeholder="admin, stef, marie..."
+                placeholder="votre@email.com"
                 value={identifier}
                 onChange={(e) => setIdentifier(e.target.value)}
                 required
-                autoComplete="username"
+                autoComplete="email"
                 disabled={isSubmitting}
               />
             </div>
