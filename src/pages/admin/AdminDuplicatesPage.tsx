@@ -354,6 +354,7 @@ export function AdminDuplicatesPage() {
       toast.success(`${items.length} vente${items.length > 1 ? 's restaurées' : ' restaurée'}`);
       setLastDeleted(null);
       await fetchDuplicates();
+      await fetchAuditLog();
     } catch (e: any) {
       toast.error('Restauration impossible', { description: e.message });
     }
