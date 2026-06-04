@@ -8,7 +8,8 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { AlertTriangle, RefreshCw, Trash2, Copy, Search, X, Undo2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { AlertTriangle, RefreshCw, Trash2, Copy, Search, X, Undo2, ChevronLeft, ChevronRight, History, ChevronDown } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { format, parseISO, isWithinInterval } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { toast } from 'sonner';
@@ -50,6 +51,16 @@ interface DuplicateGroup {
 type SortKey = 'date' | 'employee' | 'contract' | 'type';
 type SortDir = 'asc' | 'desc';
 
+interface AuditEvent {
+  id: string;
+  action: 'INSERT' | 'DELETE' | string;
+  user_id: string | null;
+  user_email: string | null;
+  created_at: string;
+  count: number;
+  items: any[];
+}
+
 const PAGE_SIZE_OPTIONS = [5, 10, 20, 50];
 
 export function AdminDuplicatesPage() {
@@ -71,6 +82,56 @@ export function AdminDuplicatesPage() {
   const [sortDir, setSortDir] = useState<SortDir>('desc');
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+
+  // Audit log
+  const [auditEvents, setAuditEvents] = useState<AuditEvent[]>([]);
+  const [auditLoading, setAuditLoading] = useState(false);
+  const [expandedEvent, setExpandedEvent] = useState<string | null>(null);
+
+  const fetchAuditLog = async () => {
+    setAuditLoading(true);
+    try {
+      const { data, error } = await supabaseAny
+        .from('audit_logs')
+        .select('*')
+        .eq('table_name', 'insurance_sales')
+        .in('action', ['DELETE', 'INSERT'])
+        .order('created_at', { ascending: false })
+        .limit(500);
+      if (error) throw error;
+
+      // Group consecutive rows: same user_id + action + within 5s window
+      const events: AuditEvent[] = [];
+      (data || []).forEach((row: any) => {
+        const last = events[events.length - 1];
+        const ts = +new Date(row.created_at);
+        if (
+          last &&
+          last.action === row.action &&
+          last.user_id === row.user_id &&
+          Math.abs(+new Date(last.created_at) - ts) <= 5000
+        ) {
+          last.items.push(row);
+          last.count = last.items.length;
+        } else {
+          events.push({
+            id: row.id,
+            action: row.action,
+            user_id: row.user_id,
+            user_email: row.user_email,
+            created_at: row.created_at,
+            count: 1,
+            items: [row],
+          });
+        }
+      });
+      setAuditEvents(events.slice(0, 50));
+    } catch (e: any) {
+      console.error(e);
+    } finally {
+      setAuditLoading(false);
+    }
+  };
 
   const fetchDuplicates = async () => {
     setLoading(true);
@@ -128,7 +189,7 @@ export function AdminDuplicatesPage() {
     }
   };
 
-  useEffect(() => { fetchDuplicates(); }, []);
+  useEffect(() => { fetchDuplicates(); fetchAuditLog(); }, []);
 
   const userOptions = useMemo(() => {
     const seen = new Map<string, string>();
@@ -273,6 +334,7 @@ export function AdminDuplicatesPage() {
         duration: 10000,
       });
       await fetchDuplicates();
+      await fetchAuditLog();
     } catch (e: any) {
       toast.error('Erreur', { description: e.message });
     }
@@ -292,6 +354,7 @@ export function AdminDuplicatesPage() {
       toast.success(`${items.length} vente${items.length > 1 ? 's restaurées' : ' restaurée'}`);
       setLastDeleted(null);
       await fetchDuplicates();
+      await fetchAuditLog();
     } catch (e: any) {
       toast.error('Restauration impossible', { description: e.message });
     }
@@ -555,6 +618,94 @@ export function AdminDuplicatesPage() {
           </Card>
         );
       })}
+
+      {/* Journal d'audit */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <History className="h-4 w-4" /> Journal d'audit
+            </CardTitle>
+            <CardDescription>
+              Historique des suppressions groupées et restaurations effectuées depuis cette page
+            </CardDescription>
+          </div>
+          <Button variant="outline" size="sm" onClick={fetchAuditLog} disabled={auditLoading}>
+            <RefreshCw className={`mr-2 h-4 w-4 ${auditLoading ? 'animate-spin' : ''}`} />
+            Actualiser
+          </Button>
+        </CardHeader>
+        <CardContent>
+          {auditEvents.length === 0 ? (
+            <div className="py-6 text-center text-sm text-muted-foreground">
+              Aucune opération enregistrée pour le moment.
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {auditEvents.map((ev) => {
+                const isDelete = ev.action === 'DELETE';
+                const isOpen = expandedEvent === ev.id;
+                return (
+                  <Collapsible
+                    key={ev.id}
+                    open={isOpen}
+                    onOpenChange={(o) => setExpandedEvent(o ? ev.id : null)}
+                  >
+                    <div className="border rounded-lg">
+                      <CollapsibleTrigger className="w-full flex items-center justify-between gap-3 p-3 hover:bg-muted/40 transition">
+                        <div className="flex items-center gap-3 text-left">
+                          <Badge variant={isDelete ? 'destructive' : 'default'} className={isDelete ? '' : 'bg-green-600 hover:bg-green-700'}>
+                            {isDelete ? <Trash2 className="h-3 w-3 mr-1" /> : <Undo2 className="h-3 w-3 mr-1" />}
+                            {isDelete
+                              ? `Suppression${ev.count > 1 ? ' groupée' : ''}`
+                              : 'Restauration'}
+                          </Badge>
+                          <div>
+                            <div className="text-sm font-medium">
+                              {ev.count} vente{ev.count > 1 ? 's' : ''}
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              {ev.user_email || 'Système'} • {format(new Date(ev.created_at), 'dd/MM/yyyy HH:mm:ss', { locale: fr })}
+                            </div>
+                          </div>
+                        </div>
+                        <ChevronDown className={`h-4 w-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+                      </CollapsibleTrigger>
+                      <CollapsibleContent>
+                        <div className="px-3 pb-3 border-t">
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead>N° dossier</TableHead>
+                                <TableHead>Client</TableHead>
+                                <TableHead>Date vente</TableHead>
+                                <TableHead className="text-right">Montant</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {ev.items.map((it: any) => {
+                                const v = (isDelete ? it.old_values : it.new_values) || {};
+                                return (
+                                  <TableRow key={it.id}>
+                                    <TableCell className="font-mono text-xs">{v.contract_number || '-'}</TableCell>
+                                    <TableCell>{v.client_name || '-'}</TableCell>
+                                    <TableCell>{v.sale_date ? format(new Date(v.sale_date), 'dd/MM/yyyy', { locale: fr }) : '-'}</TableCell>
+                                    <TableCell className="text-right">{v.amount ? `${Number(v.amount).toFixed(2)} €` : '-'}</TableCell>
+                                  </TableRow>
+                                );
+                              })}
+                            </TableBody>
+                          </Table>
+                        </div>
+                      </CollapsibleContent>
+                    </div>
+                  </Collapsible>
+                );
+              })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Pagination */}
       {filteredGroups.length > pageSize && (
