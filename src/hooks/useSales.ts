@@ -146,9 +146,13 @@ export function useSales() {
       return data;
     } catch (error: any) {
       console.error('Error adding sale:', error);
+      const msg = String(error?.message || '');
+      const isDuplicate = msg.includes('DUPLICATE_SALE') || error?.code === '23505';
       toast({
-        title: '❌ Erreur',
-        description: error.message || 'Impossible d\'ajouter la vente',
+        title: isDuplicate ? '⛔ Doublon détecté' : '❌ Erreur',
+        description: isDuplicate
+          ? (msg.replace(/^.*DUPLICATE_SALE:\s*/, '') || 'Cette prestation a déjà été enregistrée pour ce numéro de dossier.')
+          : (msg || "Impossible d'ajouter la vente"),
         variant: 'destructive',
       });
       throw error;
