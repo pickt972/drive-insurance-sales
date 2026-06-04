@@ -21,7 +21,8 @@ import {
   Bell,
   Car,
   PlusCircle,
-  TrendingUp
+  TrendingUp,
+  Copy
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -45,6 +46,7 @@ const navigation = [
   { name: 'Règles de bonus', href: '/admin/bonus-rules', icon: ClipboardList },
   { name: 'Rapports', href: '/admin/reports', icon: FileText },
   { name: 'Journal d\'audit', href: '/admin/audit-logs', icon: ClipboardList },
+  { name: 'Doublons', href: '/admin/duplicates', icon: Copy },
   { name: 'Paramètres', href: '/admin/settings', icon: SettingsIcon },
 ];
 
