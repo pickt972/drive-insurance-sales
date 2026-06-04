@@ -17,6 +17,7 @@ import { AdminSettingsPage } from '@/pages/admin/AdminSettingsPage';
 import { AdminArgumentsPage } from '@/pages/admin/AdminArgumentsPage';
 import { AdminFAQPage } from '@/pages/admin/AdminFAQPage';
 import { AdminNewSalePage } from '@/pages/admin/AdminNewSalePage';
+import { AdminDuplicatesPage } from '@/pages/admin/AdminDuplicatesPage';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { AdminRoute } from '@/components/auth/AdminRoute';
 import { AuthProvider } from '@/hooks/useAuth';
