@@ -599,6 +599,32 @@ export type Database = {
           }
         | { Args: { _role: string; _user_id: string }; Returns: boolean }
       is_admin: { Args: never; Returns: boolean }
+      restore_insurance_sale: {
+        Args: { sale_data: Json }
+        Returns: {
+          agency: string | null
+          amount: number
+          client_name: string | null
+          client_phone: string | null
+          commission_amount: number | null
+          contract_number: string | null
+          created_at: string | null
+          id: string
+          insurance_type_id: string | null
+          notes: string | null
+          sale_date: string
+          status: string | null
+          updated_at: string | null
+          user_id: string | null
+          vehicle_registration: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "insurance_sales"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
     }
     Enums: {
       app_role: "admin" | "user"
