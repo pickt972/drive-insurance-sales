@@ -5,9 +5,10 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { AlertTriangle, RefreshCw, Trash2, Copy, Search, X } from 'lucide-react';
+import { AlertTriangle, RefreshCw, Trash2, Copy, Search, X, Undo2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { format, parseISO, isWithinInterval } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { toast } from 'sonner';
@@ -46,10 +47,17 @@ interface DuplicateGroup {
   sales: SaleRow[];
 }
 
+type SortKey = 'date' | 'employee' | 'contract' | 'type';
+type SortDir = 'asc' | 'desc';
+
+const PAGE_SIZE_OPTIONS = [5, 10, 20, 50];
+
 export function AdminDuplicatesPage() {
   const [loading, setLoading] = useState(false);
   const [groups, setGroups] = useState<DuplicateGroup[]>([]);
-  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [lastDeleted, setLastDeleted] = useState<any[] | null>(null);
 
   // Filters
   const [search, setSearch] = useState('');
@@ -57,6 +65,12 @@ export function AdminDuplicatesPage() {
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [dateFrom, setDateFrom] = useState<string>('');
   const [dateTo, setDateTo] = useState<string>('');
+
+  // Sort & pagination
+  const [sortKey, setSortKey] = useState<SortKey>('date');
+  const [sortDir, setSortDir] = useState<SortDir>('desc');
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   const fetchDuplicates = async () => {
     setLoading(true);
@@ -104,8 +118,8 @@ export function AdminDuplicatesPage() {
         }
       });
 
-      dups.sort((a, b) => b.count - a.count);
       setGroups(dups);
+      setSelected(new Set());
     } catch (e: any) {
       console.error(e);
       toast.error('Erreur', { description: e.message });
@@ -114,11 +128,8 @@ export function AdminDuplicatesPage() {
     }
   };
 
-  useEffect(() => {
-    fetchDuplicates();
-  }, []);
+  useEffect(() => { fetchDuplicates(); }, []);
 
-  // Build filter options
   const userOptions = useMemo(() => {
     const seen = new Map<string, string>();
     groups.forEach((g) => g.sales.forEach((s) => seen.set(s.user_id, s.user_name || 'N/A')));
@@ -136,7 +147,7 @@ export function AdminDuplicatesPage() {
     const from = dateFrom ? parseISO(dateFrom) : null;
     const to = dateTo ? parseISO(dateTo) : null;
 
-    return groups
+    const result = groups
       .map((g) => {
         if (typeFilter !== 'all' && g.insurance_type_id !== typeFilter) return null;
 
@@ -165,53 +176,101 @@ export function AdminDuplicatesPage() {
         return { ...g, sales: filteredSales, count: filteredSales.length };
       })
       .filter(Boolean) as DuplicateGroup[];
-  }, [groups, search, userFilter, typeFilter, dateFrom, dateTo]);
+
+    // Sort
+    const cmp = (a: DuplicateGroup, b: DuplicateGroup) => {
+      let va: any; let vb: any;
+      switch (sortKey) {
+        case 'date':
+          va = Math.max(...a.sales.map((s) => +new Date(s.sale_date)));
+          vb = Math.max(...b.sales.map((s) => +new Date(s.sale_date)));
+          break;
+        case 'employee':
+          va = a.sales[0].user_name || '';
+          vb = b.sales[0].user_name || '';
+          break;
+        case 'contract':
+          va = a.contract_number;
+          vb = b.contract_number;
+          break;
+        case 'type':
+          va = a.insurance_type_name;
+          vb = b.insurance_type_name;
+          break;
+      }
+      if (va < vb) return sortDir === 'asc' ? -1 : 1;
+      if (va > vb) return sortDir === 'asc' ? 1 : -1;
+      return 0;
+    };
+    result.sort(cmp);
+    return result;
+  }, [groups, search, userFilter, typeFilter, dateFrom, dateTo, sortKey, sortDir]);
+
+  // Reset page when filters change
+  useEffect(() => { setPage(1); }, [search, userFilter, typeFilter, dateFrom, dateTo, sortKey, sortDir, pageSize]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredGroups.length / pageSize));
+  const currentPage = Math.min(page, totalPages);
+  const pagedGroups = filteredGroups.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   const clearFilters = () => {
-    setSearch('');
-    setUserFilter('all');
-    setTypeFilter('all');
-    setDateFrom('');
-    setDateTo('');
+    setSearch(''); setUserFilter('all'); setTypeFilter('all'); setDateFrom(''); setDateTo('');
+  };
+  const hasFilters = !!(search || userFilter !== 'all' || typeFilter !== 'all' || dateFrom || dateTo);
+
+  // Selection helpers
+  const toggleOne = (id: string) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+  const toggleGroup = (group: DuplicateGroup, checked: boolean) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      group.sales.slice(1).forEach((s) => {
+        if (checked) next.add(s.id); else next.delete(s.id);
+      });
+      return next;
+    });
+  };
+  const selectAllVisible = () => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      pagedGroups.forEach((g) => g.sales.slice(1).forEach((s) => next.add(s.id)));
+      return next;
+    });
   };
 
-  const hasFilters = search || userFilter !== 'all' || typeFilter !== 'all' || dateFrom || dateTo;
-
-  const handleDelete = async () => {
-    if (!deleteId) return;
-    // Find the sale to back it up
-    let backup: any = null;
+  const findRawById = (id: string) => {
     for (const g of groups) {
-      const found = g.sales.find((s) => s.id === deleteId);
-      if (found) { backup = found.raw; break; }
+      const f = g.sales.find((s) => s.id === id);
+      if (f) return f.raw;
     }
-    const idToDelete = deleteId;
-    setDeleteId(null);
+    return null;
+  };
+
+  const handleBulkDelete = async () => {
+    const ids = Array.from(selected);
+    if (!ids.length) return;
+    setConfirmOpen(false);
+
+    const backups = ids.map(findRawById).filter(Boolean);
 
     try {
-      const { error } = await supabaseAny.from('insurance_sales').delete().eq('id', idToDelete);
+      const { error } = await supabaseAny.from('insurance_sales').delete().in('id', ids);
       if (error) throw error;
+      setLastDeleted(backups);
+      setSelected(new Set());
 
-      toast.success('Doublon supprimé', {
-        description: `Vente n° ${backup?.contract_number || ''} supprimée.`,
-        action: backup
-          ? {
-              label: 'Annuler',
-              onClick: async () => {
-                try {
-                  const { error: restoreErr } = await supabaseAny.rpc('restore_insurance_sale', {
-                    sale_data: backup,
-                  });
-                  if (restoreErr) throw restoreErr;
-                  toast.success('Vente restaurée');
-                  await fetchDuplicates();
-                } catch (err: any) {
-                  toast.error('Restauration impossible', { description: err.message });
-                }
-              },
-            }
-          : undefined,
-        duration: 8000,
+      toast.success(`${ids.length} doublon${ids.length > 1 ? 's supprimés' : ' supprimé'}`, {
+        description: 'Vous pouvez annuler cette opération.',
+        action: {
+          label: 'Annuler',
+          onClick: () => handleUndo(backups),
+        },
+        duration: 10000,
       });
       await fetchDuplicates();
     } catch (e: any) {
@@ -219,11 +278,30 @@ export function AdminDuplicatesPage() {
     }
   };
 
+  const handleUndo = async (backups?: any[]) => {
+    const items = backups || lastDeleted;
+    if (!items || !items.length) {
+      toast.info('Rien à restaurer');
+      return;
+    }
+    try {
+      for (const b of items) {
+        const { error } = await supabaseAny.rpc('restore_insurance_sale', { sale_data: b });
+        if (error) throw error;
+      }
+      toast.success(`${items.length} vente${items.length > 1 ? 's restaurées' : ' restaurée'}`);
+      setLastDeleted(null);
+      await fetchDuplicates();
+    } catch (e: any) {
+      toast.error('Restauration impossible', { description: e.message });
+    }
+  };
+
   const totalDuplicates = filteredGroups.reduce((sum, g) => sum + (g.count - 1), 0);
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-3">
           <div className="p-2 rounded-lg bg-orange-100 dark:bg-orange-950">
             <Copy className="h-6 w-6 text-orange-600" />
@@ -235,16 +313,23 @@ export function AdminDuplicatesPage() {
             </p>
           </div>
         </div>
-        <Button variant="outline" onClick={fetchDuplicates} disabled={loading}>
-          <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-          Actualiser
-        </Button>
+        <div className="flex gap-2">
+          {lastDeleted && lastDeleted.length > 0 && (
+            <Button variant="outline" onClick={() => handleUndo()}>
+              <Undo2 className="mr-2 h-4 w-4" /> Annuler la dernière opération ({lastDeleted.length})
+            </Button>
+          )}
+          <Button variant="outline" onClick={fetchDuplicates} disabled={loading}>
+            <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+            Actualiser
+          </Button>
+        </div>
       </div>
 
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
-            <Search className="h-4 w-4" /> Recherche et filtres
+            <Search className="h-4 w-4" /> Recherche, filtres et tri
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -292,6 +377,43 @@ export function AdminDuplicatesPage() {
               </div>
             </div>
           </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-3">
+            <div>
+              <Label className="text-xs">Trier par</Label>
+              <Select value={sortKey} onValueChange={(v) => setSortKey(v as SortKey)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="date">Date de vente</SelectItem>
+                  <SelectItem value="employee">Employé</SelectItem>
+                  <SelectItem value="contract">N° de dossier</SelectItem>
+                  <SelectItem value="type">Type d'assurance</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label className="text-xs">Ordre</Label>
+              <Select value={sortDir} onValueChange={(v) => setSortDir(v as SortDir)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="asc">Croissant</SelectItem>
+                  <SelectItem value="desc">Décroissant</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label className="text-xs">Par page</Label>
+              <Select value={String(pageSize)} onValueChange={(v) => setPageSize(Number(v))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {PAGE_SIZE_OPTIONS.map((n) => (
+                    <SelectItem key={n} value={String(n)}>{n}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
           {hasFilters && (
             <div className="mt-3 flex justify-end">
               <Button variant="ghost" size="sm" onClick={clearFilters}>
@@ -331,6 +453,32 @@ export function AdminDuplicatesPage() {
         </Card>
       </div>
 
+      {/* Bulk action bar */}
+      {filteredGroups.length > 0 && (
+        <div className="flex items-center justify-between flex-wrap gap-2 p-3 rounded-lg border bg-muted/30">
+          <div className="flex items-center gap-3">
+            <Button variant="outline" size="sm" onClick={selectAllVisible}>
+              Tout sélectionner (page)
+            </Button>
+            <Button variant="ghost" size="sm" onClick={() => setSelected(new Set())} disabled={!selected.size}>
+              Désélectionner
+            </Button>
+            <span className="text-sm text-muted-foreground">
+              {selected.size} sélectionné{selected.size > 1 ? 's' : ''}
+            </span>
+          </div>
+          <Button
+            variant="destructive"
+            size="sm"
+            disabled={!selected.size}
+            onClick={() => setConfirmOpen(true)}
+          >
+            <Trash2 className="mr-2 h-4 w-4" />
+            Supprimer la sélection
+          </Button>
+        </div>
+      )}
+
       {filteredGroups.length === 0 && !loading && (
         <Card>
           <CardContent className="py-12 text-center text-muted-foreground">
@@ -339,75 +487,103 @@ export function AdminDuplicatesPage() {
         </Card>
       )}
 
-      {filteredGroups.map((group) => (
-        <Card key={`${group.contract_number}-${group.insurance_type_id}`}>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="font-mono text-base">
-                  Dossier {group.contract_number}
-                </CardTitle>
-                <CardDescription>
-                  <Badge variant="secondary" className="mr-2">{group.insurance_type_name}</Badge>
-                  {group.count} enregistrements
-                </CardDescription>
+      {pagedGroups.map((group) => {
+        const dupIds = group.sales.slice(1).map((s) => s.id);
+        const allSelected = dupIds.length > 0 && dupIds.every((id) => selected.has(id));
+        const someSelected = dupIds.some((id) => selected.has(id));
+        return (
+          <Card key={`${group.contract_number}-${group.insurance_type_id}`}>
+            <CardHeader>
+              <div className="flex items-center justify-between gap-3 flex-wrap">
+                <div className="flex items-center gap-3">
+                  <Checkbox
+                    checked={allSelected ? true : someSelected ? 'indeterminate' : false}
+                    onCheckedChange={(v) => toggleGroup(group, !!v)}
+                    aria-label="Sélectionner tous les doublons du groupe"
+                  />
+                  <div>
+                    <CardTitle className="font-mono text-base">
+                      Dossier {group.contract_number}
+                    </CardTitle>
+                    <CardDescription>
+                      <Badge variant="secondary" className="mr-2">{group.insurance_type_name}</Badge>
+                      {group.count} enregistrements
+                    </CardDescription>
+                  </div>
+                </div>
+                <Badge variant="destructive">{group.count - 1} doublon{group.count - 1 > 1 ? 's' : ''}</Badge>
               </div>
-              <Badge variant="destructive">{group.count - 1} doublon{group.count - 1 > 1 ? 's' : ''}</Badge>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Date vente</TableHead>
-                  <TableHead>Créé le</TableHead>
-                  <TableHead>Utilisateur</TableHead>
-                  <TableHead>Client</TableHead>
-                  <TableHead className="text-right">Montant</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {group.sales.map((s, idx) => (
-                  <TableRow key={s.id}>
-                    <TableCell>{format(new Date(s.sale_date), 'dd/MM/yyyy', { locale: fr })}</TableCell>
-                    <TableCell className="text-xs text-muted-foreground">
-                      {format(new Date(s.created_at), 'dd/MM/yyyy HH:mm', { locale: fr })}
-                      {idx === 0 && <Badge variant="outline" className="ml-2 text-[10px]">Original</Badge>}
-                    </TableCell>
-                    <TableCell>{s.user_name}</TableCell>
-                    <TableCell>{s.client_name || '-'}</TableCell>
-                    <TableCell className="text-right font-semibold">{Number(s.amount).toFixed(2)} €</TableCell>
-                    <TableCell className="text-right">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => setDeleteId(s.id)}
-                        disabled={idx === 0}
-                        title={idx === 0 ? "Original conservé" : "Supprimer ce doublon"}
-                      >
-                        <Trash2 className={`h-4 w-4 ${idx === 0 ? 'text-gray-300' : 'text-red-500'}`} />
-                      </Button>
-                    </TableCell>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-10"></TableHead>
+                    <TableHead>Date vente</TableHead>
+                    <TableHead>Créé le</TableHead>
+                    <TableHead>Utilisateur</TableHead>
+                    <TableHead>Client</TableHead>
+                    <TableHead className="text-right">Montant</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-      ))}
+                </TableHeader>
+                <TableBody>
+                  {group.sales.map((s, idx) => (
+                    <TableRow key={s.id}>
+                      <TableCell>
+                        {idx === 0 ? (
+                          <span className="text-[10px] text-muted-foreground">—</span>
+                        ) : (
+                          <Checkbox
+                            checked={selected.has(s.id)}
+                            onCheckedChange={() => toggleOne(s.id)}
+                          />
+                        )}
+                      </TableCell>
+                      <TableCell>{format(new Date(s.sale_date), 'dd/MM/yyyy', { locale: fr })}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground">
+                        {format(new Date(s.created_at), 'dd/MM/yyyy HH:mm', { locale: fr })}
+                        {idx === 0 && <Badge variant="outline" className="ml-2 text-[10px]">Original</Badge>}
+                      </TableCell>
+                      <TableCell>{s.user_name}</TableCell>
+                      <TableCell>{s.client_name || '-'}</TableCell>
+                      <TableCell className="text-right font-semibold">{Number(s.amount).toFixed(2)} €</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        );
+      })}
 
-      <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
+      {/* Pagination */}
+      {filteredGroups.length > pageSize && (
+        <div className="flex items-center justify-between flex-wrap gap-2 pt-2">
+          <div className="text-sm text-muted-foreground">
+            Page {currentPage} sur {totalPages} — {filteredGroups.length} groupes
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" disabled={currentPage <= 1} onClick={() => setPage(currentPage - 1)}>
+              <ChevronLeft className="h-4 w-4" /> Précédent
+            </Button>
+            <Button variant="outline" size="sm" disabled={currentPage >= totalPages} onClick={() => setPage(currentPage + 1)}>
+              Suivant <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      )}
+
+      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Supprimer ce doublon ?</AlertDialogTitle>
+            <AlertDialogTitle>Supprimer {selected.size} doublon{selected.size > 1 ? 's' : ''} ?</AlertDialogTitle>
             <AlertDialogDescription>
-              La vente sera supprimée. Vous pourrez l'annuler immédiatement via la notification.
+              Les ventes sélectionnées seront supprimées. Vous pourrez annuler immédiatement via la notification ou le bouton "Annuler la dernière opération".
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700">
+            <AlertDialogAction onClick={handleBulkDelete} className="bg-red-600 hover:bg-red-700">
               Supprimer
             </AlertDialogAction>
           </AlertDialogFooter>
