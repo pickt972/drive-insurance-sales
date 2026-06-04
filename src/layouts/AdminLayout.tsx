@@ -21,8 +21,8 @@ import {
   Bell,
   Car,
   PlusCircle,
-  TrendingUp
-} from 'lucide-react';
+  TrendingUp,
+  Copy
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
