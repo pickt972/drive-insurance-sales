@@ -204,11 +204,17 @@ export function useUsers() {
     if (!isAdmin) throw new Error('Accès refusé');
 
     try {
-      const { error } = await supabase.auth.admin.updateUserById(userId, {
-        password: newPassword,
+      const response = await supabase.functions.invoke('reset-user-password', {
+        body: { user_id: userId, new_password: newPassword },
       });
 
-      if (error) throw error;
+      if (response.error) {
+        throw new Error(response.error.message || 'Erreur lors de la mise à jour');
+      }
+      const data = response.data as any;
+      if (data && data.success === false) {
+        throw new Error(data.error || 'Erreur lors de la mise à jour');
+      }
 
       toast({
         title: '✅ Mot de passe modifié',
