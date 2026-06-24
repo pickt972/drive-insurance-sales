@@ -28,26 +28,34 @@ Deno.serve(async (req) => {
 
     const clean = username.toLowerCase().trim();
 
-    // Look up by email prefix (case-insensitive)
-    const { data, error } = await supabaseAdmin
+    // 1) Try lookup by explicit username column
+    const { data: byUsername } = await supabaseAdmin
+      .from('profiles')
+      .select('email')
+      .ilike('username', clean)
+      .limit(1)
+      .maybeSingle();
+
+    if (byUsername?.email) {
+      return new Response(
+        JSON.stringify({ email: byUsername.email }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // 2) Fallback: lookup by email local-part prefix
+    const { data: byPrefix } = await supabaseAdmin
       .from('profiles')
       .select('email')
       .ilike('email', `${clean}@%`)
       .limit(1)
       .maybeSingle();
 
-    if (error) {
-      console.error('resolve-identifier error:', error);
-      return new Response(
-        JSON.stringify({ email: null }),
-        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
     return new Response(
-      JSON.stringify({ email: data?.email ?? null }),
+      JSON.stringify({ email: byPrefix?.email ?? null }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
+
   } catch (error) {
     console.error('resolve-identifier unexpected:', error);
     return new Response(
