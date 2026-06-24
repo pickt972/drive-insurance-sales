@@ -137,13 +137,14 @@ serve(async (req) => {
       )
     }
 
-    // Update profile with phone if provided
-    if (phone && newUser.user) {
+    // Ensure profile has username + phone set
+    if (newUser.user) {
       await supabaseAdmin
         .from('profiles')
-        .update({ phone })
+        .update({ username: cleanUsername, ...(phone ? { phone } : {}) })
         .eq('id', newUser.user.id)
     }
+
 
     return new Response(
       JSON.stringify({ 
