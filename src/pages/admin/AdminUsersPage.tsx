@@ -568,7 +568,7 @@ export function AdminUsersPage() {
     }
   };
 
-  const getIdentifier = (email: string) => email.split('@')[0];
+  const getIdentifier = (user: User) => user.username || (user.email ? user.email.split('@')[0] : '');
 
   const filteredUsers = users.filter(user => {
     const matchesSearch = searchTerm === '' ||
