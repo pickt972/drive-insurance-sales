@@ -702,7 +702,7 @@ export function AdminUsersPage() {
                           <TableCell className="font-medium">{user.full_name}</TableCell>
                           <TableCell>
                             <Badge variant="outline" className="font-mono text-xs">
-                              {getIdentifier(user.email)}
+                              {getIdentifier(user)}
                             </Badge>
                           </TableCell>
                           <TableCell className="text-sm text-muted-foreground">
