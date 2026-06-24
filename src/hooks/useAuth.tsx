@@ -238,10 +238,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       setIsLoading(true);
 
-      // IMPORTANT: Utiliser le bon domaine
-      const email = identifier.includes('@')
-        ? identifier.toLowerCase().trim()
-        : `${identifier.toLowerCase().trim()}@aloelocation.internal`;
+      const raw = identifier.toLowerCase().trim();
+      let email = raw;
+
+      if (!raw.includes('@')) {
+        // Try to resolve username → email via edge function (handles external emails like gmail)
+        let resolved: string | null = null;
+        try {
+          const { data } = await supabase.functions.invoke('resolve-identifier', {
+            body: { username: raw },
+          });
+          resolved = (data as any)?.email ?? null;
+        } catch (e) {
+          devError('[AUTH] resolve-identifier failed:', e);
+        }
+        email = resolved ?? `${raw}@aloelocation.internal`;
+      }
 
       devLog('[AUTH] signIn attempt:', email);
 
@@ -257,7 +269,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       devLog('[AUTH] signIn success:', data.user?.id);
-      // onAuthStateChange gère le reste
       return { error: null };
     } catch (err) {
       devError('[AUTH] signIn exception:', err);
