@@ -320,11 +320,13 @@ export function AdminUsersPage() {
         }
       }
 
-      // Update profile
+      // Update profile (including username — independent of email)
+      const cleanUsername = (formData.username || '').toLowerCase().trim().replace(/\s+/g, '');
       const { error: profileError } = await supabaseAny
         .from('profiles')
         .update({
           full_name: formData.full_name,
+          username: cleanUsername || null,
           agency: formData.agency || null,
           phone: formData.phone || null,
           role: formData.role,
@@ -332,7 +334,13 @@ export function AdminUsersPage() {
         })
         .eq('id', editingUser.id);
 
-      if (profileError) throw profileError;
+      if (profileError) {
+        if ((profileError as any).code === '23505') {
+          throw new Error('Cet identifiant est déjà utilisé par un autre utilisateur');
+        }
+        throw profileError;
+      }
+
 
       // Update user_roles table for security
       await supabaseAny
