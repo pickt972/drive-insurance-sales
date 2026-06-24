@@ -896,15 +896,50 @@ export function AdminUsersPage() {
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="full_name">Nom complet</Label>
-              <Input
-                id="full_name"
-                value={formData.full_name}
-                onChange={(e) => handleFormChange('full_name', e.target.value)}
-                placeholder="Jean Dupont"
-              />
-            </div>
+            {(() => {
+              const parts = (formData.full_name || '').trim().split(/\s+/);
+              const firstName = parts[0] || '';
+              const lastName = parts.slice(1).join(' ');
+              const identifier = (formData.email || '').split('@')[0] || '';
+              const setName = (first: string, last: string) =>
+                handleFormChange('full_name', `${first} ${last}`.trim());
+              return (
+                <>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="grid gap-2">
+                      <Label htmlFor="first_name">Prénom</Label>
+                      <Input
+                        id="first_name"
+                        value={firstName}
+                        onChange={(e) => setName(e.target.value, lastName)}
+                        placeholder="Jean"
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="last_name">Nom</Label>
+                      <Input
+                        id="last_name"
+                        value={lastName}
+                        onChange={(e) => setName(firstName, e.target.value)}
+                        placeholder="Dupont"
+                      />
+                    </div>
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="identifier">Identifiant</Label>
+                    <Input
+                      id="identifier"
+                      value={identifier}
+                      disabled
+                      className="bg-muted"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      L'identifiant correspond à la partie avant le @ de l'email.
+                    </p>
+                  </div>
+                </>
+              );
+            })()}
             <div className="grid gap-2">
               <Label htmlFor="email">Email</Label>
               <div className="flex gap-2">

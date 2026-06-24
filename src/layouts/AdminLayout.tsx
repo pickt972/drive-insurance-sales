@@ -39,7 +39,7 @@ const navigation = [
   { name: 'Tableau de bord', href: '/admin/dashboard', icon: LayoutDashboard },
   { name: 'Nouvelle Vente', href: '/admin/new-sale', icon: PlusCircle },
   { name: 'Ventes', href: '/admin/sales', icon: ShoppingCart },
-  { name: 'Utilisateurs', href: '/admin/users', icon: Users },
+  
   { name: 'Types d\'assurances', href: '/admin/insurance-types', icon: Shield },
   { name: 'Objectifs', href: '/admin/objectives', icon: Target },
   { name: 'Primes & Bonus', href: '/admin/bonuses', icon: Gift },
