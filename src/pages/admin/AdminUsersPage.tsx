@@ -301,7 +301,18 @@ export function AdminUsersPage() {
     setSaving(true);
     try {
       const supabaseAny = supabase as any;
-      
+
+      // If identifier (email) changed, update auth + profile email via edge function
+      if (formData.email && formData.email !== editingUser.email) {
+        const response = await supabase.functions.invoke('update-user-email', {
+          body: { userId: editingUser.id, newEmail: formData.email },
+        });
+        if (response.error || !(response.data as any)?.success) {
+          const msg = (response.data as any)?.error || response.error?.message || 'Erreur lors de la mise à jour de l\'identifiant';
+          throw new Error(msg);
+        }
+      }
+
       // Update profile
       const { error: profileError } = await supabaseAny
         .from('profiles')
@@ -337,11 +348,11 @@ export function AdminUsersPage() {
       setEditDialogOpen(false);
       setEditingUser(null);
       loadUsers();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving user:', error);
       toast({
         title: 'Erreur',
-        description: 'Impossible de sauvegarder les modifications',
+        description: error?.message || 'Impossible de sauvegarder les modifications',
         variant: 'destructive',
       });
     } finally {
@@ -900,9 +911,17 @@ export function AdminUsersPage() {
               const parts = (formData.full_name || '').trim().split(/\s+/);
               const firstName = parts[0] || '';
               const lastName = parts.slice(1).join(' ');
-              const identifier = (formData.email || '').split('@')[0] || '';
+              const currentEmail = formData.email || '';
+              const identifier = currentEmail.split('@')[0] || '';
+              const domain = currentEmail.includes('@')
+                ? currentEmail.split('@')[1]
+                : 'aloelocation.internal';
               const setName = (first: string, last: string) =>
                 handleFormChange('full_name', `${first} ${last}`.trim());
+              const setIdentifier = (value: string) => {
+                const clean = value.toLowerCase().trim().replace(/\s+/g, '');
+                handleFormChange('email', clean ? `${clean}@${domain}` : '');
+              };
               return (
                 <>
                   <div className="grid grid-cols-2 gap-3">
@@ -930,11 +949,11 @@ export function AdminUsersPage() {
                     <Input
                       id="identifier"
                       value={identifier}
-                      disabled
-                      className="bg-muted"
+                      onChange={(e) => setIdentifier(e.target.value)}
+                      placeholder="jean.dupont"
                     />
                     <p className="text-xs text-muted-foreground">
-                      L'identifiant correspond à la partie avant le @ de l'email.
+                      Utilisé pour la connexion. Domaine actuel : @{domain}
                     </p>
                   </div>
                 </>
