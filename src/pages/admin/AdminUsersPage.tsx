@@ -54,6 +54,7 @@ import { CSS } from '@dnd-kit/utilities';
 interface User {
   id: string;
   email: string;
+  username: string | null;
   full_name: string;
   role: string;
   agency: string | null;
@@ -66,10 +67,12 @@ interface User {
 interface EditFormData {
   full_name: string;
   email: string;
+  username: string;
   agency: string;
   phone: string;
   role: 'admin' | 'user';
 }
+
 
 interface CreateFormData {
   username: string;
