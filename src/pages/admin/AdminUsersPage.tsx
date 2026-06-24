@@ -212,10 +212,12 @@ export function AdminUsersPage() {
     setFormData({
       full_name: user.full_name || '',
       email: user.email || '',
+      username: user.username || (user.email ? user.email.split('@')[0] : ''),
       agency: user.agency || '',
       phone: user.phone || '',
       role: (user.role as 'admin' | 'user') || 'user',
     });
+
     setEditDialogOpen(true);
   };
 
