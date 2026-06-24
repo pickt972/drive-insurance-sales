@@ -49,8 +49,12 @@ export function UserManagement() {
   const { toast } = useToast();
   const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
 
+  const INTERNAL_DOMAIN = '@aloelocation.internal';
+
   const [editUser, setEditUser] = useState<{ id: string; email: string; full_name: string } | null>(null);
-  const [formName, setFormName] = useState('');
+  const [formFirstName, setFormFirstName] = useState('');
+  const [formLastName, setFormLastName] = useState('');
+  const [formIdentifier, setFormIdentifier] = useState('');
   const [formEmail, setFormEmail] = useState('');
   const [formPassword, setFormPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -77,7 +81,10 @@ export function UserManagement() {
 
   const openEdit = (user: { id: string; email: string; full_name: string }) => {
     setEditUser(user);
-    setFormName(user.full_name);
+    const parts = (user.full_name || '').trim().split(/\s+/);
+    setFormFirstName(parts[0] || '');
+    setFormLastName(parts.slice(1).join(' ') || '');
+    setFormIdentifier(user.email.split('@')[0] || '');
     setFormEmail(user.email);
     setFormPassword('');
     setShowPassword(false);
@@ -85,14 +92,27 @@ export function UserManagement() {
 
   const closeEdit = () => {
     setEditUser(null);
-    setFormName('');
+    setFormFirstName('');
+    setFormLastName('');
+    setFormIdentifier('');
     setFormEmail('');
     setFormPassword('');
   };
 
+  // Quand l'identifiant change et que l'email actuel est interne, synchroniser l'email
+  const handleIdentifierChange = (value: string) => {
+    const clean = value.trim().toLowerCase().replace(/\s+/g, '');
+    setFormIdentifier(clean);
+    if (!editUser) return;
+    if (editUser.email.toLowerCase().endsWith(INTERNAL_DOMAIN)) {
+      setFormEmail(clean ? `${clean}${INTERNAL_DOMAIN}` : '');
+    }
+  };
+
   const handleSaveCredentials = async () => {
     if (!editUser) return;
-    const nameChanged = formName.trim() && formName.trim() !== editUser.full_name;
+    const newFullName = `${formFirstName.trim()} ${formLastName.trim()}`.trim();
+    const nameChanged = newFullName && newFullName !== editUser.full_name;
     const emailChanged = formEmail.trim() && formEmail.trim().toLowerCase() !== editUser.email.toLowerCase();
     const passwordChanged = formPassword.trim().length > 0;
 
@@ -112,10 +132,10 @@ export function UserManagement() {
     setSaving(true);
     try {
       if (nameChanged) {
-        await updateUser(editUser.id, { full_name: formName.trim() });
+        await updateUser(editUser.id, { full_name: newFullName });
       }
       if (emailChanged) {
-        await updateUserEmail(editUser.id, formEmail.trim());
+        await updateUserEmail(editUser.id, formEmail.trim().toLowerCase());
       }
       if (passwordChanged) {
         await updatePassword(editUser.id, formPassword);
@@ -282,16 +302,39 @@ export function UserManagement() {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-2">
-            <div className="space-y-2">
-              <Label>Nom complet</Label>
-              <Input
-                value={formName}
-                onChange={(e) => setFormName(e.target.value)}
-                placeholder="Prénom Nom"
-              />
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label>Prénom</Label>
+                <Input
+                  value={formFirstName}
+                  onChange={(e) => setFormFirstName(e.target.value)}
+                  placeholder="Marie"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Nom</Label>
+                <Input
+                  value={formLastName}
+                  onChange={(e) => setFormLastName(e.target.value)}
+                  placeholder="Dupont"
+                />
+              </div>
             </div>
             <div className="space-y-2">
-              <Label>Email (identifiant de connexion)</Label>
+              <Label>Identifiant</Label>
+              <Input
+                value={formIdentifier}
+                onChange={(e) => handleIdentifierChange(e.target.value)}
+                placeholder="marie"
+                autoCapitalize="none"
+                autoCorrect="off"
+              />
+              <p className="text-xs text-muted-foreground">
+                Nom court utilisé pour la connexion (sans espace, sans accent).
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label>Email (connexion)</Label>
               <Input
                 type="email"
                 value={formEmail}
