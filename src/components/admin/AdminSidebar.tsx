@@ -16,7 +16,7 @@ import {
 const adminMenuItems = [
   { title: 'Tableau de bord', url: '/admin', icon: LayoutDashboard, end: true },
   { title: 'Ventes', url: '/admin/sales', icon: TrendingUp },
-  { title: 'Utilisateurs', url: '/admin/users', icon: Users },
+  
   { title: 'Types d\'assurance', url: '/admin/insurance-types', icon: ShieldCheck },
   { title: 'Objectifs', url: '/admin/objectives', icon: Target },
   { title: 'Primes & Bonus', url: '/admin/bonuses', icon: DollarSign },
