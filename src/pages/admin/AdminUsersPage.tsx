@@ -54,6 +54,7 @@ import { CSS } from '@dnd-kit/utilities';
 interface User {
   id: string;
   email: string;
+  username: string | null;
   full_name: string;
   role: string;
   agency: string | null;
@@ -66,10 +67,12 @@ interface User {
 interface EditFormData {
   full_name: string;
   email: string;
+  username: string;
   agency: string;
   phone: string;
   role: 'admin' | 'user';
 }
+
 
 interface CreateFormData {
   username: string;
@@ -143,10 +146,12 @@ export function AdminUsersPage() {
   const [formData, setFormData] = useState<EditFormData>({
     full_name: '',
     email: '',
+    username: '',
     agency: '',
     phone: '',
     role: 'user',
   });
+
   const [createFormData, setCreateFormData] = useState<CreateFormData>({
     username: '',
     full_name: '',
@@ -207,10 +212,12 @@ export function AdminUsersPage() {
     setFormData({
       full_name: user.full_name || '',
       email: user.email || '',
+      username: user.username || (user.email ? user.email.split('@')[0] : ''),
       agency: user.agency || '',
       phone: user.phone || '',
       role: (user.role as 'admin' | 'user') || 'user',
     });
+
     setEditDialogOpen(true);
   };
 
@@ -313,11 +320,13 @@ export function AdminUsersPage() {
         }
       }
 
-      // Update profile
+      // Update profile (including username — independent of email)
+      const cleanUsername = (formData.username || '').toLowerCase().trim().replace(/\s+/g, '');
       const { error: profileError } = await supabaseAny
         .from('profiles')
         .update({
           full_name: formData.full_name,
+          username: cleanUsername || null,
           agency: formData.agency || null,
           phone: formData.phone || null,
           role: formData.role,
@@ -325,7 +334,13 @@ export function AdminUsersPage() {
         })
         .eq('id', editingUser.id);
 
-      if (profileError) throw profileError;
+      if (profileError) {
+        if ((profileError as any).code === '23505') {
+          throw new Error('Cet identifiant est déjà utilisé par un autre utilisateur');
+        }
+        throw profileError;
+      }
+
 
       // Update user_roles table for security
       await supabaseAny
@@ -911,16 +926,11 @@ export function AdminUsersPage() {
               const parts = (formData.full_name || '').trim().split(/\s+/);
               const firstName = parts[0] || '';
               const lastName = parts.slice(1).join(' ');
-              const currentEmail = formData.email || '';
-              const identifier = currentEmail.split('@')[0] || '';
-              const domain = currentEmail.includes('@')
-                ? currentEmail.split('@')[1]
-                : 'aloelocation.internal';
               const setName = (first: string, last: string) =>
                 handleFormChange('full_name', `${first} ${last}`.trim());
               const setIdentifier = (value: string) => {
-                const clean = value.toLowerCase().trim().replace(/\s+/g, '');
-                handleFormChange('email', clean ? `${clean}@${domain}` : '');
+                const clean = value.toLowerCase().replace(/\s+/g, '');
+                handleFormChange('username', clean);
               };
               return (
                 <>
@@ -948,17 +958,18 @@ export function AdminUsersPage() {
                     <Label htmlFor="identifier">Identifiant</Label>
                     <Input
                       id="identifier"
-                      value={identifier}
+                      value={formData.username}
                       onChange={(e) => setIdentifier(e.target.value)}
                       placeholder="jean.dupont"
                     />
                     <p className="text-xs text-muted-foreground">
-                      Utilisé pour la connexion. Domaine actuel : @{domain}
+                      Utilisé pour la connexion (en plus de l'email).
                     </p>
                   </div>
                 </>
               );
             })()}
+
             <div className="grid gap-2">
               <Label htmlFor="email">Email</Label>
               <div className="flex gap-2">
