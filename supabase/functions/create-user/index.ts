@@ -89,15 +89,16 @@ serve(async (req) => {
       )
     }
 
+    const cleanUsername = String(username).toLowerCase().trim()
     // Generate email from username
-    const email = `${username.toLowerCase().trim()}@aloelocation.internal`
+    const email = `${cleanUsername}@aloelocation.internal`
 
     // Check if username/email already exists
     const { data: existingUser } = await supabaseAdmin
       .from('profiles')
       .select('id')
-      .eq('email', email)
-      .single()
+      .or(`email.eq.${email},username.eq.${cleanUsername}`)
+      .maybeSingle()
 
     if (existingUser) {
       return new Response(
@@ -115,8 +116,10 @@ serve(async (req) => {
         full_name: full_name || username,
         role,
         agency: agency || null,
+        username: cleanUsername,
       }
     })
+
 
     if (authError) {
       console.error('Error creating user:', authError)
