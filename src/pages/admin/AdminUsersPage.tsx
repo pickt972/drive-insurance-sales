@@ -926,16 +926,11 @@ export function AdminUsersPage() {
               const parts = (formData.full_name || '').trim().split(/\s+/);
               const firstName = parts[0] || '';
               const lastName = parts.slice(1).join(' ');
-              const currentEmail = formData.email || '';
-              const identifier = currentEmail.split('@')[0] || '';
-              const domain = currentEmail.includes('@')
-                ? currentEmail.split('@')[1]
-                : 'aloelocation.internal';
               const setName = (first: string, last: string) =>
                 handleFormChange('full_name', `${first} ${last}`.trim());
               const setIdentifier = (value: string) => {
-                const clean = value.toLowerCase().trim().replace(/\s+/g, '');
-                handleFormChange('email', clean ? `${clean}@${domain}` : '');
+                const clean = value.toLowerCase().replace(/\s+/g, '');
+                handleFormChange('username', clean);
               };
               return (
                 <>
@@ -963,17 +958,18 @@ export function AdminUsersPage() {
                     <Label htmlFor="identifier">Identifiant</Label>
                     <Input
                       id="identifier"
-                      value={identifier}
+                      value={formData.username}
                       onChange={(e) => setIdentifier(e.target.value)}
                       placeholder="jean.dupont"
                     />
                     <p className="text-xs text-muted-foreground">
-                      Utilisé pour la connexion. Domaine actuel : @{domain}
+                      Utilisé pour la connexion (en plus de l'email).
                     </p>
                   </div>
                 </>
               );
             })()}
+
             <div className="grid gap-2">
               <Label htmlFor="email">Email</Label>
               <div className="flex gap-2">
