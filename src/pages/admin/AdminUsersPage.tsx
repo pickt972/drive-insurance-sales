@@ -146,10 +146,12 @@ export function AdminUsersPage() {
   const [formData, setFormData] = useState<EditFormData>({
     full_name: '',
     email: '',
+    username: '',
     agency: '',
     phone: '',
     role: 'user',
   });
+
   const [createFormData, setCreateFormData] = useState<CreateFormData>({
     username: '',
     full_name: '',
