@@ -295,6 +295,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     session,
     isLoading,
     isAdmin: role === 'admin',
+    isManager: role === 'manager',
+    isAdminOrManager: role === 'admin' || role === 'manager',
     isAuthenticated: !!user && !!profile,
     signIn,
     signOut,
