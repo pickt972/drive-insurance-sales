@@ -57,21 +57,27 @@ serve(async (req) => {
       )
     }
 
-    // Check if caller is admin
-    const { data: callerRole } = await supabaseAdmin
+    // Check if caller is admin or manager
+    const { data: callerRoles } = await supabaseAdmin
       .from('user_roles')
       .select('role')
       .eq('user_id', caller.id)
-      .single()
 
-    if (callerRole?.role !== 'admin') {
+    const callerRoleList = (callerRoles ?? []).map((r: any) => r.role)
+    const isAdmin = callerRoleList.includes('admin')
+    const isManager = callerRoleList.includes('manager')
+
+    if (!isAdmin && !isManager) {
       return new Response(
-        JSON.stringify({ success: false, error: 'Accès refusé - Admin requis' }),
+        JSON.stringify({ success: false, error: 'Accès refusé' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 403 }
       )
     }
 
-    const { username, full_name, password, role = 'user', agency, phone } = await req.json()
+    const body = await req.json()
+    const { username, full_name, password, agency, phone } = body
+    // Managers can only create standard employees
+    const role = isManager && !isAdmin ? 'user' : (body.role ?? 'user')
 
     if (!username || !password) {
       return new Response(
