@@ -972,19 +972,16 @@ export function AdminUsersPage() {
 
             <div className="grid gap-2">
               <Label htmlFor="email">Email</Label>
-              <div className="flex gap-2">
-                <Input
-                  id="email"
-                  type="email"
-                  value={formData.email}
-                  disabled
-                  className="bg-muted flex-1"
-                />
-                <Button variant="outline" size="sm" onClick={() => { setEditDialogOpen(false); if (editingUser) openEditEmailDialog(editingUser); }}>
-                  <Mail className="h-4 w-4 mr-1" />
-                  Modifier
-                </Button>
-              </div>
+              <Input
+                id="email"
+                type="email"
+                value={formData.email}
+                onChange={(e) => handleFormChange('email', e.target.value)}
+                placeholder="utilisateur@exemple.com"
+              />
+              <p className="text-xs text-muted-foreground">
+                La modification met à jour l'email de connexion de l'utilisateur.
+              </p>
             </div>
             <div className="grid gap-2">
               <Label htmlFor="phone">Téléphone</Label>
