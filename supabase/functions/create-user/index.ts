@@ -74,7 +74,10 @@ serve(async (req) => {
       )
     }
 
-    const { username, full_name, password, role = 'user', agency, phone } = await req.json()
+    const body = await req.json()
+    const { username, full_name, password, agency, phone } = body
+    // Managers can only create standard employees
+    const role = isManager && !isAdmin ? 'user' : (body.role ?? 'user')
 
     if (!username || !password) {
       return new Response(
